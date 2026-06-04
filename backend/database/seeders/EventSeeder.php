@@ -182,6 +182,68 @@ class EventSeeder extends Seeder
                 ],
             ],
 
+            // --- Stress-driven self-initiated behaviour (scheduled-only) ---
+            [
+                'key' => 'survivor_strained',
+                'title' => 'Nervi tesi',
+                'body' => 'Qualcuno sbatte un boccale sul tavolo. La tensione si sente.',
+                'speaker' => null,
+                'base_weight' => 10,
+                'cooldown_days' => 0,
+                'is_filler' => false,
+                'requires' => ['flag' => '__scheduled_only', 'is' => true],
+                'choices' => [
+                    [
+                        'label' => 'Faccio finta di niente',
+                        'hint' => null,
+                        'outcomes' => [
+                            ['weight' => 1, 'effects' => [['resource' => 'morale', 'delta' => -4]],
+                                'log' => 'La cosa cova sotto la cenere.'],
+                        ],
+                    ],
+                    [
+                        'label' => 'Parlo con lui',
+                        'hint' => null,
+                        'outcomes' => [
+                            ['weight' => 1, 'effects' => [['resource' => 'morale', 'delta' => 3]],
+                                'log' => 'Si sfoga. Per ora basta.'],
+                        ],
+                    ],
+                ],
+            ],
+            [
+                'key' => 'survivor_breaks',
+                'title' => 'Crollo',
+                'body' => 'Uno dei tuoi ha smesso di rispondere agli ordini.',
+                'speaker' => null,
+                'base_weight' => 10,
+                'cooldown_days' => 0,
+                'is_filler' => false,
+                'requires' => ['flag' => '__scheduled_only', 'is' => true],
+                'choices' => [
+                    [
+                        'label' => 'Lo lascio stare',
+                        'hint' => 'rischioso',
+                        'outcomes' => [
+                            ['weight' => 1, 'effects' => [['resource' => 'morale', 'delta' => -10]],
+                                'log' => 'Si chiude in cabina. Non esce per ore.'],
+                        ],
+                    ],
+                    [
+                        'label' => 'Lo costringo a lavorare',
+                        'hint' => 'molto pericoloso',
+                        'outcomes' => [
+                            ['weight' => 3, 'effects' => [['resource' => 'power', 'delta' => 5]],
+                                'log' => 'Obbedisce, a denti stretti.'],
+                            ['weight' => 2, 'effects' => [
+                                ['resource' => 'morale', 'delta' => -15],
+                                ['damage_system' => 'power_grid', 'amount' => 15],
+                            ], 'log' => 'Sbaglia tutto. Forse di proposito.'],
+                        ],
+                    ],
+                ],
+            ],
+
             // --- Guaranteed filler (always eligible, low stakes) -----------
             [
                 'key' => 'filler_silence',

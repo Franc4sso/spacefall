@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use App\Game\Engine\EffectApplier;
+use App\Game\Engine\HintService;
+use App\Game\Engine\OutcomeWeigher;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -17,6 +19,14 @@ class AppServiceProvider extends ServiceProvider
         // by constructor type-hint.
         $this->app->singleton(EffectApplier::class, function () {
             return new EffectApplier(config('game.resources'));
+        });
+
+        $this->app->singleton(HintService::class, function () {
+            return new HintService(config('game.risk_bands'), config('game.traits'));
+        });
+
+        $this->app->singleton(OutcomeWeigher::class, function () {
+            return new OutcomeWeigher(config('game.traits'));
         });
     }
 

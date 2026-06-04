@@ -50,6 +50,8 @@ final class RunState
             flags: $run->flags ?? [],
             recentEvents: $run->recent_events ?? [],
             scheduledEvents: $run->scheduled_events ?? [],
+            characters: $run->characters ?? [],
+            relationships: $run->relationships ?? [],
         );
     }
 
@@ -63,5 +65,7 @@ final class RunState
         $run->flags = $this->flags;
         $run->recent_events = $this->recentEvents;
         $run->scheduled_events = $this->scheduledEvents;
+        $run->characters = $this->characters;
+        $run->relationships = $this->relationships;
     }
 }

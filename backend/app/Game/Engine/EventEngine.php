@@ -18,6 +18,8 @@ final class EventEngine
         private readonly Selector $selector,
         private readonly ConditionEvaluator $evaluator,
         private readonly EffectApplier $applier,
+        private readonly HintService $hints,
+        private readonly OutcomeWeigher $weigher,
     ) {
     }
 
@@ -87,7 +89,8 @@ final class EventEngine
         }
 
         $rng = $run->rng();
-        $outcome = $this->pickOutcome($choice['outcomes'] ?? [], $rng);
+        $speaker = $this->resolveSpeaker($event, $state);
+        $outcome = $this->pickOutcome($choice['outcomes'] ?? [], $speaker, $rng);
 
         $this->applier->apply($outcome['effects'] ?? [], $state, $rng);
 
@@ -115,13 +118,16 @@ final class EventEngine
      */
     private function visibleChoices(Event $event, RunState $state): array
     {
+        $speaker = $this->resolveSpeaker($event, $state);
+
         $out = [];
         foreach ($event->choices as $index => $choice) {
             $available = $this->evaluator->evaluate($choice['requires'] ?? null, $state);
             $out[] = [
                 'index' => $index,
                 'label' => $choice['label'] ?? '',
-                'hint' => $choice['hint'] ?? null,
+                // Trait-distorted hint: vague phrase coloured by the speaker.
+                'hint' => $this->hints->hintFor($choice, $speaker),
                 'available' => $available,
             ];
         }
@@ -129,9 +135,10 @@ final class EventEngine
     }
 
     /**
-     * Weighted-random outcome branch. Single-branch choices resolve directly.
+     * Weighted-random outcome branch, reweighted by the speaker's luck traits.
+     * Single-branch choices resolve directly (no luck to apply).
      */
-    private function pickOutcome(array $outcomes, \App\Game\SeededRng $rng): array
+    private function pickOutcome(array $outcomes, ?array $speaker, \App\Game\SeededRng $rng): array
     {
         if ($outcomes === []) {
             return ['effects' => [], 'log' => ''];
@@ -140,10 +147,27 @@ final class EventEngine
             return $outcomes[0];
         }
 
-        $weights = [];
-        foreach ($outcomes as $i => $o) {
-            $weights[$i] = max(1, (int) ($o['weight'] ?? 1));
-        }
+        $weights = $this->weigher->weights($outcomes, $speaker);
+        // weightedPick keys by array index; weights is parallel to $outcomes.
         return $outcomes[$rng->weightedPick($weights)];
+    }
+
+    /**
+     * The living character whose name matches the event's `speaker`, or null
+     * (no speaker, or speaker dead/absent → neutral hints, no luck shift).
+     *
+     * @return array<string,mixed>|null
+     */
+    private function resolveSpeaker(Event $event, RunState $state): ?array
+    {
+        if (! $event->speaker) {
+            return null;
+        }
+        foreach ($state->characters as $c) {
+            if (($c['name'] ?? null) === $event->speaker && ($c['alive'] ?? true)) {
+                return $c;
+            }
+        }
+        return null;
     }
 }

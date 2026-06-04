@@ -117,10 +117,19 @@ final class Selector
 
     /**
      * Effective weight. Phase 2 returns base_weight; trait / relationship / item
-     * modifiers multiply in at Phase 3 (still data-driven — no per-event logic).
+     * modifiers multiply in via the event's `weight_modifiers` (data-driven,
+     * evaluated with the same Condition DSL — no per-event code here).
      */
     private function weightFor(Event $event, RunState $state): int
     {
-        return (int) $event->base_weight;
+        $weight = (float) $event->base_weight;
+
+        foreach ($event->weight_modifiers ?? [] as $mod) {
+            if ($this->evaluator->evaluate($mod['when'] ?? null, $state)) {
+                $weight *= (float) ($mod['factor'] ?? 1.0);
+            }
+        }
+
+        return max(1, (int) round($weight));
     }
 }

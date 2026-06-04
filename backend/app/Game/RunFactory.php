@@ -32,6 +32,29 @@ final class RunFactory
             'day' => 1,
             'resources' => $resources,
             'status' => 'active',
+            'characters' => $this->roster(),
+            'relationships' => [],
         ]);
+    }
+
+    /**
+     * Build the starting survivors from config. Stress starts at 0, everyone
+     * alive. Relationships start empty (neutral) and form through play.
+     *
+     * @return list<array<string,mixed>>
+     */
+    private function roster(): array
+    {
+        $roster = [];
+        foreach (config('game.roster') as $member) {
+            $roster[] = [
+                'name' => $member['name'],
+                'role' => $member['role'],
+                'traits' => $member['traits'] ?? [],
+                'stress' => 0,
+                'alive' => true,
+            ];
+        }
+        return $roster;
     }
 }

@@ -34,4 +34,67 @@ return [
         'hull'   => ['max' => 100, 'start' => 100, 'daily' => 2,  'two_sided' => false],
     ],
 
+    /*
+     | Traits. Each is pure data the engine consults; no trait name is ever
+     | hard-coded in code. Two levers:
+     |
+     |   hint_bias    how this trait distorts a spoken risk estimate:
+     |                  'reliable' — reports the true risk band
+     |                  'inflate'  — reports one band more dangerous
+     |                  'downplay' — reports one band safer
+     |                This is the "probability filtered through a character"
+     |                rule: the player never sees a number, only a vague phrase,
+     |                and the trait colours it.
+     |
+     |   luck_shift   when the SPEAKER of an event carries this trait, every
+     |                outcome's weight is multiplied by luck_shift ^ (danger of
+     |                that outcome). danger is inferred from the outcome's net
+     |                resource effect (negative = dangerous). >1 favours good
+     |                outcomes, <1 favours bad ones. This makes a Genius's plans
+     |                measurably work out better than a Reckless survivor's over
+     |                many seeds, without authoring per-event branches.
+     */
+    'traits' => [
+        'genius'   => ['hint_bias' => 'reliable', 'luck_shift' => 1.0],
+        'coward'   => ['hint_bias' => 'inflate',  'luck_shift' => 1.0],
+        'paranoid' => ['hint_bias' => 'inflate',  'luck_shift' => 1.0],
+        'optimist' => ['hint_bias' => 'downplay', 'luck_shift' => 1.0],
+        'lucky'    => ['hint_bias' => 'reliable', 'luck_shift' => 1.6],
+        'reckless' => ['hint_bias' => 'downplay', 'luck_shift' => 0.65],
+    ],
+
+    /*
+     | Risk bands → the Italian phrase shown to the player. A choice's true risk
+     | is computed from its outcome spread; the speaker's hint_bias shifts which
+     | band's phrase is shown. Order matters: index 0 = safest.
+     */
+    'risk_bands' => [
+        ['key' => 'safe',       'phrase' => 'dovrebbe reggere'],
+        ['key' => 'uncertain',  'phrase' => 'incerto'],
+        ['key' => 'risky',      'phrase' => 'rischioso'],
+        ['key' => 'dangerous',  'phrase' => 'molto pericoloso'],
+    ],
+
+    /*
+     | Stress bands → self-initiated behaviour. When a survivor's stress crosses
+     | a threshold at end-of-day, the engine schedules the named event (it fires
+     | through the normal scheduled-event path — no special-casing). The events
+     | themselves are content (Phase 5/8). 'spawn' null = no behaviour.
+     */
+    'stress_bands' => [
+        ['min' => 0,  'spawn' => null],
+        ['min' => 60, 'spawn' => 'survivor_strained'],
+        ['min' => 85, 'spawn' => 'survivor_breaks'],
+    ],
+
+    /*
+     | Default starting roster. Names are content; roles/traits are English keys.
+     | Female-safe phrasing in events means names need no gender field (design §2).
+     */
+    'roster' => [
+        ['name' => 'Anna',  'role' => 'engineer', 'traits' => ['genius']],
+        ['name' => 'Bex',   'role' => 'doctor',   'traits' => ['optimist']],
+        ['name' => 'Cole',  'role' => 'pilot',    'traits' => ['coward']],
+    ],
+
 ];

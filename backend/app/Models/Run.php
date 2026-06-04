@@ -29,6 +29,8 @@ class Run extends Model
         'recent_events',
         'scheduled_events',
         'current_event_key',
+        'characters',
+        'relationships',
     ];
 
     protected $casts = [
@@ -39,12 +41,16 @@ class Run extends Model
         'flags' => 'array',
         'recent_events' => 'array',
         'scheduled_events' => 'array',
+        'characters' => 'array',
+        'relationships' => 'array',
     ];
 
     protected $attributes = [
         'flags' => '{}',
         'recent_events' => '{}',
         'scheduled_events' => '[]',
+        'characters' => '[]',
+        'relationships' => '[]',
     ];
 
     /**

@@ -31,6 +31,7 @@ class Event extends Model
         'is_filler',
         'requires',
         'choices',
+        'weight_modifiers',
     ];
 
     protected $casts = [
@@ -39,5 +40,6 @@ class Event extends Model
         'is_filler' => 'boolean',
         'requires' => 'array',
         'choices' => 'array',
+        'weight_modifiers' => 'array',
     ];
 }

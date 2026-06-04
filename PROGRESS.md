@@ -8,7 +8,7 @@ Design + resolved forks: `docs/superpowers/specs/2026-06-04-starfall-station-des
 - [x] **Phase 0 — Foundations**
 - [x] **Phase 1 — Run state & day counter**
 - [x] **Phase 2 — Event Engine** (DSL reviewed & approved at the gate)
-- [ ] Phase 3 — Characters, traits, stress, relationships
+- [x] **Phase 3 — Characters, traits, stress, relationships**
 - [ ] Phase 4 — Items
 - [ ] Phase 5 — Daily loop assembled + rationing
 - [ ] Phase 6 — Endings & fair-failure cascade
@@ -88,6 +88,36 @@ Design + resolved forks: `docs/superpowers/specs/2026-06-04-starfall-station-des
 
 **DoD met:** heavy evaluator/applier unit tests; Selector fuzz never empty; multi-day real-event
 feature test; ~5 events seeded.
+
+## Phase 3 — Characters, traits, stress, relationships ✅
+
+- **Run columns** `characters` + `relationships` (JSON). `RunState`/`RunFactory` load/seed/save them.
+  Roster comes from `config('game.roster')` (Anna/genius, Bex/optimist, Cole/coward by default).
+- **Traits = data** (`config('game.traits')`): `hint_bias` (reliable/inflate/downplay) +
+  `luck_shift`. No trait name hard-coded anywhere in code.
+- **`HintService`** — the signature feature. Computes a choice's *true* risk band from its outcome
+  spread (probability-weighted resource loss), then the **speaker's trait distorts** which band's
+  Italian phrase is shown: Genius reliable, Coward/Paranoid inflate, Optimist downplay. Author-written
+  hints override. The player never sees a number.
+- **`OutcomeWeigher`** — `luck_shift` reweights outcome branches by the speaker's traits (good vs bad
+  branch classified by net resource effect). Lucky tilts toward good outcomes, Reckless toward bad —
+  shifts the realised distribution over many seeds, zero per-event authoring.
+- **Weight modifiers** — events gained an optional `weight_modifiers: [{when: Condition, factor}]`.
+  Selector multiplies base_weight by each factor whose condition holds, via the *same* Condition DSL
+  (a trait, resource, flag, relationship… can all bias selection). Generic, not trait-only.
+- **Stress bands** (`config('game.stress_bands')`) — `DayProcessor` schedules a survivor's
+  self-initiated event when their stress crosses INTO a higher band (tracked per-survivor via
+  `stress_band` so it fires on entry, not daily). Fires through the normal scheduled-event path.
+- **Content:** seeded `survivor_strained` / `survivor_breaks` (scheduled-only) so stress behaviour
+  has events to fire.
+- **API** now surfaces the living roster (name/role/traits/stress/alive) for the Phase 9 panel.
+- **Tested (71 total):** Coward hint ≠ Genius hint for the same risk; Optimist downplays; author
+  override; luck_shift changes outcome distribution over 2000 seeds (Lucky > neutral > Reckless on
+  good-branch rate); weight modifier biases selection only when its condition holds; stress crossing
+  schedules behaviour and doesn't double-fire; roster seeded + surfaced.
+
+**DoD met:** Coward vs Genius hint differs for the same risk; a trait changes an outcome
+distribution over many seeds.
 
 ## Decisions / assumptions
 

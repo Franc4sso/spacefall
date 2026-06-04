@@ -108,6 +108,16 @@ class RunController extends Controller
             'seed' => $run->seed,
             'resources' => $run->resources,
             'resource_meta' => $meta,
+            // Living survivors for the roster panel (Phase 9). Internal fields
+            // (stress_band tracking) are not surfaced.
+            'characters' => collect($run->characters ?? [])
+                ->map(fn ($c) => [
+                    'name' => $c['name'] ?? '?',
+                    'role' => $c['role'] ?? null,
+                    'traits' => $c['traits'] ?? [],
+                    'stress' => $c['stress'] ?? 0,
+                    'alive' => $c['alive'] ?? true,
+                ])->all(),
             'card' => null,
         ];
 
