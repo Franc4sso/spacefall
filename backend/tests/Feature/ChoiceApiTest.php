@@ -17,7 +17,10 @@ it('returns a run with a current card on start', function () {
 it('resolves a choice over HTTP and returns the log plus next state', function () {
     $run = $this->postJson('/api/runs', ['seed' => 123])->json();
 
-    $res = $this->postJson("/api/runs/{$run['id']}/choices", ['choice' => 0])
+    // Pick the first *available* choice — some cards gate choice 0 on an item.
+    $choice = collect($run['card']['choices'])->firstWhere('available', true)['index'];
+
+    $res = $this->postJson("/api/runs/{$run['id']}/choices", ['choice' => $choice])
         ->assertOk();
 
     expect($res->json('resolution'))->toHaveKeys(['log', 'effects']);

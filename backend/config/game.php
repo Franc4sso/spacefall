@@ -97,4 +97,39 @@ return [
         ['name' => 'Cole',  'role' => 'pilot',    'traits' => ['coward']],
     ],
 
+    /*
+     | Items. The player picks `items_pick` of these at the start of a run.
+     | Items gate CHOICES (via the `has_item` condition in a choice's requires),
+     | so a Drone build and a Scanner build open genuinely different routes —
+     | items change *how you play*, not just numbers (design §2.1). Each entry is
+     | pure data: key (English), name + description (Italian). No item logic in
+     | code; what an item *does* is expressed entirely in the events that gate on
+     | it. `unlock` items are reserved for the meta system (Phase 7) — left out of
+     | the default pool for now.
+     */
+    'items_pick' => 5,
+
+    'items' => [
+        ['key' => 'drone',        'name' => 'Drone da ricognizione', 'description' => 'Esplora i settori sigillati al posto tuo.'],
+        ['key' => 'scanner',      'name' => 'Scanner portatile',     'description' => 'Legge guasti e minacce prima che esplodano.'],
+        ['key' => 'welder',       'name' => 'Saldatrice',            'description' => 'Ripara brecce nello scafo sul posto.'],
+        ['key' => 'medkit',       'name' => 'Kit medico',            'description' => 'Tiene in piedi chi sta cedendo.'],
+        ['key' => 'rifle',        'name' => 'Fucile a impulsi',      'description' => 'Quando parlare non basta.'],
+        ['key' => 'seedbank',     'name' => 'Banca semi',            'description' => 'Coltivi cibo invece di razionarlo.'],
+        ['key' => 'reactor_cell', 'name' => 'Cella di riserva',      'description' => 'Energia d\'emergenza per un giorno nero.'],
+        ['key' => 'spacesuit',    'name' => 'Tuta EVA',              'description' => 'Uscire fuori smette di essere un suicidio.'],
+        ['key' => 'comms',        'name' => 'Radio a lungo raggio',  'description' => 'Una possibilità di chiamare aiuto.'],
+        ['key' => 'toolkit',      'name' => 'Cassetta attrezzi',     'description' => 'Improvvisi riparazioni che altri non possono.'],
+        ['key' => 'rebreather',   'name' => 'Riciclatore d\'aria',   'description' => 'Allunga ogni respiro.'],
+        ['key' => 'battery',      'name' => 'Pacco batterie',        'description' => 'Accumuli energia per dopo.'],
+        ['key' => 'rations',      'name' => 'Razioni extra',         'description' => 'Un cuscinetto contro la fame.'],
+        ['key' => 'manual',       'name' => 'Manuale tecnico',       'description' => 'Sai cosa stai toccando, per una volta.'],
+        ['key' => 'turret',       'name' => 'Torretta automatica',   'description' => 'Difende un settore senza il tuo presidio.'],
+        ['key' => 'cryopod',      'name' => 'Cella criogenica',      'description' => 'Metti qualcuno in pausa per salvarlo.'],
+        ['key' => 'sensors',      'name' => 'Rete di sensori',       'description' => 'La stazione ti avvisa, a volte.'],
+        ['key' => 'fabricator',   'name' => 'Fabbricatore',          'description' => 'Stampi pezzi che non hai.'],
+        ['key' => 'flare',        'name' => 'Razzi di segnalazione', 'description' => 'Un grido visibile nel vuoto.'],
+        ['key' => 'logbank',      'name' => 'Archivio di bordo',     'description' => 'Sai cosa è successo a chi c\'era prima.'],
+    ],
+
 ];

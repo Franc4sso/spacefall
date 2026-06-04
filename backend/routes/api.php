@@ -11,6 +11,8 @@ Route::get('/health', function () {
     ]);
 });
 
+Route::get('/items', [RunController::class, 'items']);
+
 Route::post('/runs', [RunController::class, 'store']);
 Route::get('/runs/{run}', [RunController::class, 'show']);
 Route::get('/runs/{run}/card', [RunController::class, 'card']);

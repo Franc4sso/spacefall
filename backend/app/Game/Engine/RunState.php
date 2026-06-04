@@ -52,6 +52,7 @@ final class RunState
             scheduledEvents: $run->scheduled_events ?? [],
             characters: $run->characters ?? [],
             relationships: $run->relationships ?? [],
+            items: $run->items ?? [],
         );
     }
 

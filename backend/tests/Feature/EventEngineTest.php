@@ -39,9 +39,10 @@ it('resolves a choice, applies effects, and unpins the card', function () {
     $engine = app(EventEngine::class);
 
     $card = $engine->currentCard($run);
-    $before = $run->fresh()->resources;
 
-    $result = $engine->resolveChoice($run->fresh(), 0);
+    // First available choice — some cards gate choice 0 on an item.
+    $choice = collect($card['choices'])->firstWhere('available', true)['index'];
+    $result = $engine->resolveChoice($run->fresh(), $choice);
 
     expect($result)->toHaveKeys(['log', 'effects']);
     expect($run->fresh()->current_event_key)->toBeNull();

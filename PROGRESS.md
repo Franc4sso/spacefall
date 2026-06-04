@@ -9,7 +9,7 @@ Design + resolved forks: `docs/superpowers/specs/2026-06-04-starfall-station-des
 - [x] **Phase 1 — Run state & day counter**
 - [x] **Phase 2 — Event Engine** (DSL reviewed & approved at the gate)
 - [x] **Phase 3 — Characters, traits, stress, relationships**
-- [ ] Phase 4 — Items
+- [x] **Phase 4 — Items**
 - [ ] Phase 5 — Daily loop assembled + rationing
 - [ ] Phase 6 — Endings & fair-failure cascade
 - [ ] Phase 7 — Meta progression & cross-run memory
@@ -118,6 +118,25 @@ feature test; ~5 events seeded.
 
 **DoD met:** Coward vs Genius hint differs for the same risk; a trait changes an outcome
 distribution over many seeds.
+
+## Phase 4 — Items ✅
+
+- **20 items** in `config('game.items')` (English key, Italian name/description). `items_pick = 5`.
+  Pure data — what an item *does* lives entirely in the events that gate on it; no item code.
+- **Run column** `items` (JSON list of keys). `RunState`/`RunFactory` load/save it.
+- **`RunFactory::create($seed, $itemKeys)`** sanitises the pick: drops unknown keys, de-dupes,
+  caps at `items_pick`. Single gate, so the engine trusts `has_item` blindly.
+- **Items gate CHOICES, not stats** — via the existing `has_item` condition in a choice's
+  `requires`. Seeded `hull_breach`: the "Saldo la breccia" choice is available only with the
+  `welder`, giving a different route per pick-5 (design §2.1).
+- **Endpoints:** `GET /api/items` (catalogue + pick count for the start screen);
+  `POST /api/runs` accepts `items[]`. Run state surfaces inventory as full item objects.
+- **Tested (76 total):** catalogue/pick exposed; pick sanitised (unknown dropped, deduped, capped);
+  item-gated choice available only when held; resolving a gated choice without the item is refused;
+  inventory carried through the API. *(Two earlier tests that hard-coded choice 0 were made to pick
+  the first available choice — correct real-play behaviour, since some cards now gate choice 0.)*
+
+**DoD met:** tests prove an item-gated choice is present/absent based on inventory.
 
 ## Decisions / assumptions
 

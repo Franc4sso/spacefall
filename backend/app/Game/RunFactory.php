@@ -17,7 +17,12 @@ final class RunFactory
      *                          need not be reproducible — everything derived
      *                          from it is.
      */
-    public function create(?int $seed = null): Run
+    /**
+     * @param  list<string>  $itemKeys  the player's pick. Unknown keys are
+     *                                   dropped, duplicates collapsed, and the
+     *                                   list is capped at config items_pick.
+     */
+    public function create(?int $seed = null, array $itemKeys = []): Run
     {
         $seed ??= random_int(PHP_INT_MIN, PHP_INT_MAX);
 
@@ -34,7 +39,29 @@ final class RunFactory
             'status' => 'active',
             'characters' => $this->roster(),
             'relationships' => [],
+            'items' => $this->sanitiseItems($itemKeys),
         ]);
+    }
+
+    /**
+     * Keep only known item keys, de-duplicated, capped at the pick count. The
+     * factory is the single gate that guarantees a run never holds a bogus or
+     * over-sized inventory, so the engine can trust `has_item` blindly.
+     *
+     * @param  list<string>  $itemKeys
+     * @return list<string>
+     */
+    private function sanitiseItems(array $itemKeys): array
+    {
+        $known = array_column(config('game.items'), 'key');
+        $pick = (int) config('game.items_pick');
+
+        $valid = array_values(array_unique(array_filter(
+            $itemKeys,
+            fn ($k) => in_array($k, $known, true),
+        )));
+
+        return array_slice($valid, 0, $pick);
     }
 
     /**

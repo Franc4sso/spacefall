@@ -28,11 +28,26 @@ class RunController extends Controller
     {
         $data = $request->validate([
             'seed' => ['nullable', 'integer'],
+            'items' => ['nullable', 'array'],
+            'items.*' => ['string'],
         ]);
 
-        $run = $this->factory->create($data['seed'] ?? null);
+        // The factory sanitises the pick (unknown keys dropped, capped at 5).
+        $run = $this->factory->create($data['seed'] ?? null, $data['items'] ?? []);
 
         return response()->json($this->present($run), 201);
+    }
+
+    /**
+     * GET /api/items — the full item catalogue for the start-of-run pick
+     * screen, plus how many the player chooses.
+     */
+    public function items(): JsonResponse
+    {
+        return response()->json([
+            'pick' => (int) config('game.items_pick'),
+            'items' => config('game.items'),
+        ]);
     }
 
     /**
@@ -118,6 +133,9 @@ class RunController extends Controller
                     'stress' => $c['stress'] ?? 0,
                     'alive' => $c['alive'] ?? true,
                 ])->all(),
+            // Inventory as full item objects (key + Italian name/description)
+            // so the client can render it without re-fetching the catalogue.
+            'items' => $this->itemObjects($run->items ?? []),
             'card' => null,
         ];
 
@@ -135,5 +153,23 @@ class RunController extends Controller
         }
 
         return $payload;
+    }
+
+    /**
+     * Expand stored item keys into full catalogue objects, skipping any key not
+     * in the catalogue (defensive; the factory already sanitises).
+     *
+     * @param  list<string>  $keys
+     * @return list<array<string,mixed>>
+     */
+    private function itemObjects(array $keys): array
+    {
+        $catalogue = collect(config('game.items'))->keyBy('key');
+
+        return collect($keys)
+            ->map(fn ($k) => $catalogue->get($k))
+            ->filter()
+            ->values()
+            ->all();
     }
 }

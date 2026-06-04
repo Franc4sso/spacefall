@@ -182,6 +182,43 @@ class EventSeeder extends Seeder
                 ],
             ],
 
+            // --- Item-gated event (items unlock CHOICES, not just stats) ----
+            [
+                'key' => 'hull_breach',
+                'title' => 'Microbreccia',
+                'body' => 'Un sibilo sottile. Da qualche parte lo scafo perde.',
+                'speaker' => null,
+                'base_weight' => 14,
+                'cooldown_days' => 4,
+                'is_filler' => false,
+                'requires' => null,
+                'choices' => [
+                    [
+                        // Only available if you packed the welder — a different
+                        // route opens up depending on your pick-5.
+                        'label' => 'Saldo la breccia',
+                        'requires' => ['has_item' => 'welder'],
+                        'hint' => 'dovrebbe reggere',
+                        'outcomes' => [
+                            ['weight' => 1, 'effects' => [['resource' => 'hull', 'delta' => 12]],
+                                'log' => 'Saldatura netta. Lo scafo tiene.'],
+                        ],
+                    ],
+                    [
+                        'label' => 'Tappo alla bell\'e meglio',
+                        'hint' => 'rischioso',
+                        'outcomes' => [
+                            ['weight' => 5, 'effects' => [['resource' => 'hull', 'delta' => -6]],
+                                'log' => 'Regge a malapena.'],
+                            ['weight' => 5, 'effects' => [
+                                ['resource' => 'hull', 'delta' => -10],
+                                ['resource' => 'oxygen', 'delta' => -6],
+                            ], 'log' => 'Il tappo salta nella notte.'],
+                        ],
+                    ],
+                ],
+            ],
+
             // --- Stress-driven self-initiated behaviour (scheduled-only) ---
             [
                 'key' => 'survivor_strained',
