@@ -1,0 +1,23 @@
+@import "tailwindcss";
+
+/* Starfall Station — failing-terminal aesthetic groundwork (Phase 0).
+   Full CRT dressing (scanlines, glow, glitch) lands in Phase 9. */
+@theme {
+  --color-phosphor: #4ade80;
+  --color-phosphor-dim: #166534;
+  --color-alarm: #ef4444;
+  --font-mono: "JetBrains Mono", "Fira Code", ui-monospace, "Courier New", monospace;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: #000;
+  color: var(--color-phosphor);
+  font-family: var(--font-mono);
+}

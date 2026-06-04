@@ -1,0 +1,95 @@
+# Starfall Station — Progress
+
+Mono-repo: `backend/` (Laravel 12, PHP 8.2) + `frontend/` (React 19 + Vite 8 + TS, Tailwind 4).
+Design + resolved forks: `docs/superpowers/specs/2026-06-04-starfall-station-design.md`.
+
+## Phase checklist
+
+- [x] **Phase 0 — Foundations**
+- [x] **Phase 1 — Run state & day counter**
+- [ ] **Phase 2 — Event Engine** ← REVIEW GATE before starting (DSL design below)
+- [ ] Phase 3 — Characters, traits, stress, relationships
+- [ ] Phase 4 — Items
+- [ ] Phase 5 — Daily loop assembled + rationing
+- [ ] Phase 6 — Endings & fair-failure cascade
+- [ ] Phase 7 — Meta progression & cross-run memory
+- [ ] Phase 8 — Content pass (50+ events, Italian)
+- [ ] Phase 9 — Frontend cadence + flow
+- [ ] Phase 10 — Balance via simulation
+
+> **Stopping here for review** (user choice): plan + DSL design reviewed before Phase 2 code,
+> as the build prompt requires.
+
+## Phase 0 — Foundations ✅
+
+- Laravel 12.61 scaffolded in `backend/` (PHP `^8.2`). `install:api` for `routes/api.php`.
+- Pest 3.8 installed (PHPUnit pinned to `^11.5` to satisfy Pest's conflict). `RefreshDatabase`
+  enabled for Feature tests in `tests/Pest.php`.
+- `GET /api/health` → `{status, service}`.
+- CORS published (`config/cors.php`), origins from `CORS_ALLOWED_ORIGINS`
+  (default `http://localhost:5173,http://127.0.0.1:5173`).
+- Frontend: Vite + React-TS, Tailwind 4 (`@tailwindcss/postcss`), phosphor-terminal theme tokens
+  in `src/index.css`. `src/api.ts` thin client (`VITE_API_URL`, default `http://localhost:8000/api`).
+  `App.tsx` renders health status in Italian. Vitest + RTL + jsdom configured.
+- **Tested:** `php artisan test` → 15 passed. `npm run test` → 3 passed. `npm run build` clean.
+  Live smoke through both endpoints confirmed.
+
+**DoD met:** both suites green; build typechecks; health string renders.
+
+## Phase 1 — Run state & day counter ✅
+
+- `runs` migration: `seed`, `rng_cursor`, `day`, `resources` (JSON), `status`. Resources in JSON
+  (not 5 columns) so adding a resource is a `config/game.php` edit, not a migration. MySQL-compatible.
+- `config/game.php` — the five resources with `max/start/daily/two_sided`. `morale` is `two_sided`
+  (max is also dangerous; consequences arrive Phase 6).
+- `App\Game\SeededRng` — deterministic PRNG. Draw = SHA-256 of `"seed:cursor"` → 52 bits → double.
+  Cursor is monotonic and persisted on the Run, so reload-mid-run never desyncs. Chosen over a
+  hand-rolled 64-bit mix because PHP ints overflow to float and silently break determinism; SHA-256
+  keeps every value inside the safe integer range and is stable across PHP versions/platforms.
+- `App\Game\RunFactory` — starts runs from config (no hard-coded resource names).
+- `App\Game\DayProcessor` — end-of-day: subtract `daily`, clamp `[0, max]`, advance day. One method
+  per day; Phase 5 thickens this same pipeline.
+- `RunController` + routes: `POST /api/runs`, `GET /api/runs/{run}`, `POST /api/runs/{run}/advance`.
+  Response includes `resource_meta` (max + two_sided) so the thin client renders without tuning numbers.
+- **Tested:** SeededRng unit (reproducibility, cursor-resume, bounds, weighting). Run feature (start,
+  fetch, deterministic consumption, zero-clamp, identical trajectory per seed).
+
+**DoD met:** feature tests assert deterministic consumption for a fixed seed.
+
+## Decisions / assumptions
+
+- **PHP 8.2** (env has 8.2.31; spec asked 8.3+). Laravel 12 supports 8.2. No 8.3-only syntax. *(user-approved)*
+- **Mono-repo** layout, backend API ↔ frontend SPA separated. *(user-approved)*
+- **React 19 / Vite 8 / Tailwind 4** — the current `npm create vite` defaults. Spec pinned React 18 +
+  Tailwind 3. Deviation taken to avoid dependency friction with the current toolchain; React 19 is
+  backward-compatible for our usage and RTL 16 supports it. **Flag for review at the gate.**
+- **PHPUnit downgraded to `^11.5`** to satisfy Pest 3.8's conflict with `>11.5.50`.
+- **RNG = SHA-256 per (seed, cursor)** rather than SplitMix64, for cross-platform determinism (see above).
+- **Dev DB** is the committed-ignored `database/database.sqlite`; run `php artisan migrate` after clone.
+- Resource values stored as a JSON map keyed by config codes; death/two-sided *consequences* are Phase 6,
+  Phase 1 only does flat consumption + clamping.
+
+## DSL design — FOR REVIEW BEFORE PHASE 2
+
+See `docs/superpowers/specs/2026-06-04-starfall-station-design.md` §8. Summary:
+
+- **Storage:** one `events` row per event; `requires` and `choices` (choices embed `outcomes`→`effects`)
+  as JSON columns. One row = one whole event ⇒ "new event = new seeder row" (Prime Directive #1).
+  A seeder-time schema validator rejects malformed rows loudly.
+- **Three services:** Selector (always returns a card via the guaranteed filler pool), Condition
+  Evaluator (pure/total), Effect Applier (pure given a seed).
+- **Open questions to confirm:** comparison `op` set; clamp-vs-overshoot for resource effects (proposed:
+  clamp `[0,max]`, death is a separate `=0` condition); cooldown tracking via `recent_events` map;
+  delayed events via per-run `{key, fire_on_day}` queue.
+
+### How to run
+
+```
+# backend
+cd backend && composer install && php artisan migrate && php artisan test
+php artisan serve            # http://localhost:8000
+
+# frontend
+cd frontend && npm install && npm run test
+npm run dev                  # http://localhost:5173  (set VITE_API_URL if API not on :8000)
+```
