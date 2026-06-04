@@ -7,7 +7,7 @@ Design + resolved forks: `docs/superpowers/specs/2026-06-04-starfall-station-des
 
 - [x] **Phase 0 — Foundations**
 - [x] **Phase 1 — Run state & day counter**
-- [ ] **Phase 2 — Event Engine** ← REVIEW GATE before starting (DSL design below)
+- [x] **Phase 2 — Event Engine** (DSL reviewed & approved at the gate)
 - [ ] Phase 3 — Characters, traits, stress, relationships
 - [ ] Phase 4 — Items
 - [ ] Phase 5 — Daily loop assembled + rationing
@@ -56,6 +56,39 @@ Design + resolved forks: `docs/superpowers/specs/2026-06-04-starfall-station-des
 
 **DoD met:** feature tests assert deterministic consumption for a fixed seed.
 
+## Phase 2 — Event Engine ✅
+
+- **`events` table** (one JSON row per event: `requires`, `choices`→`outcomes`→`effects`,
+  `base_weight`, `cooldown_days`, `is_filler`). Runs gained engine state: `flags`,
+  `recent_events` (cooldowns), `scheduled_events` (delayed), `current_event_key` (pinned card).
+- **`RunState`** — plain mutable snapshot decoupling the pure services from Eloquent. Carries
+  later-phase fields (characters/items/systems/relationships) as empty defaults so conditions are
+  *total* before that content exists.
+- **`ConditionEvaluator`** — pure, total. all/any/not + resource/day/flag(run|profile)/has_item/
+  has_role/trait_present/relationship-band/system. Unknown kinds & bad ops fail closed, never throw.
+- **`EffectApplier`** — every effect type. Resource deltas clamp `[0,max]` (gate decision; death is
+  a separate condition). Character targeting (`random`/`highest_stress`/`lowest_loyalty`/`<name>`)
+  draws from SeededRng → deterministic. Relationships symmetric & clamped `[-100,100]`.
+- **`Selector`** — **always returns a card.** Order: scheduled-due (forced, ignores requires) →
+  eligible themed (requires ✓, not on cooldown) → filler → last-resort filler → any event. Empty
+  pool throws (real misconfig); `EventEngine` degrades to no-card when the table is truly empty.
+- **`EventEngine`** — orchestration over a persisted Run: `currentCard` (picks + pins, advances
+  cursor once, reload-stable) and `resolveChoice` (weighted outcome branch → apply → record
+  cooldown → consume schedule → unpin). Only engine class touching persistence.
+- **`EventSchema`** — seed-time structural validator; malformed content fails the seeder loudly.
+- **`EventSeeder`** — 5 themed + 2 filler events, **Italian** copy / English keys. Exercises
+  flag callback (`vented_the_technician` → `technician_ghost`), spawn_event chain
+  (`power_flicker` → `power_cascade`), multi-branch weighted outcomes, choice hints.
+- **Endpoints:** `GET /runs/{id}/card`, `POST /runs/{id}/choices`. Every run response carries the
+  current card (one round-trip; flow §1.5).
+- **Tested:** 57 backend assertions across evaluator (every condition + nesting + totality),
+  applier (every effect + determinism), Selector (deterministic pick, scheduled priority, cooldown,
+  **3000-state fuzz → always a card**, last-resort), engine playthrough (12 days no stall, flag
+  callback, spawn chain), HTTP. Live smoke confirmed card variety + flag memory firing.
+
+**DoD met:** heavy evaluator/applier unit tests; Selector fuzz never empty; multi-day real-event
+feature test; ~5 events seeded.
+
 ## Decisions / assumptions
 
 - **PHP 8.2** (env has 8.2.31; spec asked 8.3+). Laravel 12 supports 8.2. No 8.3-only syntax. *(user-approved)*
@@ -68,6 +101,12 @@ Design + resolved forks: `docs/superpowers/specs/2026-06-04-starfall-station-des
 - **Dev DB** is the committed-ignored `database/database.sqlite`; run `php artisan migrate` after clone.
 - Resource values stored as a JSON map keyed by config codes; death/two-sided *consequences* are Phase 6,
   Phase 1 only does flat consumption + clamping.
+- **Scheduled-only events convention (Phase 2):** an event meant to fire *only* when spawned (e.g.
+  `power_cascade`) is gated with `requires: {flag: "__scheduled_only", is: true}` — a flag never set.
+  Normal selection skips it; the Selector's scheduled-due branch force-picks it by key ignoring
+  `requires`, so `spawn_event` still fires it. No engine special-case — pure data.
+- **`grant_research_points`** stashes into `profileFlags['__research_points']` for now; real
+  profile-scoped meta currency persistence lands in Phase 7.
 
 ## DSL design — FOR REVIEW BEFORE PHASE 2
 

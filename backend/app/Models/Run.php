@@ -10,8 +10,12 @@ use Illuminate\Database\Eloquent\Model;
  * @property int    $seed
  * @property int    $rng_cursor
  * @property int    $day
- * @property array  $resources
- * @property string $status
+ * @property array       $resources
+ * @property string      $status
+ * @property array       $flags
+ * @property array       $recent_events
+ * @property array       $scheduled_events
+ * @property string|null $current_event_key
  */
 class Run extends Model
 {
@@ -21,6 +25,10 @@ class Run extends Model
         'day',
         'resources',
         'status',
+        'flags',
+        'recent_events',
+        'scheduled_events',
+        'current_event_key',
     ];
 
     protected $casts = [
@@ -28,6 +36,15 @@ class Run extends Model
         'rng_cursor' => 'integer',
         'day' => 'integer',
         'resources' => 'array',
+        'flags' => 'array',
+        'recent_events' => 'array',
+        'scheduled_events' => 'array',
+    ];
+
+    protected $attributes = [
+        'flags' => '{}',
+        'recent_events' => '{}',
+        'scheduled_events' => '[]',
     ];
 
     /**

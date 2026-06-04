@@ -13,6 +13,8 @@ Route::get('/health', function () {
 
 Route::post('/runs', [RunController::class, 'store']);
 Route::get('/runs/{run}', [RunController::class, 'show']);
+Route::get('/runs/{run}/card', [RunController::class, 'card']);
+Route::post('/runs/{run}/choices', [RunController::class, 'resolveChoice']);
 Route::post('/runs/{run}/advance', [RunController::class, 'advance']);
 
 Route::get('/user', function (Request $request) {

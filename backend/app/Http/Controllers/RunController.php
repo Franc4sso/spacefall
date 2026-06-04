@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Game\DayProcessor;
+use App\Game\Engine\EventEngine;
 use App\Game\RunFactory;
 use App\Models\Run;
 use Illuminate\Http\JsonResponse;
@@ -13,6 +14,7 @@ class RunController extends Controller
     public function __construct(
         private readonly RunFactory $factory,
         private readonly DayProcessor $dayProcessor,
+        private readonly EventEngine $engine,
     ) {
     }
 
@@ -56,9 +58,38 @@ class RunController extends Controller
     }
 
     /**
+     * GET /api/runs/{run}/card — the card the player currently faces. Picks and
+     * pins one if none is pinned. Always returns a card (filler guarantee).
+     */
+    public function card(Run $run): JsonResponse
+    {
+        return response()->json($this->present($run));
+    }
+
+    /**
+     * POST /api/runs/{run}/choices — resolve the pinned card's choice.
+     * Body: { choice: int } (index into the card's choices).
+     * Returns the resolution log + the new run state (with the next card).
+     */
+    public function resolveChoice(Run $run, Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'choice' => ['required', 'integer', 'min:0'],
+        ]);
+
+        $result = $this->engine->resolveChoice($run, $data['choice']);
+
+        return response()->json([
+            'resolution' => $result,
+            'state' => $this->present($run->fresh()),
+        ]);
+    }
+
+    /**
      * The wire shape of a run. Resource metadata (max/two_sided) is included
      * so the thin client can render bars and danger states without knowing
-     * the tuning numbers itself.
+     * the tuning numbers itself. Always carries the current card so the client
+     * can render in one round-trip (flow: §1.5).
      */
     private function present(Run $run): array
     {
@@ -70,13 +101,29 @@ class RunController extends Controller
             ];
         }
 
-        return [
+        $payload = [
             'id' => $run->id,
             'day' => $run->day,
             'status' => $run->status,
             'seed' => $run->seed,
             'resources' => $run->resources,
             'resource_meta' => $meta,
+            'card' => null,
         ];
+
+        if ($run->status === 'active') {
+            $card = $this->engine->currentCard($run);
+            if ($card['event'] !== null) {
+                $payload['card'] = [
+                    'key' => $card['event']->key,
+                    'title' => $card['event']->title,
+                    'body' => $card['event']->body,
+                    'speaker' => $card['event']->speaker,
+                    'choices' => $card['choices'],
+                ];
+            }
+        }
+
+        return $payload;
     }
 }

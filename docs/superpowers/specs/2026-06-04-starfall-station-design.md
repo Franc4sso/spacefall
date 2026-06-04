@@ -108,13 +108,12 @@ each row against a schema at seed time so malformed content fails loudly.
 Condition Evaluator (pure/total), Effect Applier (pure given seed). Filler pool = events whose
 `requires` is `{ all: [] }` (always true), low stakes, so the hand is never empty.
 
-**Open DSL questions to confirm at the gate:**
-1. `op` set = `<, <=, =, !=, >=, >` only? (Proposed: yes.)
-2. Resource clamping: do effects clamp to `[0, max]` per resource, or can they overshoot and a
-   separate rule reads "below zero"? (Proposed: clamp to `[0, max]`; death is a separate
-   condition check on `= 0`, not a negative value.)
-3. `cooldown_days` tracked per-event in run state. (Proposed: yes, a `recent_events` map.)
-4. Delayed events (`spawn_event`) stored as a per-run queue `{key, fire_on_day}`. (Proposed: yes.)
+**DSL questions — RESOLVED at the gate (2026-06-04):**
+1. `op` set = `<, <=, =, !=, >=, >` only. ✅
+2. **Resource effects clamp to `[0, max]`.** Death is a separate Condition check on `resource = 0`,
+   never a negative value in state. ✅ *(user-approved)*
+3. `cooldown_days` tracked per-event via a `recent_events` map in run state. ✅
+4. Delayed events (`spawn_event`) stored as a per-run queue `{key, fire_on_day}`. ✅
 
 ## 9. Out of scope now
 
