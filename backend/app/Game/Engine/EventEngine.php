@@ -20,6 +20,7 @@ final class EventEngine
         private readonly EffectApplier $applier,
         private readonly HintService $hints,
         private readonly OutcomeWeigher $weigher,
+        private readonly EndingService $endings,
     ) {
     }
 
@@ -31,6 +32,11 @@ final class EventEngine
      */
     public function currentCard(Run $run): array
     {
+        // An ended run shows no card — the run is over.
+        if ($run->status !== 'active') {
+            return ['event' => null, 'choices' => []];
+        }
+
         $state = RunState::fromRun($run);
 
         $event = $run->current_event_key
@@ -107,9 +113,13 @@ final class EventEngine
         $run->current_event_key = null;
         $run->save();
 
+        // A choice's effects may push the run into an ending (death or win).
+        $ending = $this->endings->check($run);
+
         return [
             'log' => $outcome['log'] ?? '',
             'effects' => $outcome['effects'] ?? [],
+            'ending' => $ending,
         ];
     }
 

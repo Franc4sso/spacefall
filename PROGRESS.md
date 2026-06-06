@@ -11,7 +11,7 @@ Design + resolved forks: `docs/superpowers/specs/2026-06-04-starfall-station-des
 - [x] **Phase 3 — Characters, traits, stress, relationships**
 - [x] **Phase 4 — Items**
 - [x] **Phase 5 — Daily loop assembled + rationing**
-- [ ] Phase 6 — Endings & fair-failure cascade
+- [x] **Phase 6 — Endings & fair-failure cascade**
 - [ ] Phase 7 — Meta progression & cross-run memory
 - [ ] Phase 8 — Content pass (50+ events, Italian)
 - [ ] Phase 9 — Frontend cadence + flow
@@ -158,6 +158,30 @@ distribution over many seeds.
   stress scales with crew size; "eat alone" crashes morale + sets flag.
 
 **DoD met:** a feature test plays ~15 days end to end and the state stays internally consistent.
+
+## Phase 6 — Endings & fair-failure cascade ✅
+
+- **11 data-driven endings** in `config('game.endings')`: each a `when` Condition (same DSL),
+  `type` (win|lose), Italian name + epilogue. 6 deaths (oxygen/hull/food/power/morale=0 + the
+  two-sided **morale=100 recklessness** death) and 5 wins (Escape/Rescue/Colony/Research/Sacrifice).
+  Adding an ending is one config entry.
+- **Two-sided danger:** `morale` kills at BOTH ends — 0 (breakdown) and 100 (fatal euphoria),
+  satisfying design §1.5.
+- **`EndingService`** — evaluates endings in config order (deaths first, so a lethal state
+  pre-empts a simultaneous win), marks the run `ended` + records `ending_key`/`ending_type`,
+  clears the pinned card. Reuses the total ConditionEvaluator.
+- **Wired** into `EventEngine::resolveChoice` (effects may be lethal/winning) and
+  `DayProcessor::advance` (the day's drain may cross a threshold). Both no-op on an ended run;
+  `currentCard` shows no card once ended. API surfaces the ending object for the game-over screen.
+- **Win-enabling content:** seeded `research_breakthrough` (scanner+time → `research_complete`) and
+  `the_sacrifice` (→ `made_the_sacrifice`) so those wins are reachable through play, not just by flag.
+- **Tested (100 total):** each of the 11 endings driven and asserted; lethal pre-empts win;
+  ended run stops the loop + card flow; **the fair-failure cascade** — an ignored `power_flicker`
+  schedules `power_cascade` for a *future* day (traceable), which fires as the forced card and, with
+  low reserves, drives oxygen toward a death caused by the earlier choice.
+
+**DoD met:** tests drive a run into each ending; a test proves an ignored fault cascades via
+`spawn_event` into a later disaster.
 
 ## Decisions / assumptions
 

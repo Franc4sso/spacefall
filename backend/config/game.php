@@ -149,6 +149,107 @@ return [
      */
     'items_pick' => 5,
 
+    /*
+     | Endings. Each is a data-driven ending: a `when` Condition (the same DSL),
+     | a `type` (win|lose), and Italian name + epilogue text. Evaluated after
+     | every choice resolution and every day advance; the FIRST whose `when`
+     | holds fires (so order = priority). Deaths come first so a lethal state
+     | pre-empts any simultaneous win.
+     |
+     | Adding an ending is one new entry here — never engine code (Directive #1).
+     |
+     | Two-sided danger: `morale` is hazardous at BOTH ends — at 0 the crew
+     | breaks down (lose), at max it tips into reckless euphoria that gets
+     | everyone killed (lose). This is the design §1.5 "danger at both ends".
+     */
+    'endings' => [
+        // --- Lethal states (checked first) ---
+        [
+            'key' => 'death_asphyxiation', 'type' => 'lose',
+            'name' => 'Asfissia',
+            'text' => 'L\'aria finisce. Il silenzio della stazione diventa il tuo.',
+            'when' => ['resource' => 'oxygen', 'op' => '<=', 'value' => 0],
+        ],
+        [
+            'key' => 'death_hull', 'type' => 'lose',
+            'name' => 'Decompressione',
+            'text' => 'Lo scafo cede di colpo. Non fa nemmeno in tempo a far male.',
+            'when' => ['resource' => 'hull', 'op' => '<=', 'value' => 0],
+        ],
+        [
+            'key' => 'death_starvation', 'type' => 'lose',
+            'name' => 'Fame',
+            'text' => 'Le scorte sono finite da giorni. Anche le forze.',
+            'when' => ['resource' => 'food', 'op' => '<=', 'value' => 0],
+        ],
+        [
+            'key' => 'death_blackout', 'type' => 'lose',
+            'name' => 'Buio totale',
+            'text' => 'L\'energia si spegne. Con lei tutto ciò che ti teneva vivo.',
+            'when' => ['resource' => 'power', 'op' => '<=', 'value' => 0],
+        ],
+        [
+            'key' => 'death_breakdown', 'type' => 'lose',
+            'name' => 'Crollo',
+            'text' => 'A morale zero, nessuno trova più un motivo per continuare.',
+            'when' => ['resource' => 'morale', 'op' => '<=', 'value' => 0],
+        ],
+        [
+            // Two-sided: morale at the ceiling = reckless euphoria.
+            'key' => 'death_recklessness', 'type' => 'lose',
+            'name' => 'Euforia fatale',
+            'text' => 'Vi sentivate invincibili. La stazione non era d\'accordo.',
+            'when' => ['resource' => 'morale', 'op' => '>=', 'value' => 100],
+        ],
+
+        // --- Wins (checked after deaths; harder requirements first) ---
+        [
+            'key' => 'win_escape', 'type' => 'win',
+            'name' => 'Fuga',
+            'text' => 'La tuta tiene, la navetta parte. La stazione si spegne dietro di te.',
+            'when' => ['all' => [
+                ['has_item' => 'spacesuit'],
+                ['day' => ['op' => '>=', 'value' => 12]],
+                ['resource' => 'power', 'op' => '>=', 'value' => 40],
+            ]],
+        ],
+        [
+            'key' => 'win_rescue', 'type' => 'win',
+            'name' => 'Soccorso',
+            'text' => 'La radio gracchia una risposta. Qualcuno sta arrivando.',
+            'when' => ['all' => [
+                ['has_item' => 'comms'],
+                ['day' => ['op' => '>=', 'value' => 18]],
+                ['resource' => 'morale', 'op' => '>=', 'value' => 30],
+            ]],
+        ],
+        [
+            'key' => 'win_colony', 'type' => 'win',
+            'name' => 'Colonia',
+            'text' => 'Coltivate, riparate, resistete. La stazione torna a vivere.',
+            'when' => ['all' => [
+                ['has_item' => 'seedbank'],
+                ['day' => ['op' => '>=', 'value' => 25]],
+                ['resource' => 'food', 'op' => '>=', 'value' => 60],
+            ]],
+        ],
+        [
+            'key' => 'win_research', 'type' => 'win',
+            'name' => 'Scoperta',
+            'text' => 'I dati che hai salvato valgono più di una vita sola. Li hai trasmessi.',
+            'when' => ['all' => [
+                ['flag' => 'research_complete', 'is' => true],
+                ['day' => ['op' => '>=', 'value' => 15]],
+            ]],
+        ],
+        [
+            'key' => 'win_sacrifice', 'type' => 'win',
+            'name' => 'Sacrificio',
+            'text' => 'Resti indietro perché gli altri ce la facciano. È una vittoria, a modo suo.',
+            'when' => ['flag' => 'made_the_sacrifice', 'is' => true],
+        ],
+    ],
+
     'items' => [
         ['key' => 'drone',        'name' => 'Drone da ricognizione', 'description' => 'Esplora i settori sigillati al posto tuo.'],
         ['key' => 'scanner',      'name' => 'Scanner portatile',     'description' => 'Legge guasti e minacce prima che esplodano.'],

@@ -54,6 +54,10 @@ it('plays several days through real events without ever stalling', function () {
 
     for ($i = 0; $i < 12; $i++) {
         $run = $run->fresh();
+        if ($run->status !== 'active') {
+            break; // the run reached an ending — that's a valid stop, not a stall
+        }
+
         $card = $engine->currentCard($run);
         expect($card['event'])->not->toBeNull();
 

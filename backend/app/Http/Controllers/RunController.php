@@ -138,6 +138,9 @@ class RunController extends Controller
             'items' => $this->itemObjects($run->items ?? []),
             // Station systems (efficiency per system) for the status panel.
             'systems' => $run->systems ?? [],
+            // The reached ending (null while active): key/type/name/text for
+            // the game-over screen.
+            'ending' => $this->endingPayload($run),
             'card' => null,
         ];
 
@@ -164,6 +167,30 @@ class RunController extends Controller
      * @param  list<string>  $keys
      * @return list<array<string,mixed>>
      */
+    /**
+     * The run's reached ending as a display object, or null while active.
+     * Read-only: reads the stored ending_key (the EndingService already
+     * decided and persisted it).
+     *
+     * @return array<string,mixed>|null
+     */
+    private function endingPayload(Run $run): ?array
+    {
+        if ($run->ending_key === null) {
+            return null;
+        }
+        $ending = collect(config('game.endings'))->firstWhere('key', $run->ending_key);
+        if ($ending === null) {
+            return null;
+        }
+        return [
+            'key' => $ending['key'],
+            'type' => $ending['type'],
+            'name' => $ending['name'],
+            'text' => $ending['text'],
+        ];
+    }
+
     private function itemObjects(array $keys): array
     {
         $catalogue = collect(config('game.items'))->keyBy('key');

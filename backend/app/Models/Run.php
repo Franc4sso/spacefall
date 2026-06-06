@@ -33,6 +33,8 @@ class Run extends Model
         'relationships',
         'items',
         'systems',
+        'ending_key',
+        'ending_type',
     ];
 
     protected $casts = [

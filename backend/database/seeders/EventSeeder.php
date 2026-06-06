@@ -182,6 +182,72 @@ class EventSeeder extends Seeder
                 ],
             ],
 
+            // --- Win-enabling events (set the flags that gate win endings) --
+            [
+                'key' => 'research_breakthrough',
+                'title' => 'Dati anomali',
+                'body' => 'Lo scanner ha registrato qualcosa che nessuno aveva mai visto.',
+                'speaker' => null,
+                'base_weight' => 10,
+                'cooldown_days' => 99,
+                'is_filler' => false,
+                // Needs the scanner and time — a research route, not a freebie.
+                'requires' => ['all' => [
+                    ['has_item' => 'scanner'],
+                    ['day' => ['op' => '>=', 'value' => 10]],
+                ]],
+                'choices' => [
+                    [
+                        'label' => 'Completo l\'analisi (a costo di energia)',
+                        'hint' => 'ne vale la pena?',
+                        'outcomes' => [
+                            ['weight' => 1, 'effects' => [
+                                ['resource' => 'power', 'delta' => -20],
+                                ['set_flag' => 'research_complete', 'value' => true],
+                                ['grant_research_points' => 10],
+                            ], 'log' => 'I dati sono completi. Ora vanno trasmessi.'],
+                        ],
+                    ],
+                    [
+                        'label' => 'Non è il momento',
+                        'hint' => null,
+                        'outcomes' => [
+                            ['weight' => 1, 'effects' => [['resource' => 'morale', 'delta' => -2]],
+                                'log' => 'Forse un\'altra volta. Se ci sarà.'],
+                        ],
+                    ],
+                ],
+            ],
+            [
+                'key' => 'the_sacrifice',
+                'title' => 'Una via d\'uscita per uno solo',
+                'body' => 'C\'è abbastanza per far partire una capsula. Una sola.',
+                'speaker' => null,
+                'base_weight' => 8,
+                'cooldown_days' => 99,
+                'is_filler' => false,
+                'requires' => ['day' => ['op' => '>=', 'value' => 8]],
+                'choices' => [
+                    [
+                        'label' => 'Resto indietro, parta chi può',
+                        'hint' => 'definitivo',
+                        'outcomes' => [
+                            ['weight' => 1, 'effects' => [
+                                ['set_flag' => 'made_the_sacrifice', 'value' => true],
+                            ], 'log' => 'Chiudi il portello dall\'interno. Loro ce la faranno.'],
+                        ],
+                    ],
+                    [
+                        'label' => 'Non ancora',
+                        'hint' => null,
+                        'outcomes' => [
+                            ['weight' => 1, 'effects' => [['resource' => 'morale', 'delta' => 3]],
+                                'log' => 'Non stanotte. Forse mai.'],
+                        ],
+                    ],
+                ],
+            ],
+
             // --- Rationing (60 Seconds weight: one swipe, shared scarcity) --
             [
                 'key' => 'ration_crisis',

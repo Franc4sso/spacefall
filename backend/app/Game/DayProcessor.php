@@ -2,6 +2,7 @@
 
 namespace App\Game;
 
+use App\Game\Engine\EndingService;
 use App\Models\Run;
 
 /**
@@ -27,8 +28,18 @@ use App\Models\Run;
  */
 final class DayProcessor
 {
+    public function __construct(
+        private readonly EndingService $endings,
+    ) {
+    }
+
     public function advance(Run $run): Run
     {
+        // An ended run does not process further days.
+        if ($run->status !== 'active') {
+            return $run;
+        }
+
         $resources = $run->resources;
         $systems = $run->systems ?? [];
         $characters = $run->characters ?? [];
@@ -57,6 +68,10 @@ final class DayProcessor
         // 5. Advance day.
         $run->day = $run->day + 1;
         $run->save();
+
+        // The day's drain/degradation may have crossed a lethal (or winning)
+        // threshold — e.g. oxygen hit zero, or you survived to a rescue day.
+        $this->endings->check($run);
 
         return $run;
     }

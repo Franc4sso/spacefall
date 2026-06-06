@@ -58,11 +58,16 @@ it('keeps state internally consistent across a 15-day playthrough', function () 
     $engine = app(EventEngine::class);
     $day = app(DayProcessor::class);
 
+    $endedEarly = false;
     for ($i = 0; $i < 15; $i++) {
         $run = $run->fresh();
+        if ($run->status !== 'active') {
+            $endedEarly = true;
+            break; // a reached ending is a valid stop
+        }
 
         $card = $engine->currentCard($run);
-        expect($card['event'])->not->toBeNull(); // never stalls
+        expect($card['event'])->not->toBeNull(); // never stalls while active
 
         $choice = collect($card['choices'])->firstWhere('available', true)['index'] ?? 0;
         $engine->resolveChoice($run->fresh(), $choice);
@@ -88,7 +93,13 @@ it('keeps state internally consistent across a 15-day playthrough', function () 
         }
     }
 
-    expect($run->fresh()->day)->toBe(16); // started day 1, advanced 15 times
+    // If it survived all 15 days it's on day 16; if it died, state was still
+    // consistent every step and the run is properly marked ended.
+    if ($endedEarly) {
+        expect($run->fresh()->status)->toBe('ended');
+    } else {
+        expect($run->fresh()->day)->toBe(16);
+    }
 });
 
 it('is fully reproducible: same seed + same choices => identical 15-day end state', function () {
@@ -98,13 +109,16 @@ it('is fully reproducible: same seed + same choices => identical 15-day end stat
         $day = app(DayProcessor::class);
         for ($i = 0; $i < 15; $i++) {
             $run = $run->fresh();
+            if ($run->status !== 'active') {
+                break;
+            }
             $card = $engine->currentCard($run);
             $choice = collect($card['choices'])->firstWhere('available', true)['index'] ?? 0;
             $engine->resolveChoice($run->fresh(), $choice);
             $day->advance($run->fresh());
         }
         $s = $run->fresh();
-        return [$s->resources, $s->systems, $s->characters, $s->flags];
+        return [$s->status, $s->ending_key, $s->resources, $s->systems, $s->characters, $s->flags];
     };
 
     expect($play())->toEqual($play());
