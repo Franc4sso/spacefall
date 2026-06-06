@@ -13,7 +13,7 @@ function stressColor(stress: number): string {
   return "text-phosphor-dim";
 }
 
-export function CrewPanel({ characters }: { characters: Character[] }) {
+export function CrewPanel({ characters }: { characters: Character[]; epithet?: string | null }) {
   return (
     <div className="flex flex-col gap-3">
       <div className="text-[10px] tracking-widest text-phosphor-dim">EQUIPAGGIO</div>

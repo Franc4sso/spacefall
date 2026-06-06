@@ -43,7 +43,13 @@ export default function App() {
       )}
 
       {phase === "playing" && run && (
-        <GameScreen run={run} busy={busy} lastLog={lastLog} onChoose={onChoose} />
+        <GameScreen
+          run={run}
+          busy={busy}
+          lastLog={lastLog}
+          onChoose={onChoose}
+          onAdvance={() => {}} // placeholder until Task 16
+        />
       )}
 
       {phase === "ended" && run && (

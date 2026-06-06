@@ -5,6 +5,8 @@ type Props = {
   card: Card;
   busy: boolean;
   onChoose: (index: number) => void;
+  onAdvance?: () => void;
+  relevantItems?: string[];
 };
 
 // The decision card. Buttons are the reliable path (any choice count, keyboard-
@@ -13,7 +15,7 @@ type Props = {
 // previews which choice you're about to commit. Dragging never gates input —
 // you can also just tap a button. Pointer-based, no animation library, so it
 // stays light and interruptible (flow §1.5).
-export function CardView({ card, busy, onChoose }: Props) {
+export function CardView({ card, busy, onChoose, onAdvance: _onAdvance, relevantItems: _relevantItems }: Props) {
   const available = card.choices.filter((c) => c.available);
   const binary = available.length === 2;
 

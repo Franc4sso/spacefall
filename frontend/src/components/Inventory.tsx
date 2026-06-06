@@ -1,6 +1,6 @@
 import type { Item } from "../api";
 
-export function Inventory({ items }: { items: Item[] }) {
+export function Inventory({ items }: { items: Item[]; relevantItems?: string[] }) {
   return (
     <div className="flex flex-wrap items-center gap-2">
       <span className="text-[10px] tracking-widest text-phosphor-dim">DOTAZIONE</span>
