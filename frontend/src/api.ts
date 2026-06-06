@@ -9,11 +9,20 @@ export type Health = { status: string; service: string };
 
 export type ResourceMeta = { max: number; two_sided: boolean };
 
+export type ChoiceLogEntry = {
+  day: number;
+  event_key: string;
+  choice_index: number;
+  choice_label: string;
+  tags: string[];
+};
+
 export type Choice = {
   index: number;
   label: string;
   hint: string | null;
   available: boolean;
+  requires_item: string | null;
 };
 
 export type Card = {
@@ -39,6 +48,7 @@ export type Ending = {
   type: "win" | "lose";
   name: string;
   text: string;
+  epithet: string | null;
 } | null;
 
 export type RunState = {
@@ -53,6 +63,9 @@ export type RunState = {
   systems: Record<string, { efficiency: number }>;
   ending: Ending;
   card: Card | null;
+  choice_log: ChoiceLogEntry[];
+  crew_trust: number;
+  epithet: string | null;
 };
 
 export type Resolution = {
