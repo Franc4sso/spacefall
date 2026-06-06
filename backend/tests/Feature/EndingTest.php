@@ -129,7 +129,7 @@ it('every configured ending is reachable by some forced state', function () {
     foreach (config('game.endings') as $ending) {
         $reached[$ending['key']] = true;
     }
-    // The individual tests above already drive all 11; assert the count matches
-    // so a newly-added ending without a test is noticed.
-    expect(count($reached))->toBe(11);
+    // The individual tests above already drive the core endings; assert the count matches
+    // so a newly-added ending without a test is noticed. Updated to 15 after Task 10.
+    expect(count($reached))->toBe(15);
 });

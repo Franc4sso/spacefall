@@ -206,6 +206,14 @@ return [
             'when' => ['resource' => 'morale', 'op' => '>=', 'value' => 100],
         ],
 
+        // Finale: ammutinamento avvenuto
+        [
+            'key' => 'mutiny_end', 'type' => 'lose',
+            'name' => 'AMMUTINAMENTO',
+            'text' => 'L\'equipaggio ha preso il controllo. Tu sei rimasto a guardare dai corridoi vuoti.',
+            'when' => ['flag' => 'mutiny_occurred', 'is' => true],
+        ],
+
         // --- Wins (checked after deaths; harder requirements first) ---
         [
             'key' => 'win_escape', 'type' => 'win',
@@ -262,6 +270,42 @@ return [
                     ['resource' => 'power', 'op' => '<', 'value' => 30],
                     ['resource' => 'food', 'op' => '<', 'value' => 30],
                 ]],
+            ]],
+        ],
+
+        // Finale: vittoria fredda (epiteto il_freddo)
+        [
+            'key' => 'cold_victory', 'type' => 'win',
+            'name' => 'FREDDA SOPRAVVIVENZA',
+            'text' => 'Hai fatto le scelte difficili. Le facce di chi non ce l\'ha fatta ti seguiranno per sempre.',
+            'when' => ['all' => [
+                ['resource' => 'oxygen', 'op' => '>', 'value' => 0],
+                ['day' => ['op' => '>', 'value' => 25]],
+                ['flag' => 'epithet', 'scope' => 'profile', 'is' => 'il_freddo'],
+            ]],
+        ],
+
+        // Finale: vittoria con equipaggio intero (ingegnere + medico entrambi vivi)
+        [
+            'key' => 'crew_intact', 'type' => 'win',
+            'name' => 'NESSUNO RIMASTO INDIETRO',
+            'text' => 'Ogni membro dell\'equipaggio è vivo. Ogni sistema funziona. Avete vinto insieme.',
+            'when' => ['all' => [
+                ['resource' => 'oxygen', 'op' => '>', 'value' => 0],
+                ['day' => ['op' => '>', 'value' => 25]],
+                ['has_role' => 'engineer'],
+                ['has_role' => 'doctor'],
+            ]],
+        ],
+
+        // Finale: sopravvissuto solitario (fallback catch-all win)
+        [
+            'key' => 'lone_survivor', 'type' => 'win',
+            'name' => 'ULTIMO IN PIEDI',
+            'text' => 'Hai salvato la stazione. Non hai salvato nessuno.',
+            'when' => ['all' => [
+                ['resource' => 'oxygen', 'op' => '>', 'value' => 0],
+                ['day' => ['op' => '>', 'value' => 25]],
             ]],
         ],
     ],

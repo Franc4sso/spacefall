@@ -150,6 +150,12 @@ class RunController extends Controller
             'items' => $this->itemObjects($run->items ?? []),
             // Station systems (efficiency per system) for the status panel.
             'systems' => $run->systems ?? [],
+            // Last 15 choices logged during the run.
+            'choice_log' => array_slice($run->choice_log ?? [], -15),
+            // Crew trust level (0-100+, default 60).
+            'crew_trust' => (int) ($run->flags['crew_trust'] ?? 60),
+            // Character epithet (il_freddo, il_leader, etc.) from profile.
+            'epithet' => $run->profile?->flags['epithet'] ?? null,
             // The reached ending (null while active): key/type/name/text for
             // the game-over screen.
             'ending' => $this->endingPayload($run),
@@ -200,6 +206,7 @@ class RunController extends Controller
             'type' => $ending['type'],
             'name' => $ending['name'],
             'text' => $ending['text'],
+            'epithet' => $run->profile?->flags['epithet'] ?? null,
         ];
     }
 
