@@ -113,3 +113,42 @@ it('is total: unknown kinds and bad operators fail closed without throwing', fun
     expect($this->eval->evaluate(['nonsense' => 1], $s))->toBeFalse();
     expect($this->eval->evaluate(['resource' => 'food', 'op' => '~~', 'value' => 1], $s))->toBeFalse();
 });
+
+it('evaluates chosen condition true when choice exists in log', function () {
+    $state = new \App\Game\Engine\RunState(
+        day: 5,
+        resources: [],
+        choiceLog: [
+            ['day' => 2, 'event_key' => 'hull_warning', 'choice_index' => 1, 'tags' => ['ignored_warning']],
+        ]
+    );
+    $ev = new \App\Game\Engine\ConditionEvaluator;
+    expect($ev->evaluate(['chosen' => 'hull_warning:1'], $state))->toBeTrue();
+    expect($ev->evaluate(['chosen' => 'hull_warning:0'], $state))->toBeFalse();
+});
+
+it('evaluates chosen_tag condition', function () {
+    $state = new \App\Game\Engine\RunState(
+        day: 5,
+        resources: [],
+        choiceLog: [
+            ['day' => 2, 'event_key' => 'hull_warning', 'choice_index' => 1, 'tags' => ['ignored_warning']],
+        ]
+    );
+    $ev = new \App\Game\Engine\ConditionEvaluator;
+    expect($ev->evaluate(['chosen_tag' => 'ignored_warning'], $state))->toBeTrue();
+    expect($ev->evaluate(['chosen_tag' => 'nonexistent'], $state))->toBeFalse();
+});
+
+it('evaluates not_chosen condition', function () {
+    $state = new \App\Game\Engine\RunState(
+        day: 5,
+        resources: [],
+        choiceLog: [
+            ['day' => 2, 'event_key' => 'hull_warning', 'choice_index' => 1, 'tags' => []],
+        ]
+    );
+    $ev = new \App\Game\Engine\ConditionEvaluator;
+    expect($ev->evaluate(['not_chosen' => 'hull_warning:0'], $state))->toBeTrue();
+    expect($ev->evaluate(['not_chosen' => 'hull_warning:1'], $state))->toBeFalse();
+});

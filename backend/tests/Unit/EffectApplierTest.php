@@ -22,6 +22,7 @@ function freshState(array $o = []): RunState
         characters: $o['characters'] ?? [],
         relationships: $o['relationships'] ?? [],
         systems: $o['systems'] ?? [],
+        items: $o['items'] ?? [],
     );
 }
 
@@ -138,6 +139,45 @@ it('ignores unknown effects without throwing (total)', function () {
     $s = freshState();
     applier()->apply([['mystery_effect' => 1]], $s, new SeededRng(1));
     expect($s->resources)->toBe(['oxygen' => 50, 'food' => 50]);
+});
+
+it('consumes an item from state', function () {
+    $s = freshState(['items' => ['med_kit', 'torch']]);
+    applier()->apply([['consume_item' => 'med_kit']], $s, new SeededRng(1));
+    expect($s->items)->toBe(['torch']);
+});
+
+it('grants an item to state', function () {
+    $s = freshState(['items' => []]);
+    applier()->apply([['grant_item' => 'rope']], $s, new SeededRng(1));
+    expect($s->items)->toContain('rope');
+});
+
+it('does not grant duplicate items', function () {
+    $s = freshState(['items' => ['rope']]);
+    applier()->apply([['grant_item' => 'rope']], $s, new SeededRng(1));
+    expect($s->items)->toHaveCount(1);
+});
+
+it('modifies crew_trust flag', function () {
+    $s = freshState();
+    $s->flags['crew_trust'] = 50;
+    applier()->apply([['modify_trust' => -15]], $s, new SeededRng(1));
+    expect($s->flags['crew_trust'])->toBe(35);
+});
+
+it('clamps crew_trust to 0 minimum', function () {
+    $s = freshState();
+    $s->flags['crew_trust'] = 5;
+    applier()->apply([['modify_trust' => -20]], $s, new SeededRng(1));
+    expect($s->flags['crew_trust'])->toBe(0);
+});
+
+it('clamps crew_trust to 100 maximum', function () {
+    $s = freshState();
+    $s->flags['crew_trust'] = 95;
+    applier()->apply([['modify_trust' => 20]], $s, new SeededRng(1));
+    expect($s->flags['crew_trust'])->toBe(100);
 });
 
 it('is deterministic for random targeting given the same seed', function () {

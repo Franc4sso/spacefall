@@ -104,6 +104,38 @@ final class ConditionEvaluator
             return $this->compare($field, $condition['op'] ?? '=', $condition['value'] ?? 0);
         }
 
+        if (array_key_exists('chosen', $condition)) {
+            [$eventKey, $indexStr] = array_pad(explode(':', $condition['chosen'], 2), 2, '0');
+            $index = (int) $indexStr;
+            foreach ($state->choiceLog as $entry) {
+                if (($entry['event_key'] ?? null) === $eventKey && ($entry['choice_index'] ?? -1) === $index) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        if (array_key_exists('chosen_tag', $condition)) {
+            $tag = $condition['chosen_tag'];
+            foreach ($state->choiceLog as $entry) {
+                if (in_array($tag, $entry['tags'] ?? [], true)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        if (array_key_exists('not_chosen', $condition)) {
+            [$eventKey, $indexStr] = array_pad(explode(':', $condition['not_chosen'], 2), 2, '0');
+            $index = (int) $indexStr;
+            foreach ($state->choiceLog as $entry) {
+                if (($entry['event_key'] ?? null) === $eventKey && ($entry['choice_index'] ?? -1) === $index) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
         // Unknown shape: fail closed (not eligible) rather than throw.
         return false;
     }

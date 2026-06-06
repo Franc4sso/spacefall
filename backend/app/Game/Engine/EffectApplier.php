@@ -104,6 +104,25 @@ final class EffectApplier
             return;
         }
 
+        if (array_key_exists('consume_item', $effect)) {
+            $key = $effect['consume_item'];
+            $state->items = array_values(array_filter($state->items, fn ($k) => $k !== $key));
+            return;
+        }
+
+        if (array_key_exists('grant_item', $effect)) {
+            if (! in_array($effect['grant_item'], $state->items, true)) {
+                $state->items[] = $effect['grant_item'];
+            }
+            return;
+        }
+
+        if (array_key_exists('modify_trust', $effect)) {
+            $current = (int) ($state->flags['crew_trust'] ?? 60);
+            $state->flags['crew_trust'] = max(0, min(100, $current + (int) $effect['modify_trust']));
+            return;
+        }
+
         // Unknown effect: ignore (total, never throws). Malformed content is
         // caught at seed time by the validator, not at runtime.
     }

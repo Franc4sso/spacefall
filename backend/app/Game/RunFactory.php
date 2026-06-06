@@ -38,6 +38,7 @@ final class RunFactory
             'day' => 1,
             'resources' => $resources,
             'status' => 'active',
+            'flags' => ['crew_trust' => 60],
             'characters' => $this->roster(),
             'relationships' => [],
             'items' => $this->sanitiseItems($itemKeys, $profile),
