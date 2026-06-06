@@ -20,9 +20,13 @@ it('initialises station systems on a new run', function () {
 it('degrades systems each day and bleeds a resource once below threshold', function () {
     $run = app(RunFactory::class)->create(1);
 
+    // Read the tuned numbers from config so this test tracks the balance pass.
+    $ls = config('game.systems.life_support');
+    $oxDaily = config('game.resources.oxygen.daily');
+
     // Force life_support just above its penalty threshold, oxygen full.
     $systems = $run->systems;
-    $systems['life_support']['efficiency'] = 51; // penalty_below = 50, decay = 3
+    $systems['life_support']['efficiency'] = $ls['penalty_below'] + $ls['daily_decay'] - 1;
     $run->systems = $systems;
     $res = $run->resources;
     $res['oxygen'] = 100;
@@ -32,24 +36,27 @@ it('degrades systems each day and bleeds a resource once below threshold', funct
     app(DayProcessor::class)->advance($run->fresh());
 
     $after = $run->fresh();
-    // 51 - 3 = 48 < 50 -> penalty applies this day.
-    expect($after->systems['life_support']['efficiency'])->toBe(48);
-    // oxygen lost the daily drain (8) + the life_support penalty (5).
-    expect($after->resources['oxygen'])->toBe(100 - 8 - 5);
+    // efficiency dropped by decay and is now below the penalty threshold.
+    $expectedEff = $ls['penalty_below'] - 1;
+    expect($after->systems['life_support']['efficiency'])->toBe($expectedEff);
+    // oxygen lost the daily drain plus the life_support penalty.
+    $penalty = abs($ls['penalty']['delta']);
+    expect($after->resources['oxygen'])->toBe(100 - $oxDaily - $penalty);
 });
 
 it('adds hardship stress to every survivor when a resource is critically low', function () {
     $run = app(RunFactory::class)->create(1);
 
+    $foodRule = collect(config('game.hardship'))->firstWhere('resource', 'food');
     $res = $run->resources;
-    $res['food'] = 5; // <= 20 -> +8 stress to all
+    $res['food'] = $foodRule['at_or_below']; // at the threshold -> stress to all
     $run->resources = $res;
     $run->save();
 
     app(DayProcessor::class)->advance($run->fresh());
 
     foreach ($run->fresh()->characters as $c) {
-        expect($c['stress'])->toBeGreaterThanOrEqual(8);
+        expect($c['stress'])->toBeGreaterThanOrEqual($foodRule['stress']);
     }
 });
 

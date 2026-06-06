@@ -315,11 +315,11 @@ class EventSeeder extends Seeder
                 'choices' => [
                     [
                         'label' => 'Dividiamo in parti uguali',
-                        'hint' => 'giusto, costoso',
+                        'hint' => 'dovrebbe reggere',
                         'outcomes' => [
                             ['weight' => 1, 'effects' => [
-                                ['resource' => 'food', 'delta' => -8],
-                                ['resource' => 'morale', 'delta' => 4],
+                                ['resource' => 'food', 'delta' => -3],
+                                ['resource' => 'morale', 'delta' => 5],
                             ], 'log' => 'Poco per ciascuno, ma nessuno resta a digiuno.'],
                         ],
                     ],
@@ -425,10 +425,20 @@ class EventSeeder extends Seeder
                 'requires' => ['flag' => '__scheduled_only', 'is' => true],
                 'choices' => [
                     [
+                        // The always-survivable option: calming a survivor never
+                        // pushes a resource toward zero (keeps the card fair).
+                        'label' => 'Gli parlo con calma',
+                        'hint' => 'dovrebbe reggere',
+                        'outcomes' => [
+                            ['weight' => 1, 'effects' => [['character' => 'highest_stress', 'stress' => -20]],
+                                'log' => 'Pian piano si calma. Respira.'],
+                        ],
+                    ],
+                    [
                         'label' => 'Lo lascio stare',
                         'hint' => 'rischioso',
                         'outcomes' => [
-                            ['weight' => 1, 'effects' => [['resource' => 'morale', 'delta' => -10]],
+                            ['weight' => 1, 'effects' => [['resource' => 'morale', 'delta' => -8]],
                                 'log' => 'Si chiude in cabina. Non esce per ore.'],
                         ],
                     ],
@@ -439,7 +449,7 @@ class EventSeeder extends Seeder
                             ['weight' => 3, 'effects' => [['resource' => 'power', 'delta' => 5]],
                                 'log' => 'Obbedisce, a denti stretti.'],
                             ['weight' => 2, 'effects' => [
-                                ['resource' => 'morale', 'delta' => -15],
+                                ['resource' => 'morale', 'delta' => -12],
                                 ['damage_system' => 'power_grid', 'amount' => 15],
                             ], 'log' => 'Sbaglia tutto. Forse di proposito.'],
                         ],

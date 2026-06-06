@@ -69,7 +69,7 @@ it('reaches the escape win with the suit, time, and power', function () {
 it('reaches the rescue win with comms and time', function () {
     expect(endingFor([
         'items' => ['comms'],
-        'day' => 20,
+        'day' => 25,
         'resources' => ['morale' => 50],
     ])['key'])->toBe('win_rescue');
 });
@@ -84,14 +84,17 @@ it('reaches the colony win with the seedbank and stored food', function () {
 
 it('reaches the research win with the flag set', function () {
     expect(endingFor([
-        'day' => 16,
+        'day' => 23,
         'flags' => ['research_complete' => true],
+        'resources' => ['power' => 50],
     ])['key'])->toBe('win_research');
 });
 
 it('reaches the sacrifice win with its flag', function () {
     expect(endingFor([
+        'day' => 18,
         'flags' => ['made_the_sacrifice' => true],
+        'resources' => ['oxygen' => 20], // dire situation required
     ])['key'])->toBe('win_sacrifice');
 });
 

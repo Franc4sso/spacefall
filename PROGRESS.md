@@ -15,7 +15,7 @@ Design + resolved forks: `docs/superpowers/specs/2026-06-04-starfall-station-des
 - [x] **Phase 7 — Meta progression & cross-run memory**
 - [x] **Phase 8 — Content pass (50+ events, Italian)**
 - [x] **Phase 9 — Frontend cadence + flow**
-- [ ] Phase 10 — Balance via simulation
+- [x] **Phase 10 — Balance via simulation**
 
 > **Stopping here for review** (user choice): plan + DSL design reviewed before Phase 2 code,
 > as the build prompt requires.
@@ -259,6 +259,32 @@ set in one run is readable by a condition in a later run.
 human check — the architecture removes the mid-run round-trip that would cause waits; no headless
 browser is installed to automate the visual pass.)*
 
+## Phase 10 — Balance via simulation ✅
+
+- **Headless auto-player** (`Simulator`) plays full seeded runs under a pluggable **`Policy`**
+  (`RandomPolicy`, `GreedySurvivalPolicy` — picks the choice whose visible *hint* sounds safest,
+  reading only what a human sees). Records the decision trail per run.
+- **`php artisan sim:run --count=N --policy=… --items=…`** prints the aggregate: run-length
+  distribution, win/loss rate, endings reached; fails loudly if any run stalls.
+- **`FairnessProbe`** — the operational "no unavoidable death" check: for a death caused by a
+  *choice*, it re-plays from the seed to the final decision and verifies at least one alternative
+  available choice did NOT lock in the death. Deaths caused by the slow daily drain are fair by
+  construction (avoidable over the preceding days).
+- **Balance tests (5, all green):** never stalls; **hard but not impossible** (greedy win-rate
+  > random, greedy can win); run length in a sane band; **no unavoidable choice-deaths**; every
+  ending reachable across policies/seeds (no dead content).
+- **Tuning (DATA only — config + content, never engine):** gentler daily drains + slower system
+  decay so no resource bottoms out before the player has had real decisions; raised win thresholds
+  (rescue/research/sacrifice) so they're earned, not stumbled into; safe-but-good choices given
+  reassuring hints so following the hints rewards survival *without making it automatic*; capped the
+  one card (`c_mold`) that could starve you regardless of choice. Result on 60-run batches:
+  **greedy ~28% win (median ~26 days), random ~18% (median ~22)** — informed play wins meaningfully
+  more, the game stays hard, short runs happen only to careless play.
+
+**DoD met:** the section-5 balance assertions pass.
+
+## Status: ALL 10 PHASES COMPLETE — 119 backend + 5 frontend tests green.
+
 ## Decisions / assumptions
 
 - **PHP 8.2** (env has 8.2.31; spec asked 8.3+). Laravel 12 supports 8.2. No 8.3-only syntax. *(user-approved)*
@@ -284,6 +310,11 @@ browser is installed to automate the visual pass.)*
   intent with one call instead of two.
 - **Dev ports:** other local projects occupy 8000/5173–5175, so this build runs the API on **8010**
   and Vite on **5176** (`frontend/.env` sets `VITE_API_URL`, backend `.env` sets `CORS_ALLOWED_ORIGINS`).
+- **Hints help, but not too much (user steer, Phase 10):** hints are never numbers and are distorted
+  by the speaker's trait (Coward inflates, Optimist downplays), so they orient without being reliable.
+  Balance aligns safe-sounding hints with genuinely-good choices just enough that a hint-following
+  player survives more than random (greedy 28% vs 18%) — deliberately NOT so much that the game plays
+  itself. Short runs are allowed but only result from careless play (no hard length floor).
 
 ## DSL design — FOR REVIEW BEFORE PHASE 2
 

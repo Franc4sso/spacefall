@@ -99,7 +99,13 @@ class ContentEventSeeder extends Seeder
             $this->ev([
                 'key' => 'c_mold', 'title' => 'Muffa nelle scorte', 'speaker' => 'Bex',
                 'body' => 'Metà delle razioni sa di chiuso.',
-                'requires' => ['resource' => 'food', 'op' => '<', 'value' => 60],
+                // A waste event, not a crisis: only when there's still food to
+                // lose. Never appears in the lethal zone, so no choice can
+                // starve you on this card.
+                'requires' => ['all' => [
+                    ['resource' => 'food', 'op' => '<', 'value' => 60],
+                    ['resource' => 'food', 'op' => '>', 'value' => 25],
+                ]],
                 'choices' => [
                     $this->one('Butto il marcio', [['resource' => 'food', 'delta' => -6], ['resource' => 'morale', 'delta' => 2]], 'Meno cibo, ma sano.'),
                     $this->gamble('Si mangia lo stesso', [['resource' => 'food', 'delta' => 2]], 'Regge lo stomaco.', [['resource' => 'food', 'delta' => -4], ['character' => 'random', 'stress' => 10]], 'Qualcuno sta male.', 5, 5, 'azzardo'),
@@ -119,7 +125,7 @@ class ContentEventSeeder extends Seeder
                 'body' => 'Il riciclo idrico non ce la fa per tutti.',
                 'requires' => ['resource' => 'food', 'op' => '<', 'value' => 40],
                 'choices' => [
-                    $this->one('Razioni rigide', [['character' => 'all', 'stress' => 8], ['resource' => 'food', 'delta' => 3]], 'Bocche asciutte, scorte intatte.'),
+                    $this->one('Razioni rigide', [['character' => 'all', 'stress' => 6], ['resource' => 'food', 'delta' => 4]], 'Bocche asciutte, scorte intatte.', 'dovrebbe reggere'),
                     $this->one('Bere a volontà oggi', [['resource' => 'food', 'delta' => -8], ['resource' => 'morale', 'delta' => 5]], 'Un sollievo breve.'),
                 ],
             ]),
@@ -326,7 +332,7 @@ class ContentEventSeeder extends Seeder
                 'body' => 'Un settore sigillato. Il drone può entrarci.',
                 'requires' => ['has_item' => 'drone'],
                 'choices' => [
-                    $this->one('Mando il drone', [['resource' => 'food', 'delta' => 10]], 'Scorte dimenticate, recuperate.'),
+                    $this->one('Mando il drone', [['resource' => 'food', 'delta' => 12]], 'Scorte dimenticate, recuperate.', 'dovrebbe reggere'),
                     $this->one('Troppo pericoloso anche per il drone', [['resource' => 'morale', 'delta' => -2]], 'Resta sigillato.'),
                 ],
             ]),
@@ -344,7 +350,7 @@ class ContentEventSeeder extends Seeder
                 'body' => 'La banca semi può diventare un orto. Con pazienza.',
                 'requires' => ['has_item' => 'seedbank'],
                 'choices' => [
-                    $this->one('Pianto subito', [['resource' => 'food', 'delta' => 14], ['resource' => 'power', 'delta' => -5]], 'Verde fragile sotto le luci.'),
+                    $this->one('Pianto subito', [['resource' => 'food', 'delta' => 16], ['resource' => 'power', 'delta' => -5]], 'Verde fragile sotto le luci.', 'dovrebbe reggere'),
                     $this->one('Non è il momento', [], 'I semi aspettano.'),
                 ],
             ]),

@@ -27,11 +27,15 @@ return [
      | top. Tuned for real in Phase 10 via the simulation harness.
      */
     'resources' => [
-        'oxygen' => ['max' => 100, 'start' => 100, 'daily' => 8,  'two_sided' => false],
-        'food'   => ['max' => 100, 'start' => 80,  'daily' => 10, 'two_sided' => false],
-        'power'  => ['max' => 100, 'start' => 90,  'daily' => 6,  'two_sided' => false],
-        'morale' => ['max' => 100, 'start' => 60,  'daily' => 4,  'two_sided' => true],
-        'hull'   => ['max' => 100, 'start' => 100, 'daily' => 2,  'two_sided' => false],
+        // Daily drains are deliberately gentle: a do-nothing run still trends to
+        // death, but slowly enough that CHOICES decide the outcome (no resource
+        // can bottom out before the player has had real decisions about it).
+        // Tuned via the simulation harness (Phase 10) to a 30–60-day band.
+        'oxygen' => ['max' => 100, 'start' => 100, 'daily' => 3, 'two_sided' => false],
+        'food'   => ['max' => 100, 'start' => 100, 'daily' => 4, 'two_sided' => false],
+        'power'  => ['max' => 100, 'start' => 95,  'daily' => 3, 'two_sided' => false],
+        'morale' => ['max' => 100, 'start' => 65,  'daily' => 2, 'two_sided' => true],
+        'hull'   => ['max' => 100, 'start' => 100, 'daily' => 1, 'two_sided' => false],
     ],
 
     /*
@@ -49,16 +53,16 @@ return [
      */
     'systems' => [
         'life_support' => [
-            'start' => 100, 'daily_decay' => 3, 'penalty_below' => 50,
-            'penalty' => ['resource' => 'oxygen', 'delta' => -5],
+            'start' => 100, 'daily_decay' => 1, 'penalty_below' => 40,
+            'penalty' => ['resource' => 'oxygen', 'delta' => -3],
         ],
         'power_grid' => [
-            'start' => 100, 'daily_decay' => 2, 'penalty_below' => 50,
-            'penalty' => ['resource' => 'power', 'delta' => -4],
+            'start' => 100, 'daily_decay' => 1, 'penalty_below' => 40,
+            'penalty' => ['resource' => 'power', 'delta' => -3],
         ],
         'hull_integrity' => [
-            'start' => 100, 'daily_decay' => 1, 'penalty_below' => 40,
-            'penalty' => ['resource' => 'hull', 'delta' => -3],
+            'start' => 100, 'daily_decay' => 1, 'penalty_below' => 35,
+            'penalty' => ['resource' => 'hull', 'delta' => -2],
         ],
     ],
 
@@ -69,9 +73,9 @@ return [
      | rationing pressure (60 Seconds) made mechanical. Data only.
      */
     'hardship' => [
-        ['resource' => 'food', 'at_or_below' => 20, 'stress' => 8],
-        ['resource' => 'oxygen', 'at_or_below' => 25, 'stress' => 10],
-        ['resource' => 'morale', 'at_or_below' => 15, 'stress' => 6],
+        ['resource' => 'food', 'at_or_below' => 18, 'stress' => 5],
+        ['resource' => 'oxygen', 'at_or_below' => 20, 'stress' => 6],
+        ['resource' => 'morale', 'at_or_below' => 12, 'stress' => 4],
     ],
 
     /*
@@ -219,8 +223,8 @@ return [
             'text' => 'La radio gracchia una risposta. Qualcuno sta arrivando.',
             'when' => ['all' => [
                 ['has_item' => 'comms'],
-                ['day' => ['op' => '>=', 'value' => 18]],
-                ['resource' => 'morale', 'op' => '>=', 'value' => 30],
+                ['day' => ['op' => '>=', 'value' => 24]],
+                ['resource' => 'morale', 'op' => '>=', 'value' => 38],
             ]],
         ],
         [
@@ -239,14 +243,26 @@ return [
             'text' => 'I dati che hai salvato valgono più di una vita sola. Li hai trasmessi.',
             'when' => ['all' => [
                 ['flag' => 'research_complete', 'is' => true],
-                ['day' => ['op' => '>=', 'value' => 15]],
+                ['day' => ['op' => '>=', 'value' => 22]],
+                ['resource' => 'power', 'op' => '>=', 'value' => 30],
             ]],
         ],
         [
             'key' => 'win_sacrifice', 'type' => 'win',
             'name' => 'Sacrificio',
             'text' => 'Resti indietro perché gli altri ce la facciano. È una vittoria, a modo suo.',
-            'when' => ['flag' => 'made_the_sacrifice', 'is' => true],
+            // A meaningful sacrifice, not a free out: you must have held on a
+            // while AND the situation must be genuinely dire (a resource on the
+            // brink) for staying behind to count as a victory.
+            'when' => ['all' => [
+                ['flag' => 'made_the_sacrifice', 'is' => true],
+                ['day' => ['op' => '>=', 'value' => 16]],
+                ['any' => [
+                    ['resource' => 'oxygen', 'op' => '<', 'value' => 30],
+                    ['resource' => 'power', 'op' => '<', 'value' => 30],
+                    ['resource' => 'food', 'op' => '<', 'value' => 30],
+                ]],
+            ]],
         ],
     ],
 
