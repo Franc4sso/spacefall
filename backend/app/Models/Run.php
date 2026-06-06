@@ -32,6 +32,7 @@ class Run extends Model
         'characters',
         'relationships',
         'items',
+        'systems',
     ];
 
     protected $casts = [
@@ -45,6 +46,7 @@ class Run extends Model
         'characters' => 'array',
         'relationships' => 'array',
         'items' => 'array',
+        'systems' => 'array',
     ];
 
     protected $attributes = [
@@ -54,6 +56,7 @@ class Run extends Model
         'characters' => '[]',
         'relationships' => '[]',
         'items' => '[]',
+        'systems' => '{}',
     ];
 
     /**

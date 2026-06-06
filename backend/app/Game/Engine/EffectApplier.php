@@ -110,15 +110,30 @@ final class EffectApplier
 
     private function applyCharacter(array $effect, RunState $state, SeededRng $rng): void
     {
-        $index = $this->resolveTarget($effect['character'], $state, $rng);
-        if ($index === null) {
-            return;
-        }
+        // "all" hits every living survivor — the rationing primitive: one swipe
+        // weighs on the whole crew, and weighs MORE the more mouths there are.
+        $indices = $effect['character'] === 'all'
+            ? $this->livingIndices($state)
+            : array_filter([$this->resolveTarget($effect['character'], $state, $rng)], fn ($i) => $i !== null);
 
-        if (array_key_exists('stress', $effect)) {
-            $cur = $state->characters[$index]['stress'] ?? 0;
-            $state->characters[$index]['stress'] = $this->clamp($cur + (int) $effect['stress'], 100);
+        foreach ($indices as $index) {
+            if (array_key_exists('stress', $effect)) {
+                $cur = $state->characters[$index]['stress'] ?? 0;
+                $state->characters[$index]['stress'] = $this->clamp($cur + (int) $effect['stress'], 100);
+            }
         }
+    }
+
+    /** @return list<int> indices of living survivors */
+    private function livingIndices(RunState $state): array
+    {
+        $out = [];
+        foreach ($state->characters as $i => $c) {
+            if ($c['alive'] ?? true) {
+                $out[] = $i;
+            }
+        }
+        return $out;
     }
 
     private function applyKill(string $selector, RunState $state, SeededRng $rng): void

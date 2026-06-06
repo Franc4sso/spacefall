@@ -53,6 +53,7 @@ final class RunState
             characters: $run->characters ?? [],
             relationships: $run->relationships ?? [],
             items: $run->items ?? [],
+            systems: $run->systems ?? [],
         );
     }
 
@@ -68,5 +69,6 @@ final class RunState
         $run->scheduled_events = $this->scheduledEvents;
         $run->characters = $this->characters;
         $run->relationships = $this->relationships;
+        $run->systems = $this->systems;
     }
 }

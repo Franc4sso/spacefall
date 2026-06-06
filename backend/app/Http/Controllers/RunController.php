@@ -136,6 +136,8 @@ class RunController extends Controller
             // Inventory as full item objects (key + Italian name/description)
             // so the client can render it without re-fetching the catalogue.
             'items' => $this->itemObjects($run->items ?? []),
+            // Station systems (efficiency per system) for the status panel.
+            'systems' => $run->systems ?? [],
             'card' => null,
         ];
 

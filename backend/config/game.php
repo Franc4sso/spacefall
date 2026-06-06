@@ -35,6 +35,46 @@ return [
     ],
 
     /*
+     | Station systems. Each has an efficiency [0, 100] that degrades a little
+     | each day and can be damaged by events (damage_system effect). When a
+     | system's efficiency drops below `penalty_below`, it inflicts `penalty`
+     | on a resource every day — a failing life-support quietly bleeds oxygen.
+     | This is what turns neglect into a slow-motion death: ignore repairs and
+     | the daily drain compounds. All data; no system name in code.
+     |
+     |   start          efficiency at run start
+     |   daily_decay    efficiency lost per day
+     |   penalty_below  efficiency threshold under which the penalty applies
+     |   penalty        { resource, delta } applied per day while below threshold
+     */
+    'systems' => [
+        'life_support' => [
+            'start' => 100, 'daily_decay' => 3, 'penalty_below' => 50,
+            'penalty' => ['resource' => 'oxygen', 'delta' => -5],
+        ],
+        'power_grid' => [
+            'start' => 100, 'daily_decay' => 2, 'penalty_below' => 50,
+            'penalty' => ['resource' => 'power', 'delta' => -4],
+        ],
+        'hull_integrity' => [
+            'start' => 100, 'daily_decay' => 1, 'penalty_below' => 40,
+            'penalty' => ['resource' => 'hull', 'delta' => -3],
+        ],
+    ],
+
+    /*
+     | Hardship stress: when a resource sits at or below its `at_or_below`
+     | threshold at end of day, every living survivor gains `stress`. Scarcity
+     | wears people down, which feeds the stress-band behaviour above — the
+     | rationing pressure (60 Seconds) made mechanical. Data only.
+     */
+    'hardship' => [
+        ['resource' => 'food', 'at_or_below' => 20, 'stress' => 8],
+        ['resource' => 'oxygen', 'at_or_below' => 25, 'stress' => 10],
+        ['resource' => 'morale', 'at_or_below' => 15, 'stress' => 6],
+    ],
+
+    /*
      | Traits. Each is pure data the engine consults; no trait name is ever
      | hard-coded in code. Two levers:
      |

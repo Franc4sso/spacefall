@@ -182,6 +182,52 @@ class EventSeeder extends Seeder
                 ],
             ],
 
+            // --- Rationing (60 Seconds weight: one swipe, shared scarcity) --
+            [
+                'key' => 'ration_crisis',
+                'title' => 'Chi mangia stanotte',
+                'body' => 'Una sola porzione calda. Tutti la guardano.',
+                'speaker' => null,
+                'base_weight' => 22,
+                'cooldown_days' => 2,
+                'is_filler' => false,
+                'requires' => ['resource' => 'food', 'op' => '<', 'value' => 30],
+                'choices' => [
+                    [
+                        'label' => 'Dividiamo in parti uguali',
+                        'hint' => 'giusto, costoso',
+                        'outcomes' => [
+                            ['weight' => 1, 'effects' => [
+                                ['resource' => 'food', 'delta' => -8],
+                                ['resource' => 'morale', 'delta' => 4],
+                            ], 'log' => 'Poco per ciascuno, ma nessuno resta a digiuno.'],
+                        ],
+                    ],
+                    [
+                        // Stress on ALL living survivors — weighs more with a
+                        // bigger crew. The rationing primitive in action.
+                        'label' => 'Si salta il turno, si stringe la cinghia',
+                        'hint' => 'duro per tutti',
+                        'outcomes' => [
+                            ['weight' => 1, 'effects' => [
+                                ['character' => 'all', 'stress' => 12],
+                            ], 'log' => 'Pance vuote. Nessuno parla a cena.'],
+                        ],
+                    ],
+                    [
+                        'label' => 'Mangio solo io, devo reggere',
+                        'hint' => 'crudo ma lucido',
+                        'outcomes' => [
+                            ['weight' => 1, 'effects' => [
+                                ['resource' => 'morale', 'delta' => -14],
+                                ['character' => 'highest_stress', 'stress' => 15],
+                                ['set_flag' => 'ate_alone', 'value' => true],
+                            ], 'log' => 'Mangi voltando le spalle. Il rancore resta.'],
+                        ],
+                    ],
+                ],
+            ],
+
             // --- Item-gated event (items unlock CHOICES, not just stats) ----
             [
                 'key' => 'hull_breach',

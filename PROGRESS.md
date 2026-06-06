@@ -10,7 +10,7 @@ Design + resolved forks: `docs/superpowers/specs/2026-06-04-starfall-station-des
 - [x] **Phase 2 — Event Engine** (DSL reviewed & approved at the gate)
 - [x] **Phase 3 — Characters, traits, stress, relationships**
 - [x] **Phase 4 — Items**
-- [ ] Phase 5 — Daily loop assembled + rationing
+- [x] **Phase 5 — Daily loop assembled + rationing**
 - [ ] Phase 6 — Endings & fair-failure cascade
 - [ ] Phase 7 — Meta progression & cross-run memory
 - [ ] Phase 8 — Content pass (50+ events, Italian)
@@ -137,6 +137,27 @@ distribution over many seeds.
   the first available choice — correct real-play behaviour, since some cards now gate choice 0.)*
 
 **DoD met:** tests prove an item-gated choice is present/absent based on inventory.
+
+## Phase 5 — Daily loop assembled + rationing ✅
+
+- **Station systems** (`config('game.systems')`: life_support, power_grid, hull_integrity). Run
+  column `systems` = `{key: {efficiency}}`. Initialised by RunFactory, loaded/saved via RunState
+  (so `damage_system` effects persist), surfaced in the API.
+- **Full end-of-day pipeline** in `DayProcessor`, ordered & clamped:
+  1. resource consumption → 2. system degradation + below-threshold resource penalty (failing
+  life-support bleeds oxygen — neglect compounds) → 3. hardship stress (scarce resource → whole crew
+  gains stress) → 4. stress-band self-initiated behaviour → 5. advance day. All config-driven.
+- **Rationing primitive:** added `character: "all"` to EffectApplier — one swipe hits every living
+  survivor, weighing *more* with a bigger crew (the 60 Seconds weight). Seeded `ration_crisis`
+  (appears when food < 30): split fairly (food cost), tighten belts (stress to all), or eat alone
+  (morale crash + `ate_alone` flag for a later callback).
+- **Tested (85 total):** systems init; degrade + penalty math; hardship stress to all; **15-day
+  end-to-end playthrough stays internally consistent** (every resource/efficiency/stress in range,
+  never stalls, day = 16); **same seed + same choices → identical 15-day end state** (reproducibility
+  contract holds across the whole loop); rationing appears only when food scarce; "tighten belts"
+  stress scales with crew size; "eat alone" crashes morale + sets flag.
+
+**DoD met:** a feature test plays ~15 days end to end and the state stays internally consistent.
 
 ## Decisions / assumptions
 

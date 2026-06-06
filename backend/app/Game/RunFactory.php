@@ -40,7 +40,22 @@ final class RunFactory
             'characters' => $this->roster(),
             'relationships' => [],
             'items' => $this->sanitiseItems($itemKeys),
+            'systems' => $this->systems(),
         ]);
+    }
+
+    /**
+     * Initialise station systems at their configured starting efficiency.
+     *
+     * @return array<string,array{efficiency:int}>
+     */
+    private function systems(): array
+    {
+        $systems = [];
+        foreach (config('game.systems') as $key => $def) {
+            $systems[$key] = ['efficiency' => $def['start']];
+        }
+        return $systems;
     }
 
     /**

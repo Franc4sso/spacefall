@@ -63,6 +63,19 @@ it('adds stress to a targeted character and clamps it', function () {
     expect($s->characters[0]['stress'])->toBe(100);
 });
 
+it('targets all living survivors with stress (rationing primitive)', function () {
+    $s = freshState(['characters' => [
+        ['name' => 'A', 'alive' => true, 'stress' => 0],
+        ['name' => 'B', 'alive' => false, 'stress' => 0], // dead, skipped
+        ['name' => 'C', 'alive' => true, 'stress' => 90],
+    ]]);
+    applier()->apply([['character' => 'all', 'stress' => 12]], $s, new SeededRng(1));
+
+    expect($s->characters[0]['stress'])->toBe(12);
+    expect($s->characters[1]['stress'])->toBe(0);   // dead untouched
+    expect($s->characters[2]['stress'])->toBe(100); // clamped
+});
+
 it('targets highest_stress', function () {
     $s = freshState(['characters' => [
         ['name' => 'A', 'alive' => true, 'stress' => 10],
