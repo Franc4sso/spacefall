@@ -250,6 +250,24 @@ return [
         ],
     ],
 
+    /*
+     | Meta unlocks — bought with research_points, persisted on the profile.
+     | Per design §2.1 these add CONTENT, not stat boosts: an unlock makes a
+     | locked item pickable (new decisions/routes, a bigger pool), never a
+     | bigger number. Declarative.
+     |
+     |   key / cost / name / description (Italian)
+     |   grants_item  the locked item key this unlock makes pickable
+     */
+    'unlocks' => [
+        ['key' => 'unlock_turret',     'cost' => 15, 'name' => 'Torretta automatica',
+            'description' => 'Sblocca la torretta tra gli equipaggiamenti iniziali.', 'grants_item' => 'turret'],
+        ['key' => 'unlock_cryopod',    'cost' => 25, 'name' => 'Cella criogenica',
+            'description' => 'Sblocca la cella criogenica.', 'grants_item' => 'cryopod'],
+        ['key' => 'unlock_fabricator', 'cost' => 40, 'name' => 'Fabbricatore',
+            'description' => 'Sblocca il fabbricatore.', 'grants_item' => 'fabricator'],
+    ],
+
     'items' => [
         ['key' => 'drone',        'name' => 'Drone da ricognizione', 'description' => 'Esplora i settori sigillati al posto tuo.'],
         ['key' => 'scanner',      'name' => 'Scanner portatile',     'description' => 'Legge guasti e minacce prima che esplodano.'],
@@ -265,10 +283,10 @@ return [
         ['key' => 'battery',      'name' => 'Pacco batterie',        'description' => 'Accumuli energia per dopo.'],
         ['key' => 'rations',      'name' => 'Razioni extra',         'description' => 'Un cuscinetto contro la fame.'],
         ['key' => 'manual',       'name' => 'Manuale tecnico',       'description' => 'Sai cosa stai toccando, per una volta.'],
-        ['key' => 'turret',       'name' => 'Torretta automatica',   'description' => 'Difende un settore senza il tuo presidio.'],
-        ['key' => 'cryopod',      'name' => 'Cella criogenica',      'description' => 'Metti qualcuno in pausa per salvarlo.'],
+        ['key' => 'turret',       'name' => 'Torretta automatica',   'description' => 'Difende un settore senza il tuo presidio.', 'locked' => true],
+        ['key' => 'cryopod',      'name' => 'Cella criogenica',      'description' => 'Metti qualcuno in pausa per salvarlo.', 'locked' => true],
         ['key' => 'sensors',      'name' => 'Rete di sensori',       'description' => 'La stazione ti avvisa, a volte.'],
-        ['key' => 'fabricator',   'name' => 'Fabbricatore',          'description' => 'Stampi pezzi che non hai.'],
+        ['key' => 'fabricator',   'name' => 'Fabbricatore',          'description' => 'Stampi pezzi che non hai.', 'locked' => true],
         ['key' => 'flare',        'name' => 'Razzi di segnalazione', 'description' => 'Un grido visibile nel vuoto.'],
         ['key' => 'logbank',      'name' => 'Archivio di bordo',     'description' => 'Sai cosa è successo a chi c\'era prima.'],
     ],

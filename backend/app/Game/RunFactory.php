@@ -2,6 +2,7 @@
 
 namespace App\Game;
 
+use App\Models\Profile;
 use App\Models\Run;
 
 /**
@@ -11,18 +12,18 @@ use App\Models\Run;
 final class RunFactory
 {
     /**
-     * @param  int|null  $seed  Explicit seed for reproducible runs (tests,
-     *                          simulation harness). When null a seed is drawn;
-     *                          random_int is fine here because the *seed itself*
-     *                          need not be reproducible — everything derived
-     *                          from it is.
+     * @param  int|null      $seed      Explicit seed for reproducible runs
+     *                                  (tests, simulation harness). When null a
+     *                                  seed is drawn; random_int is fine because
+     *                                  the *seed itself* need not be reproducible.
+     * @param  list<string>  $itemKeys  The player's pick. Unknown keys dropped,
+     *                                  duplicates collapsed, locked items the
+     *                                  profile hasn't unlocked dropped, capped at
+     *                                  items_pick.
+     * @param  Profile|null  $profile   Owning profile; gates locked items and
+     *                                  links the run for cross-run memory.
      */
-    /**
-     * @param  list<string>  $itemKeys  the player's pick. Unknown keys are
-     *                                   dropped, duplicates collapsed, and the
-     *                                   list is capped at config items_pick.
-     */
-    public function create(?int $seed = null, array $itemKeys = []): Run
+    public function create(?int $seed = null, array $itemKeys = [], ?Profile $profile = null): Run
     {
         $seed ??= random_int(PHP_INT_MIN, PHP_INT_MAX);
 
@@ -39,8 +40,9 @@ final class RunFactory
             'status' => 'active',
             'characters' => $this->roster(),
             'relationships' => [],
-            'items' => $this->sanitiseItems($itemKeys),
+            'items' => $this->sanitiseItems($itemKeys, $profile),
             'systems' => $this->systems(),
+            'profile_id' => $profile?->id,
         ]);
     }
 
@@ -66,17 +68,50 @@ final class RunFactory
      * @param  list<string>  $itemKeys
      * @return list<string>
      */
-    private function sanitiseItems(array $itemKeys): array
+    private function sanitiseItems(array $itemKeys, ?Profile $profile): array
     {
-        $known = array_column(config('game.items'), 'key');
         $pick = (int) config('game.items_pick');
+        $available = $this->availableItemKeys($profile);
 
         $valid = array_values(array_unique(array_filter(
             $itemKeys,
-            fn ($k) => in_array($k, $known, true),
+            fn ($k) => in_array($k, $available, true),
         )));
 
         return array_slice($valid, 0, $pick);
+    }
+
+    /**
+     * Item keys a profile may pick: all unlocked items, plus locked items whose
+     * unlock the profile owns. The single source of truth for both the factory
+     * and the /api/items pick screen.
+     *
+     * @return list<string>
+     */
+    public function availableItemKeys(?Profile $profile): array
+    {
+        $unlocked = $profile?->unlocks ?? [];
+        // Map: locked item key => unlock key that grants it.
+        $grantedBy = [];
+        foreach (config('game.unlocks') as $u) {
+            if (isset($u['grants_item'])) {
+                $grantedBy[$u['grants_item']] = $u['key'];
+            }
+        }
+
+        $keys = [];
+        foreach (config('game.items') as $item) {
+            if (! ($item['locked'] ?? false)) {
+                $keys[] = $item['key'];
+                continue;
+            }
+            // Locked: include only if its granting unlock is owned.
+            $unlockKey = $grantedBy[$item['key']] ?? null;
+            if ($unlockKey !== null && in_array($unlockKey, $unlocked, true)) {
+                $keys[] = $item['key'];
+            }
+        }
+        return $keys;
     }
 
     /**

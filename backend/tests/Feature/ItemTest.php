@@ -12,7 +12,9 @@ it('exposes the item catalogue and the pick count', function () {
     $res = $this->getJson('/api/items')->assertOk();
 
     expect($res->json('pick'))->toBe(config('game.items_pick'));
-    expect($res->json('items'))->toHaveCount(count(config('game.items')));
+    // Locked items are filtered out for a profile that hasn't unlocked them.
+    $unlockedCount = collect(config('game.items'))->reject(fn ($i) => $i['locked'] ?? false)->count();
+    expect($res->json('items'))->toHaveCount($unlockedCount);
     expect($res->json('items.0'))->toHaveKeys(['key', 'name', 'description']);
 });
 

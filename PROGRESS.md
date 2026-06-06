@@ -12,7 +12,7 @@ Design + resolved forks: `docs/superpowers/specs/2026-06-04-starfall-station-des
 - [x] **Phase 4 — Items**
 - [x] **Phase 5 — Daily loop assembled + rationing**
 - [x] **Phase 6 — Endings & fair-failure cascade**
-- [ ] Phase 7 — Meta progression & cross-run memory
+- [x] **Phase 7 — Meta progression & cross-run memory**
 - [ ] Phase 8 — Content pass (50+ events, Italian)
 - [ ] Phase 9 — Frontend cadence + flow
 - [ ] Phase 10 — Balance via simulation
@@ -182,6 +182,33 @@ distribution over many seeds.
 
 **DoD met:** tests drive a run into each ending; a test proves an ignored fault cascades via
 `spawn_event` into a later disaster.
+
+## Phase 7 — Meta progression & cross-run memory ✅
+
+- **`Profile` model + table** (`handle`, `research_points`, `unlocks`, `flags`). Resolve-or-create
+  by handle (no auth scaffolding — out of scope). Runs link via nullable `profile_id`.
+- **Real profile-scoped flag store (the signature feature):** `RunState::fromRun` loads
+  `profileFlags` from the linked profile, so a `flag … scope:profile` condition sees what *earlier
+  runs* left behind. `ProfileSync` flushes mutated profile flags back after every resolution.
+  Seeded `reactor_gamble` (sets profile flag) → `old_scorch` (requires it) demonstrates a callback
+  spanning two separate runs.
+- **Research points earned even on loss:** the EffectApplier accumulates `grant_research_points`
+  into a transient accumulator; `ProfileSync` moves the delta into `profile.research_points` on each
+  flush — so points are banked the moment they're earned, surviving a later death.
+- **Unlocks = content, not boosts (design §2.1):** `config('game.unlocks')` each `grants_item` a
+  *locked* catalogue item. `RunFactory::availableItemKeys` is the single source of truth: locked
+  items are pickable only once their unlock is owned, and `/api/items` filters to it. An unlock
+  changes the *next run's hand of cards*, not its numbers.
+- **Endpoints:** `GET /api/meta` (points, owned + buyable unlocks with affordability),
+  `POST /api/meta/unlock` (spend points). `POST /api/runs` / `GET /api/items` take an optional
+  `handle`.
+- **Tested (107 total):** meta exposed; points accrue to profile on a granting event; points
+  survive a loss; unlock spends + records; unaffordable unlock refused; **an unlock changes the next
+  run's pickable items**; **a profile flag set in one run is read by a later run's condition** (and
+  the callback event surfaces in run 2).
+
+**DoD met:** points accrue (incl. on loss); an unlock changes the next run's options; a profile flag
+set in one run is readable by a condition in a later run.
 
 ## Decisions / assumptions
 

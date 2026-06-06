@@ -21,6 +21,7 @@ final class EventEngine
         private readonly HintService $hints,
         private readonly OutcomeWeigher $weigher,
         private readonly EndingService $endings,
+        private readonly ProfileSync $profileSync,
     ) {
     }
 
@@ -107,11 +108,13 @@ final class EventEngine
             fn ($s) => ($s['key'] ?? null) !== $event->key,
         ));
 
-        // Persist.
+        // Persist run state, then flush profile-scoped state (cross-run memory
+        // + earned research points) back onto the profile.
         $state->applyTo($run);
         $run->syncRng($rng);
         $run->current_event_key = null;
         $run->save();
+        $this->profileSync->flush($run, $state);
 
         // A choice's effects may push the run into an ending (death or win).
         $ending = $this->endings->check($run);

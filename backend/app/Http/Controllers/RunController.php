@@ -30,23 +30,35 @@ class RunController extends Controller
             'seed' => ['nullable', 'integer'],
             'items' => ['nullable', 'array'],
             'items.*' => ['string'],
+            'handle' => ['nullable', 'string', 'max:120'],
         ]);
 
-        // The factory sanitises the pick (unknown keys dropped, capped at 5).
-        $run = $this->factory->create($data['seed'] ?? null, $data['items'] ?? []);
+        $profile = \App\Models\Profile::resolve($data['handle'] ?? 'anonymous');
+
+        // The factory sanitises the pick (unknown/locked-unowned dropped, capped).
+        $run = $this->factory->create($data['seed'] ?? null, $data['items'] ?? [], $profile);
 
         return response()->json($this->present($run), 201);
     }
 
     /**
-     * GET /api/items — the full item catalogue for the start-of-run pick
-     * screen, plus how many the player chooses.
+     * GET /api/items — the item catalogue for the start-of-run pick screen,
+     * filtered to what this profile may actually pick (locked items appear only
+     * once their unlock is owned).
      */
-    public function items(): JsonResponse
+    public function items(Request $request): JsonResponse
     {
+        $profile = \App\Models\Profile::resolve($request->query('handle', 'anonymous'));
+        $available = $this->factory->availableItemKeys($profile);
+
+        $items = collect(config('game.items'))
+            ->filter(fn ($i) => in_array($i['key'], $available, true))
+            ->values()
+            ->all();
+
         return response()->json([
             'pick' => (int) config('game.items_pick'),
-            'items' => config('game.items'),
+            'items' => $items,
         ]);
     }
 

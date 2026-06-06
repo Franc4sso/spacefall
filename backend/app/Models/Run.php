@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Game\SeededRng;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * @property int    $id
@@ -35,6 +36,7 @@ class Run extends Model
         'systems',
         'ending_key',
         'ending_type',
+        'profile_id',
     ];
 
     protected $casts = [
@@ -60,6 +62,11 @@ class Run extends Model
         'items' => '[]',
         'systems' => '{}',
     ];
+
+    public function profile(): BelongsTo
+    {
+        return $this->belongsTo(Profile::class);
+    }
 
     /**
      * A fresh RNG positioned at this run's current cursor. After drawing,

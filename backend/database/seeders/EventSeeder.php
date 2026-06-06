@@ -182,6 +182,60 @@ class EventSeeder extends Seeder
                 ],
             ],
 
+            // --- Cross-run memory (profile-scoped flags persist BETWEEN runs) -
+            [
+                'key' => 'reactor_gamble',
+                'title' => 'Sovraccarico',
+                'body' => 'Potresti spingere il reattore oltre i limiti. Una volta sola.',
+                'speaker' => null,
+                'base_weight' => 9,
+                'cooldown_days' => 99,
+                'is_filler' => false,
+                'requires' => ['day' => ['op' => '>=', 'value' => 5]],
+                'choices' => [
+                    [
+                        'label' => 'Lo spingo al massimo',
+                        'hint' => 'irreversibile',
+                        'outcomes' => [
+                            ['weight' => 1, 'effects' => [
+                                ['resource' => 'power', 'delta' => 25],
+                                // PROFILE-scoped: this is remembered in FUTURE runs.
+                                ['set_flag' => 'blew_a_reactor', 'scope' => 'profile', 'value' => true],
+                            ], 'log' => 'Il reattore regge. Stavolta.'],
+                        ],
+                    ],
+                    [
+                        'label' => 'Troppo rischio',
+                        'hint' => null,
+                        'outcomes' => [
+                            ['weight' => 1, 'effects' => [['resource' => 'morale', 'delta' => 2]],
+                                'log' => 'Lasci stare. Per ora.'],
+                        ],
+                    ],
+                ],
+            ],
+            [
+                // Appears only in a run AFTER one where you blew a reactor.
+                'key' => 'old_scorch',
+                'title' => 'Bruciature familiari',
+                'body' => 'Le pareti portano i segni di un reattore spinto troppo. Sai com\'è andata.',
+                'speaker' => null,
+                'base_weight' => 12,
+                'cooldown_days' => 0,
+                'is_filler' => false,
+                'requires' => ['flag' => 'blew_a_reactor', 'scope' => 'profile', 'is' => true],
+                'choices' => [
+                    [
+                        'label' => 'Stavolta più cauto',
+                        'hint' => null,
+                        'outcomes' => [
+                            ['weight' => 1, 'effects' => [['resource' => 'morale', 'delta' => 3]],
+                                'log' => 'La memoria di ieri ti tiene le mani ferme.'],
+                        ],
+                    ],
+                ],
+            ],
+
             // --- Win-enabling events (set the flags that gate win endings) --
             [
                 'key' => 'research_breakthrough',

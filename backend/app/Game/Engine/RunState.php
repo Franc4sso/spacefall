@@ -44,12 +44,19 @@ final class RunState
 
     public static function fromRun(Run $run): self
     {
+        // Profile-scoped flags are loaded from the linked profile so a
+        // condition with scope:profile sees what earlier runs left behind
+        // (cross-run memory). They are flushed back by ProfileSync after a
+        // choice resolves.
+        $profileFlags = $run->profile?->flags ?? [];
+
         return new self(
             day: $run->day,
             resources: $run->resources ?? [],
             flags: $run->flags ?? [],
             recentEvents: $run->recent_events ?? [],
             scheduledEvents: $run->scheduled_events ?? [],
+            profileFlags: $profileFlags,
             characters: $run->characters ?? [],
             relationships: $run->relationships ?? [],
             items: $run->items ?? [],

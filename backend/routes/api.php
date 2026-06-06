@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\MetaController;
 use App\Http\Controllers\RunController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -12,6 +13,9 @@ Route::get('/health', function () {
 });
 
 Route::get('/items', [RunController::class, 'items']);
+
+Route::get('/meta', [MetaController::class, 'show']);
+Route::post('/meta/unlock', [MetaController::class, 'unlock']);
 
 Route::post('/runs', [RunController::class, 'store']);
 Route::get('/runs/{run}', [RunController::class, 'show']);
