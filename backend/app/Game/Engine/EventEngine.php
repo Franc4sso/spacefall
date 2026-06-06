@@ -108,6 +108,19 @@ final class EventEngine
             fn ($s) => ($s['key'] ?? null) !== $event->key,
         ));
 
+        // Append this choice to the rolling log (capped at 30 entries).
+        $entry = [
+            'day'          => $state->day,
+            'event_key'    => $event->key,
+            'choice_index' => $choiceIndex,
+            'choice_label' => $choice['label'] ?? '',
+            'tags'         => $choice['tags'] ?? [],
+        ];
+        $state->choiceLog = array_slice(
+            array_merge($state->choiceLog, [$entry]),
+            -30
+        );
+
         // Persist run state, then flush profile-scoped state (cross-run memory
         // + earned research points) back onto the profile.
         $state->applyTo($run);

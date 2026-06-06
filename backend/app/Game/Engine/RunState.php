@@ -27,6 +27,7 @@ final class RunState
      * @param  list<string>          $items             item keys (Phase 4)
      * @param  array<string,array<string,mixed>> $systems  system => fields (Phase 5)
      * @param  list<array{a:string,b:string,value:int}> $relationships (Phase 3)
+     * @param  list<array<string,mixed>> $choiceLog      ordered log of resolved choices (capped at 30)
      */
     public function __construct(
         public int $day,
@@ -39,6 +40,7 @@ final class RunState
         public array $items = [],
         public array $systems = [],
         public array $relationships = [],
+        public array $choiceLog = [],
     ) {
     }
 
@@ -61,6 +63,7 @@ final class RunState
             relationships: $run->relationships ?? [],
             items: $run->items ?? [],
             systems: $run->systems ?? [],
+            choiceLog: $run->choice_log ?? [],
         );
     }
 
@@ -77,5 +80,6 @@ final class RunState
         $run->characters = $this->characters;
         $run->relationships = $this->relationships;
         $run->systems = $this->systems;
+        $run->choice_log = $this->choiceLog;
     }
 }
