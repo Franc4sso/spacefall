@@ -1,39 +1,54 @@
-import { useEffect, useState } from "react";
-import { fetchHealth } from "./api";
+import { useCallback, useState } from "react";
+import { GameOverScreen } from "./components/GameOverScreen";
+import { GameScreen } from "./components/GameScreen";
+import { StartScreen } from "./components/StartScreen";
+import { useRun } from "./useRun";
 
-type Status = "loading" | "online" | "offline";
+// One stable handle per browser → the profile that carries cross-run memory and
+// unlocks. No login (out of scope); a random handle persisted locally is enough.
+function useHandle(): string {
+  const [handle] = useState(() => {
+    const existing = localStorage.getItem("starfall_handle");
+    if (existing) return existing;
+    const fresh = "pilot-" + Math.random().toString(36).slice(2, 9);
+    localStorage.setItem("starfall_handle", fresh);
+    return fresh;
+  });
+  return handle;
+}
 
 export default function App() {
-  const [status, setStatus] = useState<Status>("loading");
-  const [service, setService] = useState<string>("");
+  const handle = useHandle();
+  const { run, phase, busy, error, begin, choose, reset } = useRun(handle);
+  const [lastLog, setLastLog] = useState<string | null>(null);
 
-  useEffect(() => {
-    let active = true;
-    fetchHealth()
-      .then((h) => {
-        if (!active) return;
-        setService(h.service);
-        setStatus("online");
-      })
-      .catch(() => {
-        if (active) setStatus("offline");
-      });
-    return () => {
-      active = false;
-    };
-  }, []);
+  const onChoose = useCallback(
+    async (index: number) => {
+      const log = await choose(index);
+      setLastLog(log);
+    },
+    [choose],
+  );
 
   return (
-    <main className="flex h-full flex-col items-center justify-center gap-4 p-8 text-center">
-      <h1 className="text-2xl tracking-widest text-phosphor">STARFALL STATION</h1>
-      <p className="text-sm text-phosphor-dim">// terminal di bordo</p>
-      <p data-testid="health" className="text-sm">
-        {status === "loading" && "Connessione al sistema…"}
-        {status === "online" && (
-          <span className="text-phosphor">SISTEMA ONLINE — {service}</span>
-        )}
-        {status === "offline" && <span className="text-alarm">SISTEMA OFFLINE</span>}
-      </p>
-    </main>
+    <div className="crt h-full">
+      {error && (
+        <div className="absolute left-1/2 top-3 z-50 -translate-x-1/2 rounded-sm border border-alarm px-3 py-1 text-xs text-alarm">
+          {error}
+        </div>
+      )}
+
+      {phase === "start" && (
+        <StartScreen handle={handle} busy={busy} onBegin={begin} />
+      )}
+
+      {phase === "playing" && run && (
+        <GameScreen run={run} busy={busy} lastLog={lastLog} onChoose={onChoose} />
+      )}
+
+      {phase === "ended" && run && (
+        <GameOverScreen ending={run.ending} day={run.day} onRestart={reset} />
+      )}
+    </div>
   );
 }

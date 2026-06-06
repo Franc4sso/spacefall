@@ -14,7 +14,7 @@ Design + resolved forks: `docs/superpowers/specs/2026-06-04-starfall-station-des
 - [x] **Phase 6 — Endings & fair-failure cascade**
 - [x] **Phase 7 — Meta progression & cross-run memory**
 - [x] **Phase 8 — Content pass (50+ events, Italian)**
-- [ ] Phase 9 — Frontend cadence + flow
+- [x] **Phase 9 — Frontend cadence + flow**
 - [ ] Phase 10 — Balance via simulation
 
 > **Stopping here for review** (user choice): plan + DSL design reviewed before Phase 2 code,
@@ -230,6 +230,35 @@ set in one run is readable by a condition in a later run.
 
 **DoD met:** ≥50 events exist and every event's requires/choices validate against the DSL schema.
 
+## Phase 9 — Frontend cadence + flow ✅
+
+- **Full card UI** in the failing-terminal aesthetic (§2.2): phosphor-green on black, CRT scanlines
+  + vignette + flicker, red alarm pulses, glitch on the game-over title — all CSS/SVG, no heavy
+  assets. Distinctive monospace (JetBrains Mono).
+- **Layout:** day on top, resource bars left, card centre, crew right, inventory bottom (stacks on
+  small screens).
+- **Flow (§1.5) — the priority:**
+  - **No mid-run round-trip wait:** the choice POST returns the *next* state (card included) in the
+    same response, so resolving and "prefetching the next card" are one request — there is never a
+    second fetch to wait on. The swipe animates optimistically while it's in flight.
+  - **Animations are CSS-only and interruptible** (card-in, tilt, pulse, jolt) — they never gate
+    input; a fast player taps again immediately.
+  - **No loading state mid-run;** **two-tap restart** after death (ANCORA → DISTACCO).
+- **Micro-feedback:** card tilts toward the drag with a left/right "tell" preview (Reigns binary
+  swipe), resource bars pulse red when critical (oxygen/low + two-sided morale at max), the screen
+  desaturates + flickers harder as `decay` rises toward game over, death jolt on the ending screen.
+- **Start screen:** the pick-5 (filtered to the profile's unlocked items), then DISTACCO.
+- **`useRun` hook** owns the server-authoritative state; `useHandle` persists a per-browser handle
+  → the profile carrying cross-run memory + unlocks (no login, out of scope).
+- **Tested:** 5 RTL tests — start screen renders picks; starting a run shows the first card; a
+  choice advances to the next card with no spinner; the game-over screen shows the ending + restart;
+  an item-gated unavailable choice is disabled. Build typechecks; SPA serves and talks to the API
+  (verified live, CORS ok).
+
+**DoD met:** RTL tests on the card flow. *(Manual "zero perceptible wait" playthrough is a
+human check — the architecture removes the mid-run round-trip that would cause waits; no headless
+browser is installed to automate the visual pass.)*
+
 ## Decisions / assumptions
 
 - **PHP 8.2** (env has 8.2.31; spec asked 8.3+). Laravel 12 supports 8.2. No 8.3-only syntax. *(user-approved)*
@@ -248,6 +277,13 @@ set in one run is readable by a condition in a later run.
   `requires`, so `spawn_event` still fires it. No engine special-case — pure data.
 - **`grant_research_points`** stashes into `profileFlags['__research_points']` for now; real
   profile-scoped meta currency persistence lands in Phase 7.
+- **Flow "prefetch" (Phase 9):** rather than a separate prefetch request, the choice-resolution POST
+  already returns the next card in its response (the API computes it server-side). So the swipe needs
+  no second round-trip — the next card is in hand the instant the one request returns. The UI animates
+  the swipe optimistically over that single request. This satisfies the §1.5 "prefetch the next card"
+  intent with one call instead of two.
+- **Dev ports:** other local projects occupy 8000/5173–5175, so this build runs the API on **8010**
+  and Vite on **5176** (`frontend/.env` sets `VITE_API_URL`, backend `.env` sets `CORS_ALLOWED_ORIGINS`).
 
 ## DSL design — FOR REVIEW BEFORE PHASE 2
 

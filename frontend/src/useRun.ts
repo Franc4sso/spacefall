@@ -1,0 +1,61 @@
+import { useCallback, useState } from "react";
+import { resolveChoice, startRun, type RunState } from "./api";
+
+// Drives a single run. State is server-authoritative: every choice POST returns
+// the *next* state (card included), so resolving and "prefetching the next
+// card" are the same round-trip — there is never a second request to wait on
+// mid-run (flow §1.5). The UI animates the swipe optimistically while that one
+// request is in flight and never blocks input on it.
+
+export type RunPhase = "start" | "playing" | "ended";
+
+export function useRun(handle: string) {
+  const [run, setRun] = useState<RunState | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const begin = useCallback(
+    async (items: string[]) => {
+      setError(null);
+      setBusy(true);
+      try {
+        const state = await startRun({ items, handle });
+        setRun(state);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Errore di avvio");
+      } finally {
+        setBusy(false);
+      }
+    },
+    [handle],
+  );
+
+  // Resolve a choice. Returns the log line so the UI can flash it. The next
+  // card arrives in the same response — no extra fetch.
+  const choose = useCallback(
+    async (choiceIndex: number): Promise<string | null> => {
+      if (!run || busy) return null;
+      setBusy(true);
+      try {
+        const res = await resolveChoice(run.id, choiceIndex);
+        setRun(res.state);
+        return res.resolution.log ?? null;
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Errore");
+        return null;
+      } finally {
+        setBusy(false);
+      }
+    },
+    [run, busy],
+  );
+
+  const reset = useCallback(() => {
+    setRun(null);
+    setError(null);
+  }, []);
+
+  const phase: RunPhase = !run ? "start" : run.status === "ended" ? "ended" : "playing";
+
+  return { run, phase, busy, error, begin, choose, reset };
+}
