@@ -2,6 +2,8 @@
 
 namespace App\Game\Engine;
 
+use App\Game\Engine\EpithetEngine;
+use App\Game\Engine\TrustEngine;
 use App\Models\Event;
 use App\Models\Run;
 use RuntimeException;
@@ -22,6 +24,8 @@ final class EventEngine
         private readonly OutcomeWeigher $weigher,
         private readonly EndingService $endings,
         private readonly ProfileSync $profileSync,
+        private readonly EpithetEngine $epithet,
+        private readonly TrustEngine $trust,
     ) {
     }
 
@@ -39,6 +43,17 @@ final class EventEngine
         }
 
         $state = RunState::fromRun($run);
+
+        if (! $run->current_event_key && $this->trust->shouldMutiny($state)) {
+            $mutinyEvent = Event::where('key', $this->trust->mutinyEventKey())->first();
+            if ($mutinyEvent) {
+                // Reset trust to prevent infinite loop
+                $run->flags = array_merge($run->flags ?? [], ['crew_trust' => 25]);
+                $run->current_event_key = $mutinyEvent->key;
+                $run->save();
+                return ['event' => $mutinyEvent, 'choices' => $this->visibleChoices($mutinyEvent, $state)];
+            }
+        }
 
         $event = $run->current_event_key
             ? Event::where('key', $run->current_event_key)->first()
@@ -129,6 +144,15 @@ final class EventEngine
         $run->save();
         $this->profileSync->flush($run, $state);
 
+        // Sync epithet to profile
+        $epithet = $this->epithet->calculate($state);
+        if ($epithet !== null && $run->profile) {
+            $profileFlags = $run->profile->flags ?? [];
+            $profileFlags['epithet'] = $epithet;
+            $run->profile->flags = $profileFlags;
+            $run->profile->save();
+        }
+
         // A choice's effects may push the run into an ending (death or win).
         $ending = $this->endings->check($run);
 
@@ -145,19 +169,44 @@ final class EventEngine
     private function visibleChoices(Event $event, RunState $state): array
     {
         $speaker = $this->resolveSpeaker($event, $state);
+        $corrupted = $this->shouldCorruptHints($state, $speaker);
+        $choiceCount = count($event->choices);
 
         $out = [];
         foreach ($event->choices as $index => $choice) {
             $available = $this->evaluator->evaluate($choice['requires'] ?? null, $state);
+            $hint = $this->hints->hintFor($choice, $speaker);
+
+            // Corrupt hint: swap it with a random other choice's hint
+            if ($corrupted && $hint !== null && $choiceCount > 1) {
+                $otherIndices = array_filter(array_keys($event->choices), fn ($i) => $i !== $index);
+                if ($otherIndices !== []) {
+                    $otherKey = array_values($otherIndices)[($state->day + $index) % count($otherIndices)];
+                    $otherChoice = $event->choices[$otherKey];
+                    $hint = $this->hints->hintFor($otherChoice, $speaker) ?? $hint;
+                }
+            }
+
             $out[] = [
-                'index' => $index,
-                'label' => $choice['label'] ?? '',
-                // Trait-distorted hint: vague phrase coloured by the speaker.
-                'hint' => $this->hints->hintFor($choice, $speaker),
-                'available' => $available,
+                'index'        => $index,
+                'label'        => $choice['label'] ?? '',
+                'hint'         => $hint,
+                'available'    => $available,
+                'requires_item'=> $choice['requires_item'] ?? null,
             ];
         }
         return $out;
+    }
+
+    private function shouldCorruptHints(RunState $state, ?array $speaker): bool
+    {
+        $moraleLow = ($state->resources['morale'] ?? 100) < 25;
+        $speakerStressed = $speaker !== null && ($speaker['stress'] ?? 0) > 80;
+        if (! $moraleLow && ! $speakerStressed) {
+            return false;
+        }
+        // Deterministic: use day + speaker name length to avoid rand()
+        return (($state->day * 7 + strlen($speaker['name'] ?? '')) % 4) === 0;
     }
 
     /**
