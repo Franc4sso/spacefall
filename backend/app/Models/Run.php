@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property array       $recent_events
  * @property array       $scheduled_events
  * @property string|null $current_event_key
+ * @property array       $choice_log
  */
 class Run extends Model
 {
@@ -37,6 +38,7 @@ class Run extends Model
         'ending_key',
         'ending_type',
         'profile_id',
+        'choice_log',
     ];
 
     protected $casts = [
@@ -51,6 +53,7 @@ class Run extends Model
         'relationships' => 'array',
         'items' => 'array',
         'systems' => 'array',
+        'choice_log' => 'array',
     ];
 
     protected $attributes = [
@@ -61,6 +64,7 @@ class Run extends Model
         'relationships' => '[]',
         'items' => '[]',
         'systems' => '{}',
+        'choice_log' => '[]',
     ];
 
     public function profile(): BelongsTo
