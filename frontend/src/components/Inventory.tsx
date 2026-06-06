@@ -1,19 +1,31 @@
 import type { Item } from "../api";
 
-export function Inventory({ items }: { items: Item[]; relevantItems?: string[] }) {
+type Props = { items: Item[]; relevantItems?: string[] };
+
+export function Inventory({ items, relevantItems = [] }: Props) {
+  if (items.length === 0) return null;
+
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <span className="text-[10px] tracking-widest text-phosphor-dim">DOTAZIONE</span>
-      {items.length === 0 && <span className="text-[10px] text-phosphor-dim">— vuota —</span>}
-      {items.map((it) => (
-        <span
-          key={it.key}
-          title={it.description}
-          className="rounded-sm border border-phosphor-dim px-2 py-0.5 text-[11px]"
-        >
-          {it.name}
-        </span>
-      ))}
+    <div style={{
+      display: "flex", gap: 8, padding: "6px 16px",
+      flexWrap: "nowrap", overflowX: "auto", alignItems: "center",
+    }}>
+      <span style={{
+        fontSize: 10, letterSpacing: "0.14em",
+        color: "var(--color-text-muted)", flexShrink: 0,
+        fontFamily: "var(--font-mono)",
+      }}>
+        ZAINO
+      </span>
+      {items.map(item => {
+        const relevant = relevantItems.includes(item.key);
+        return (
+          <div key={item.key} className={`item-pill ${relevant ? "relevant" : ""}`} title={item.description}>
+            {relevant && <span style={{ marginRight: 4 }}>✦</span>}
+            {item.name}
+          </div>
+        );
+      })}
     </div>
   );
 }

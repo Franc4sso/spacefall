@@ -5,31 +5,30 @@ type Props = {
   card: Card;
   busy: boolean;
   onChoose: (index: number) => void;
-  onAdvance?: () => void;
-  relevantItems?: string[];
+  onAdvance: () => void;
+  relevantItems: string[];
 };
 
-// The decision card. Buttons are the reliable path (any choice count, keyboard-
-// accessible). On top of that, when a card is a binary choice we add the Reigns
-// drag-to-swipe "tell": the card tilts toward the side you're dragging and
-// previews which choice you're about to commit. Dragging never gates input —
-// you can also just tap a button. Pointer-based, no animation library, so it
-// stays light and interruptible (flow §1.5).
-export function CardView({ card, busy, onChoose, onAdvance: _onAdvance, relevantItems: _relevantItems }: Props) {
-  const available = card.choices.filter((c) => c.available);
+function artClass(key: string): string {
+  if (/crisis|breach|alarm|trap|mutiny|cascade|collapse/.test(key)) return "card-art-crisis";
+  if (/silent|quiet|moment|window|hum/.test(key)) return "card-art-silent";
+  if (/moral|dilemma|last_dose|log_falsif/.test(key)) return "card-art-moral";
+  if (/system|power|hull|life_support|repair/.test(key)) return "card-art-system";
+  if (/crew|doctor|engineer|pilot|ayaka|marco|char/.test(key)) return "card-art-character";
+  return "card-art-exploration";
+}
+
+export function CardView({ card, busy, onChoose, onAdvance, relevantItems }: Props) {
+  const available = card.choices.filter(c => c.available);
   const binary = available.length === 2;
+  const isSilent = card.choices.length === 0;
 
-  const [drag, setDrag] = useState(0); // px offset, only used in binary mode
+  const [drag, setDrag] = useState(0);
   const startX = useRef<number | null>(null);
-
-  // Map a positive drag (right) to the second available choice, negative to the
-  // first — Reigns convention. Threshold to commit.
-  const COMMIT = 90;
-  const rightChoice = available[1];
-  const leftChoice = available[0];
+  const COMMIT = 95;
 
   function onPointerDown(e: React.PointerEvent) {
-    if (!binary || busy) return;
+    if (!binary || busy || isSilent) return;
     startX.current = e.clientX;
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
   }
@@ -42,77 +41,141 @@ export function CardView({ card, busy, onChoose, onAdvance: _onAdvance, relevant
     const d = drag;
     startX.current = null;
     setDrag(0);
-    if (d >= COMMIT && rightChoice) onChoose(rightChoice.index);
-    else if (d <= -COMMIT && leftChoice) onChoose(leftChoice.index);
+    if (d >= COMMIT && available[1]) onChoose(available[1].index);
+    else if (d <= -COMMIT && available[0]) onChoose(available[0].index);
   }
 
-  const tilt = Math.max(-12, Math.min(12, drag / 8));
-  const tellSide = drag >= 40 ? "tell-right" : drag <= -40 ? "tell-left" : "";
+  const tilt = Math.max(-10, Math.min(10, drag / 10));
+  const tellSide = drag >= 50 ? "tell-right" : drag <= -50 ? "tell-left" : "";
+
+  if (isSilent) {
+    return <SilentCardInline card={card} onAdvance={onAdvance} />;
+  }
 
   return (
-    <div className="flex w-full max-w-md flex-col items-stretch">
+    <div style={{ width: "100%", maxWidth: 420, display: "flex", flexDirection: "column", gap: 10 }}>
       <div
         key={card.key}
         data-testid="card"
-        className={`card-shell card-enter relative rounded-md border border-phosphor-dim bg-phosphor-deep/40 p-5 ${tellSide}`}
+        className={`card-shell card-enter ${tellSide}`}
         style={{ transform: `translateX(${drag}px) rotate(${tilt}deg)` }}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
       >
-        {/* a small SVG console glyph — atmosphere, not a text box */}
-        <Glyph />
-        {card.speaker && (
-          <div className="mb-1 text-[11px] tracking-widest text-amber">
-            {card.speaker.toUpperCase()}
-          </div>
-        )}
-        <h2 className="text-lg leading-tight text-phosphor">{card.title}</h2>
-        <p className="mt-2 text-sm leading-snug text-phosphor/85">{card.body}</p>
+        {/* Art zone */}
+        <div className={`card-art ${artClass(card.key)}`}>
+          <div className="card-art-stars" />
+          {card.speaker && (
+            <div style={{
+              position: "absolute", bottom: 10, left: 14,
+              background: "rgba(0,0,0,0.65)", backdropFilter: "blur(4px)",
+              borderRadius: 6, padding: "3px 10px",
+              fontSize: 11, fontWeight: 700, letterSpacing: "0.12em",
+              color: "var(--color-cyan)",
+            }}>
+              {card.speaker.toUpperCase()}
+            </div>
+          )}
+          {binary && (
+            <div style={{
+              position: "absolute", bottom: 10, right: 14,
+              display: "flex", gap: 12, fontSize: 10,
+              color: "rgba(255,255,255,0.3)",
+              pointerEvents: "none",
+            }}>
+              <span style={drag <= -50 ? { color: "var(--color-red)" } : {}}>
+                ◄ {available[0]?.label}
+              </span>
+              <span style={drag >= 50 ? { color: "var(--color-cyan)" } : {}}>
+                {available[1]?.label} ►
+              </span>
+            </div>
+          )}
+        </div>
 
-        {/* drag hint for binary cards */}
-        {binary && (
-          <div className="pointer-events-none mt-3 flex justify-between text-[10px] text-phosphor-dim">
-            <span className={drag <= -40 ? "text-alarm" : ""}>‹ {leftChoice?.label}</span>
-            <span className={drag >= 40 ? "text-phosphor" : ""}>{rightChoice?.label} ›</span>
-          </div>
-        )}
+        {/* Text */}
+        <div style={{ padding: "14px 18px 18px" }}>
+          <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: "var(--color-text)", lineHeight: 1.3 }}>
+            {card.title}
+          </h2>
+          <p style={{ margin: "8px 0 0", fontSize: 14, lineHeight: 1.65, color: "rgba(232,244,253,0.82)" }}>
+            {card.body}
+          </p>
+        </div>
       </div>
 
-      <div className="mt-4 flex flex-col gap-2">
-        {card.choices.map((c) => (
-          <button
-            key={c.index}
-            data-testid={`choice-${c.index}`}
-            disabled={!c.available || busy}
-            onClick={() => onChoose(c.index)}
-            className="group flex items-center justify-between rounded-sm border border-phosphor-dim px-3 py-2 text-left text-sm transition-colors enabled:hover:bg-phosphor-deep disabled:cursor-not-allowed disabled:opacity-35"
-          >
-            <span>{c.label}</span>
-            {c.hint && <span className="ml-3 text-[10px] italic text-amber">{c.hint}</span>}
-          </button>
-        ))}
+      {/* Choices */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {card.choices.map(c => {
+          const itemGated = c.requires_item !== null;
+          const isRelevant = c.requires_item && relevantItems.includes(c.requires_item);
+          return (
+            <button
+              key={c.index}
+              data-testid={`choice-${c.index}`}
+              disabled={!c.available || busy}
+              onClick={() => onChoose(c.index)}
+              className={`choice-btn ${itemGated ? "item-gated" : ""}`}
+            >
+              <span>{c.label}</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                {itemGated && (
+                  <span style={{
+                    fontSize: 10, fontFamily: "var(--font-mono)",
+                    color: isRelevant ? "var(--color-gold)" : "var(--color-text-muted)",
+                  }}>
+                    ✦ {c.requires_item}
+                  </span>
+                )}
+                {c.hint && (
+                  <span style={{ fontSize: 11, fontStyle: "italic", color: "var(--color-text-dim)" }}>
+                    {c.hint}
+                  </span>
+                )}
+              </div>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
 }
 
-function Glyph() {
+function SilentCardInline({ card, onAdvance }: { card: Card; onAdvance: () => void }) {
+  const [progress, setProgress] = useState(0);
+  const started = useRef(false);
+
+  if (!started.current) {
+    started.current = true;
+    const start = performance.now();
+    const duration = 4000;
+    const tick = (now: number) => {
+      const pct = Math.min(100, ((now - start) / duration) * 100);
+      setProgress(pct);
+      if (pct < 100) requestAnimationFrame(tick);
+      else onAdvance();
+    };
+    requestAnimationFrame(tick);
+  }
+
   return (
-    <svg
-      className="absolute right-4 top-4 opacity-30"
-      width="34"
-      height="34"
-      viewBox="0 0 34 34"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.2"
-      aria-hidden
-    >
-      <circle cx="17" cy="17" r="14" />
-      <path d="M17 5 L17 17 L25 22" />
-      <path d="M3 17 L7 17 M27 17 L31 17" />
-    </svg>
+    <div className="card-shell card-enter fade-in-up" style={{ maxWidth: 420, width: "100%" }}>
+      <div className="card-art card-art-silent">
+        <div className="card-art-stars" />
+      </div>
+      <div style={{ padding: "14px 18px 18px" }}>
+        <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: "var(--color-text)", lineHeight: 1.3 }}>
+          {card.title}
+        </h2>
+        <p style={{ margin: "8px 0 16px", fontSize: 14, lineHeight: 1.65, color: "rgba(232,244,253,0.65)", fontStyle: "italic" }}>
+          {card.body}
+        </p>
+        <div className="bar-track" style={{ height: 2 }}>
+          <div className="silent-progress" style={{ width: `${progress}%` }} />
+        </div>
+      </div>
+    </div>
   );
 }
