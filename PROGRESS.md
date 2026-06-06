@@ -13,7 +13,7 @@ Design + resolved forks: `docs/superpowers/specs/2026-06-04-starfall-station-des
 - [x] **Phase 5 — Daily loop assembled + rationing**
 - [x] **Phase 6 — Endings & fair-failure cascade**
 - [x] **Phase 7 — Meta progression & cross-run memory**
-- [ ] Phase 8 — Content pass (50+ events, Italian)
+- [x] **Phase 8 — Content pass (50+ events, Italian)**
 - [ ] Phase 9 — Frontend cadence + flow
 - [ ] Phase 10 — Balance via simulation
 
@@ -209,6 +209,26 @@ distribution over many seeds.
 
 **DoD met:** points accrue (incl. on loss); an unlock changes the next run's options; a profile flag
 set in one run is readable by a condition in a later run.
+
+## Phase 8 — Content pass ✅
+
+- **53 events total** (47 themed + 6 filler). New `ContentEventSeeder` (~38 events) keeps the core
+  `EventSeeder` as the stable test fixture; both validated by `EventSchema` at seed time.
+- **Italian, Reigns × 60 Seconds voice:** short, dry, graspable in a couple of seconds. English
+  keys/flags throughout. Female-safe phrasing (no gender-agreement traps).
+- **Variety across every trigger family:** resource thresholds, system efficiency, items (open
+  routes), traits (`coward` freeze, `genius` idea), roles (doctor/engineer), relationship bands
+  (hatred sabotage, bond, tension), run-flag callbacks (promise → broken promise), **profile-flag
+  callbacks** (`blew_a_reactor` → déjà-vu across runs), and `spawn_event` consequence chains
+  (ignored creak → paratia cede; ignored life-support → aria viziata; sensor ghost → real threat).
+- Speakers (Anna/Bex/Cole) attached so computed hints are trait-distorted in play.
+- **Tested (114 total):** ≥50 events; filler pool present; **every event validates against the DSL
+  schema**; every event has non-empty Italian text + well-formed choices/outcomes; keys unique;
+  **the Selector never stalls against the full 53-event pool over 2000 random states**; coverage
+  guard asserts at least one event on each trigger surface (resource/system/item/relationship/
+  profile-flag/spawn).
+
+**DoD met:** ≥50 events exist and every event's requires/choices validate against the DSL schema.
 
 ## Decisions / assumptions
 
