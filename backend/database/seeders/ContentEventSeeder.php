@@ -463,13 +463,13 @@ class ContentEventSeeder extends Seeder
 
             $this->ev([
                 'key' => 'doctor_exhausted', 'title' => 'Il medico è a pezzi',
-                'body' => "Marco non dorme da tre giorni. Ti chiede un turno di riposo. Puoi permettertelo?",
+                'body' => "Bex non dorme da tre giorni. Ti chiede un turno di riposo. Puoi permettertelo?",
                 'requires' => ['has_role' => 'doctor'],
                 'base_weight' => 7, 'cooldown_days' => 999,
                 'choices' => [
-                    $this->one('Concedigli il riposo', [['character' => 'Marco', 'stress' => -25]], 'Marco si riposa. Ci vorrà un giorno.'),
+                    $this->one('Concedile il riposo', [['character' => 'Bex', 'stress' => -25]], 'Bex si riposa. Ci vorrà un giorno.'),
                     array_merge(
-                        $this->one('Non possiamo fermarci ora', [['character' => 'Marco', 'stress' => 20], ['spawn_event' => ['key' => 'patient_lost', 'in_days' => 4]]], 'Marco annuisce e torna al lavoro, silenzioso.'),
+                        $this->one('Non possiamo fermarci ora', [['character' => 'Bex', 'stress' => 20], ['spawn_event' => ['key' => 'patient_lost', 'in_days' => 4]]], 'Bex annuisce e torna al lavoro, silenziosa.'),
                         ['tags' => ['sacrifice_crew']]
                     ),
                 ],
@@ -477,11 +477,11 @@ class ContentEventSeeder extends Seeder
 
             $this->ev([
                 'key' => 'patient_lost', 'title' => 'Troppo tardi',
-                'body' => "Il paziente che Marco stava seguendo non ce l'ha fatta. Marco ti guarda. Non dice niente. Non deve.",
+                'body' => "Il paziente che Bex stava seguendo non ce l'ha fatta. Bex ti guarda. Non dice niente. Non deve.",
                 'base_weight' => 0, 'cooldown_days' => 999,
                 'choices' => [
                     $this->one('Prendi la responsabilità', [['resource' => 'morale', 'delta' => -8], ['modify_trust' => 10]], "L'equipaggio apprezza la tua onestà. Il peso rimane."),
-                    $this->one('Era inevitabile', [['resource' => 'morale', 'delta' => -20], ['modify_trust' => -15]], 'Marco si allontana. Qualcosa si è rotto.'),
+                    $this->one('Era inevitabile', [['resource' => 'morale', 'delta' => -20], ['modify_trust' => -15]], 'Bex si allontana. Qualcosa si è rotto.'),
                 ],
             ]),
 
@@ -556,8 +556,8 @@ class ContentEventSeeder extends Seeder
                 'base_weight' => 18, 'cooldown_days' => 999,
                 'choices' => [
                     array_merge(
-                        $this->one('Vai tu — tuta EVA nell\'inventario', [['resource' => 'hull', 'delta' => 30], ['character' => 'random', 'stress' => 15]], 'Esci. Fa freddo. La riparazione regge.', null, ['has_item' => 'eva_suit']),
-                        ['tags' => ['cautious'], 'requires_item' => 'eva_suit']
+                        $this->one('Vai tu — tuta EVA nell\'inventario', [['resource' => 'hull', 'delta' => 30], ['character' => 'random', 'stress' => 15]], 'Esci. Fa freddo. La riparazione regge.', null, ['has_item' => 'spacesuit']),
+                        ['tags' => ['cautious'], 'requires_item' => 'spacesuit']
                     ),
                     $this->one("Manda qualcuno dell'equipaggio", [['resource' => 'hull', 'delta' => 20], ['kill' => 'random']], 'Lo scafo regge. Qualcuno non torna.'),
                     $this->one('Sigilla il settore e abbandonalo', [['resource' => 'hull', 'delta' => -15], ['damage_system' => 'hull_integrity', 'amount' => 30]], 'Perdi il settore. Lo scafo perde stabilità strutturale.'),
@@ -572,7 +572,7 @@ class ContentEventSeeder extends Seeder
         return [
             $this->ev([
                 'key' => 'silent_window', 'title' => 'Una finestra nello spazio',
-                'body' => "Ayaka è ferma davanti al pannello di osservazione da venti minuti. Non si gira quando entri. Le stelle non rispondono, ma almeno non mentono.",
+                'body' => "Anna è ferma davanti al pannello di osservazione da venti minuti. Non si gira quando entri. Le stelle non rispondono, ma almeno non mentono.",
                 'is_filler' => true, 'base_weight' => 3, 'cooldown_days' => 8,
                 'choices' => [],
             ]),
@@ -592,7 +592,7 @@ class ContentEventSeeder extends Seeder
         return [
             $this->ev([
                 'key' => 'moral_last_dose', 'title' => "L'ultima dose",
-                'body' => "Ci sono due feriti. Una dose di antidolorifico. Marco ti guarda. Non è una decisione medica — è una decisione umana.",
+                'body' => "Ci sono due feriti. Una dose di antidolorifico. Bex ti guarda. Non è una decisione medica — è una decisione umana.",
                 'requires' => ['has_role' => 'doctor'],
                 'base_weight' => 6, 'cooldown_days' => 999,
                 'choices' => [
