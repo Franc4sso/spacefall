@@ -52,8 +52,9 @@ final class EventSchema
             }
         }
 
-        if (! is_array($event['choices']) || $event['choices'] === []) {
-            throw new InvalidArgumentException("Event {$key}: must have at least one choice.");
+        // Silent events (no choices) auto-advance in the frontend — allow empty array.
+        if (! is_array($event['choices'])) {
+            throw new InvalidArgumentException("Event {$key}: 'choices' must be an array.");
         }
 
         if (array_key_exists('requires', $event) && $event['requires'] !== null) {

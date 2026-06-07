@@ -42,8 +42,8 @@ it('every event has non-empty Italian text and well-formed choices', function ()
     Event::all()->each(function (Event $event) {
         expect(trim($event->title))->not->toBe('');
         expect(trim($event->body))->not->toBe('');
-        expect($event->choices)->not->toBeEmpty();
 
+        // Silent events have no choices and are auto-advanced by the frontend.
         foreach ($event->choices as $choice) {
             expect(trim($choice['label'] ?? ''))->not->toBe('');
             expect($choice['outcomes'] ?? [])->not->toBeEmpty();

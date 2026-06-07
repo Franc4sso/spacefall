@@ -71,6 +71,10 @@ class ContentEventSeeder extends Seeder
             $this->itemEvents(),
             $this->memoryEvents(),
             $this->fillerEvents(),
+            $this->dominoEvents(),
+            $this->trapEvents(),
+            $this->silentEvents(),
+            $this->moralEvents(),
         );
     }
 
@@ -424,6 +428,198 @@ class ContentEventSeeder extends Seeder
                 'choices' => [
                     $this->one('Onoro il ricordo', [['character' => 'all', 'stress' => -6], ['set_flag' => 'lost_one', 'scope' => 'profile', 'value' => true]], 'Un minuto di silenzio nel vuoto.'),
                     $this->one('Vado avanti, freddo', [['resource' => 'morale', 'delta' => -10]], 'Nessuno ti guarda allo stesso modo.'),
+                ],
+            ]),
+        ];
+    }
+
+    // ---- Domino chains (ignored choice → future crisis) ---------------------
+    private function dominoEvents(): array
+    {
+        return [
+            $this->ev([
+                'key' => 'fuel_leak_warning', 'title' => 'Perdita di carburante',
+                'body' => "Un sensore segnala una piccola perdita nel serbatoio principale. Niente di urgente, per ora.",
+                'base_weight' => 8, 'cooldown_days' => 999,
+                'choices' => [
+                    $this->one('Ripara subito', [['resource' => 'power', 'delta' => -12]], 'La perdita è sigillata. Costi energetici elevati.'),
+                    array_merge(
+                        $this->one('Monitora e basta', [['spawn_event' => ['key' => 'fuel_crisis', 'in_days' => 6]]], 'Segnato nel registro. Probabilmente si stabilizzerà.'),
+                        ['tags' => ['ignored_warning']]
+                    ),
+                ],
+            ]),
+
+            $this->ev([
+                'key' => 'fuel_crisis', 'title' => 'CRISI PROPULSORI',
+                'body' => "La piccola perdita che hai ignorato giorni fa non si è stabilizzata. Ora il sistema propulsivo sta cedendo. Non c'è via d'uscita pulita.",
+                'requires' => ['chosen_tag' => 'ignored_warning'],
+                'base_weight' => 0, 'cooldown_days' => 999,
+                'choices' => [
+                    $this->one('Sacrifica energia per stabilizzare', [['resource' => 'power', 'delta' => -30], ['damage_system' => 'power_grid', 'amount' => 20]], 'I propulsori reggono. Energia quasi esaurita.'),
+                    $this->one('Abbandona il settore propulsivo', [['damage_system' => 'hull_integrity', 'amount' => 25], ['resource' => 'hull', 'delta' => -20]], 'Settore abbandonato. Lo scafo ha subito danni strutturali.'),
+                ],
+            ]),
+
+            $this->ev([
+                'key' => 'doctor_exhausted', 'title' => 'Il medico è a pezzi',
+                'body' => "Marco non dorme da tre giorni. Ti chiede un turno di riposo. Puoi permettertelo?",
+                'requires' => ['has_role' => 'doctor'],
+                'base_weight' => 7, 'cooldown_days' => 999,
+                'choices' => [
+                    $this->one('Concedigli il riposo', [['character' => 'Marco', 'stress' => -25]], 'Marco si riposa. Ci vorrà un giorno.'),
+                    array_merge(
+                        $this->one('Non possiamo fermarci ora', [['character' => 'Marco', 'stress' => 20], ['spawn_event' => ['key' => 'patient_lost', 'in_days' => 4]]], 'Marco annuisce e torna al lavoro, silenzioso.'),
+                        ['tags' => ['sacrifice_crew']]
+                    ),
+                ],
+            ]),
+
+            $this->ev([
+                'key' => 'patient_lost', 'title' => 'Troppo tardi',
+                'body' => "Il paziente che Marco stava seguendo non ce l'ha fatta. Marco ti guarda. Non dice niente. Non deve.",
+                'base_weight' => 0, 'cooldown_days' => 999,
+                'choices' => [
+                    $this->one('Prendi la responsabilità', [['resource' => 'morale', 'delta' => -8], ['modify_trust' => 10]], "L'equipaggio apprezza la tua onestà. Il peso rimane."),
+                    $this->one('Era inevitabile', [['resource' => 'morale', 'delta' => -20], ['modify_trust' => -15]], 'Marco si allontana. Qualcosa si è rotto.'),
+                ],
+            ]),
+
+            $this->ev([
+                'key' => 'ration_cut_decision', 'title' => 'Le razioni non bastano',
+                'body' => "Il cibo sta finendo più in fretta del previsto. Devi decidere come gestire la distribuzione.",
+                'base_weight' => 9, 'cooldown_days' => 999,
+                'requires' => ['resource' => 'food', 'op' => '<', 'value' => 50],
+                'choices' => [
+                    $this->one('Taglio uguale per tutti', [['resource' => 'morale', 'delta' => -5]], 'Nessuno è contento. Almeno nessuno è trattato diversamente.'),
+                    array_merge(
+                        $this->one('Priorità a chi lavora di più', [['resource' => 'morale', 'delta' => -15], ['modify_trust' => -20], ['spawn_event' => ['key' => 'ration_revolt', 'in_days' => 5]]], "La decisione ha un senso logico. L'equipaggio non è d'accordo."),
+                        ['tags' => ['sacrifice_crew']]
+                    ),
+                ],
+            ]),
+
+            $this->ev([
+                'key' => 'ration_revolt', 'title' => 'La rivolta delle razioni',
+                'body' => "Quello che hai fatto con le razioni ha bollito sotto la superficie. Ora è esploso. Due membri si rifiutano di lavorare finché il sistema non cambia.",
+                'base_weight' => 0, 'cooldown_days' => 999,
+                'choices' => [
+                    $this->one('Cedi e ridistribuisci', [['resource' => 'food', 'delta' => -10], ['modify_trust' => 15], ['resource' => 'morale', 'delta' => 10]], 'La tensione cala. Il cibo diminuisce.'),
+                    $this->one('Mantieni la linea', [['modify_trust' => -25], ['resource' => 'morale', 'delta' => -15], ['set_flag' => 'mutiny_occurred', 'value' => true]], 'Silenzio. Del tipo sbagliato.'),
+                ],
+            ]),
+
+            $this->ev([
+                'key' => 'mutiny_trigger', 'title' => 'AMMUTINAMENTO',
+                'body' => "Hanno aspettato che dormissi. Quando ti svegli, i codici di accesso sono stati cambiati. L'equipaggio controlla la stazione. Tu no.",
+                'base_weight' => 0, 'cooldown_days' => 999,
+                'choices' => [
+                    // Survivable path: negotiate your way back, no mutiny flag.
+                    $this->one('Negozia', [['modify_trust' => 40], ['resource' => 'morale', 'delta' => -15]], 'Trovi un accordo duro. Il controllo è condiviso. La stazione respira ancora.'),
+                    // Lose path: surrender leads to mutiny_end.
+                    $this->one('Cedi il controllo', [['set_flag' => 'mutiny_occurred', 'value' => true], ['resource' => 'morale', 'delta' => 10]], 'Lasci andare. Forse è la cosa più saggia che hai fatto.'),
+                ],
+            ]),
+        ];
+    }
+
+    // ---- Trap events (both options costly) ----------------------------------
+    private function trapEvents(): array
+    {
+        return [
+            $this->ev([
+                'key' => 'trap_cascade_failure', 'title' => 'CASCATA DI GUASTI',
+                'body' => "Hai ignorato troppi segnali. Ora sono tutti diventati reali, contemporaneamente. Non c'è una buona opzione.",
+                'requires' => ['chosen_tag' => 'ignored_warning'],
+                'base_weight' => 15, 'cooldown_days' => 999,
+                'choices' => [
+                    $this->one('Salva il sistema vita', [['damage_system' => 'power_grid', 'amount' => 40], ['damage_system' => 'hull_integrity', 'amount' => 20]], 'Il supporto vitale regge. Tutto il resto no.'),
+                    $this->one('Salva la propulsione', [['damage_system' => 'life_support', 'amount' => 35], ['resource' => 'oxygen', 'delta' => -20]], "Potete muovervi. Ma l'aria si sta rarefacendo."),
+                ],
+            ]),
+
+            $this->ev([
+                'key' => 'trap_morale_collapse', 'title' => 'IL PUNTO DI ROTTURA',
+                'body' => "L'equipaggio ha raggiunto il limite. Non è rabbia, è vuoto. Devi scegliere come usare le ultime riserve di fiducia che hai.",
+                'requires' => ['resource' => 'morale', 'op' => '<', 'value' => 20],
+                'base_weight' => 20, 'cooldown_days' => 999,
+                'choices' => [
+                    $this->one('Consuma le ultime riserve di cibo per un pasto vero', [['resource' => 'food', 'delta' => -30], ['resource' => 'morale', 'delta' => 25]], 'Un pasto. Un momento di umanità. Costerà.'),
+                    $this->one('Discorso motivazionale — le parole costano poco', [['resource' => 'morale', 'delta' => 5], ['modify_trust' => -10]], 'Le parole cadono nel vuoto. Sanno che non credi nemmeno tu.'),
+                ],
+            ]),
+
+            $this->ev([
+                'key' => 'trap_hull_critical', 'title' => 'LO SCAFO STA CEDENDO',
+                'body' => "Una breccia nel settore 7. Puoi tappare il buco, ma qualcuno deve tenere in posizione il pannello dall'esterno, in tuta EVA, mentre lo scafo vibra.",
+                'requires' => ['resource' => 'hull', 'op' => '<', 'value' => 25],
+                'base_weight' => 18, 'cooldown_days' => 999,
+                'choices' => [
+                    array_merge(
+                        $this->one('Vai tu — tuta EVA nell\'inventario', [['resource' => 'hull', 'delta' => 30], ['character' => 'random', 'stress' => 15]], 'Esci. Fa freddo. La riparazione regge.', null, ['has_item' => 'eva_suit']),
+                        ['tags' => ['cautious'], 'requires_item' => 'eva_suit']
+                    ),
+                    $this->one("Manda qualcuno dell'equipaggio", [['resource' => 'hull', 'delta' => 20], ['kill' => 'random']], 'Lo scafo regge. Qualcuno non torna.'),
+                    $this->one('Sigilla il settore e abbandonalo', [['resource' => 'hull', 'delta' => -15], ['damage_system' => 'hull_integrity', 'amount' => 30]], 'Perdi il settore. Lo scafo perde stabilità strutturale.'),
+                ],
+            ]),
+        ];
+    }
+
+    // ---- Silent cards (narrative-only, auto-advance) ------------------------
+    private function silentEvents(): array
+    {
+        return [
+            $this->ev([
+                'key' => 'silent_window', 'title' => 'Una finestra nello spazio',
+                'body' => "Ayaka è ferma davanti al pannello di osservazione da venti minuti. Non si gira quando entri. Le stelle non rispondono, ma almeno non mentono.",
+                'is_filler' => true, 'base_weight' => 3, 'cooldown_days' => 8,
+                'choices' => [],
+            ]),
+
+            $this->ev([
+                'key' => 'silent_engine_hum', 'title' => 'Il ronzio dei motori',
+                'body' => "Di notte la stazione ha un suono diverso. Non sai se è rassicurante o inquietante. Hai smesso di interrogarti su queste cose.",
+                'is_filler' => true, 'base_weight' => 3, 'cooldown_days' => 10,
+                'choices' => [],
+            ]),
+        ];
+    }
+
+    // ---- Moral dilemmas (conflicting values, no clean answer) ---------------
+    private function moralEvents(): array
+    {
+        return [
+            $this->ev([
+                'key' => 'moral_last_dose', 'title' => "L'ultima dose",
+                'body' => "Ci sono due feriti. Una dose di antidolorifico. Marco ti guarda. Non è una decisione medica — è una decisione umana.",
+                'requires' => ['has_role' => 'doctor'],
+                'base_weight' => 6, 'cooldown_days' => 999,
+                'choices' => [
+                    array_merge(
+                        $this->one('A chi ha più probabilità di sopravvivere', [['character' => 'random', 'stress' => 10]], 'Una scelta razionale. Difficile da guardare in faccia.'),
+                        ['tags' => ['il_freddo']]
+                    ),
+                    array_merge(
+                        $this->one('A chi soffre di più', [['resource' => 'morale', 'delta' => 8]], 'Non è efficiente. Ma è giusto.'),
+                        ['tags' => ['generous']]
+                    ),
+                ],
+            ]),
+
+            $this->ev([
+                'key' => 'moral_log_falsification', 'title' => 'Il registro dei danni',
+                'body' => "Il rapporto ufficiale sui danni allo scafo deve essere inviato. La verità è molto peggio di quello che puoi ammettere. Puoi falsificare i dati.",
+                'base_weight' => 5, 'cooldown_days' => 999,
+                'choices' => [
+                    array_merge(
+                        $this->one('Invia i dati reali', [['resource' => 'morale', 'delta' => 5], ['modify_trust' => 10]], 'La verità è trasmessa. Qualcuno da qualche parte lo saprà.'),
+                        ['tags' => ['honest']]
+                    ),
+                    array_merge(
+                        $this->one('Minimizza i danni nel rapporto', [['set_flag' => 'log_falsified', 'value' => true]], 'Il messaggio parte. Nessuno fa domande. Per ora.'),
+                        ['tags' => ['lone_decision']]
+                    ),
                 ],
             ]),
         ];
