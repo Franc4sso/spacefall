@@ -127,7 +127,7 @@ final class EffectApplier
             $spec = $effect['modify_standing'];
             $key = 'standing_' . strtolower((string) ($spec['who'] ?? ''));
             $current = (int) ($state->flags[$key] ?? 0);
-            $state->flags[$key] = max(-100, min(100, $current + (int) ($spec['delta'] ?? 0)));
+            $state->flags[$key] = $this->clampSigned($current + (int) ($spec['delta'] ?? 0), 100);
             return;
         }
 
