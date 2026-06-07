@@ -32,7 +32,7 @@ return [
         // can bottom out before the player has had real decisions about it).
         // Tuned via the simulation harness (Phase 10) to a 30–60-day band.
         'oxygen' => ['max' => 100, 'start' => 100, 'daily' => 3, 'two_sided' => false],
-        'food'   => ['max' => 100, 'start' => 100, 'daily' => 4, 'two_sided' => false],
+        'food'   => ['max' => 100, 'start' => 100, 'daily' => 1, 'two_sided' => false],
         'power'  => ['max' => 100, 'start' => 95,  'daily' => 3, 'two_sided' => false],
         'morale' => ['max' => 100, 'start' => 65,  'daily' => 2, 'two_sided' => true],
         'hull'   => ['max' => 100, 'start' => 100, 'daily' => 1, 'two_sided' => false],
@@ -88,11 +88,16 @@ return [
      | suite stays green; Task 9 raises it to the tuned value.
      */
     'hunger' => [
-        'daily_rise' => 0,
+        'daily_rise' => 8,
         'starve_at' => 100,
         'stress_bands' => [
             ['at_or_above' => 70, 'stress' => 8],
             ['at_or_above' => 40, 'stress' => 4],
+        ],
+        // Crossing UP into a band schedules its event next day (forced, jumps
+        // the queue) so the meal decision reliably surfaces at the inflection.
+        'spawn_bands' => [
+            ['at_or_above' => 30, 'spawn' => 'food_ration'],
         ],
     ],
 

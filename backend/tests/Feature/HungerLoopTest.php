@@ -13,6 +13,9 @@ beforeEach(function () {
             ['at_or_above' => 70, 'stress' => 8],
             ['at_or_above' => 40, 'stress' => 4],
         ],
+        'game.hunger.spawn_bands' => [
+            ['at_or_above' => 30, 'spawn' => 'food_ration'],
+        ],
     ]);
 });
 
@@ -47,4 +50,33 @@ it('kills a survivor who reaches the starvation threshold', function () {
     expect($fresh->characters[0]['alive'])->toBeFalse(); // 95 + 8 >= 100 -> dies
     expect($fresh->characters[1]['alive'])->toBeTrue();
     expect($fresh->flags['died_of_hunger'] ?? false)->toBeTrue();
+});
+
+it('schedules the meal decision when the crew crosses into the hunger band', function () {
+    $run = Run::factory()->create([
+        'day' => 1,
+        'characters' => [
+            ['name' => 'Anna', 'role' => 'engineer', 'traits' => [], 'stress' => 0, 'hunger' => 25, 'alive' => true],
+        ],
+    ]);
+
+    app(DayProcessor::class)->advance($run); // 25 + 8 = 33 >= 30 -> crosses into the band
+
+    $fresh = $run->fresh();
+    expect($fresh->characters[0]['hunger_band'])->toBe(1);
+    expect(collect($fresh->scheduled_events)->pluck('key'))->toContain('food_ration');
+});
+
+it('does not re-schedule the meal while staying within the same band', function () {
+    $run = Run::factory()->create([
+        'day' => 1,
+        'characters' => [
+            ['name' => 'Anna', 'role' => 'engineer', 'traits' => [], 'stress' => 0, 'hunger' => 35, 'hunger_band' => 1, 'alive' => true],
+        ],
+    ]);
+
+    app(DayProcessor::class)->advance($run); // 35 + 8 = 43, still band 1 -> no new schedule
+
+    $fresh = $run->fresh();
+    expect(collect($fresh->scheduled_events)->pluck('key'))->not->toContain('food_ration');
 });

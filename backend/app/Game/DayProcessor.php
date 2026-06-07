@@ -57,10 +57,11 @@ final class DayProcessor
         // 3. Hardship stress from scarce resources.
         $characters = $this->applyHardship($characters, $resources);
 
-        // 3b. Hunger: rises daily, inflicts stress above thresholds, and kills
-        //     at the starvation point. A slow, visible spiral — the player has
-        //     seen it climbing for days and could have fed the crew.
-        [$characters, $hungerDeath] = $this->applyHunger($characters);
+        // 3b. Hunger: rises daily, inflicts stress above thresholds, schedules
+        //     the meal decision when the crew crosses into a hunger band (so it
+        //     reliably surfaces instead of drowning in the event pool), and
+        //     kills at the starvation point. A slow, visible spiral.
+        [$characters, $scheduled, $hungerDeath] = $this->applyHunger($characters, $scheduled, $run->day);
 
         // 4. Stress-band self-initiated behaviour.
         [$characters, $scheduled] = $this->processStress($characters, $scheduled, $run->day);
@@ -118,14 +119,16 @@ final class DayProcessor
      * updated roster and whether anyone starved (for the witness flag).
      *
      * @param  list<array<string,mixed>>  $characters
-     * @return array{0: list<array<string,mixed>>, 1: bool}
+     * @param  list<array{key:string,fire_on_day:int}>  $scheduled
+     * @return array{0: list<array<string,mixed>>, 1: list<array{key:string,fire_on_day:int}>, 2: bool}
      */
-    private function applyHunger(array $characters): array
+    private function applyHunger(array $characters, array $scheduled, int $day): array
     {
         $cfg = config('game.hunger');
         $rise = (int) ($cfg['daily_rise'] ?? 0);
         $starveAt = (int) ($cfg['starve_at'] ?? 100);
         $bands = $cfg['stress_bands'] ?? [];
+        $spawnBands = $cfg['spawn_bands'] ?? [];
         $someoneStarved = false;
 
         foreach ($characters as $i => $c) {
@@ -141,6 +144,23 @@ final class DayProcessor
                 continue;
             }
 
+            // Crossing UP into a hunger band schedules its event (the meal
+            // decision), so it surfaces reliably at the inflection rather than
+            // via weighted luck. Eating drops hunger, the band resets, and the
+            // next climb re-schedules it — a recurring survival beat.
+            $newBand = 0;
+            $spawnKey = null;
+            foreach ($spawnBands as $bi => $sb) {
+                if ($hunger >= ($sb['at_or_above'] ?? 0)) {
+                    $newBand = $bi + 1;
+                    $spawnKey = $sb['spawn'] ?? null;
+                }
+            }
+            if ($newBand > (int) ($c['hunger_band'] ?? 0) && $spawnKey !== null) {
+                $scheduled[] = ['key' => $spawnKey, 'fire_on_day' => $day + 1];
+            }
+            $characters[$i]['hunger_band'] = $newBand;
+
             // Highest matching stress band applies.
             $add = 0;
             foreach ($bands as $band) {
@@ -153,7 +173,7 @@ final class DayProcessor
             }
         }
 
-        return [$characters, $someoneStarved];
+        return [$characters, $scheduled, $someoneStarved];
     }
 
     /**

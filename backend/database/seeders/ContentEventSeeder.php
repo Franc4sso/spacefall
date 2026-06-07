@@ -1068,14 +1068,15 @@ class ContentEventSeeder extends Seeder
             $this->ev([
                 'key' => 'food_ration', 'title' => 'Il pasto', 'speaker' => 'Bex',
                 'body' => "Il cibo cala e gli stomaci brontolano. Come lo distribuisci stasera?",
-                'requires' => ['all' => [
-                    ['resource' => 'food', 'op' => '<', 'value' => 40],
-                    ['crew_hunger' => ['op' => '>=', 'value' => 25]],
-                ]],
-                'base_weight' => 7, 'cooldown_days' => 2,
-                'weight_modifiers' => [
-                    ['when' => ['resource' => 'food', 'op' => '<', 'value' => 20], 'factor' => 2.5],
-                ],
+                // Fires whenever the crew is hungry, at any food level — you can
+                // always choose to eat (spending the larder). When food runs
+                // scarce the triage/sacrifice cards (gated on low food, higher
+                // weight) take over for the hard choices.
+                // Surfaced reliably by hunger spawn_bands (DayProcessor schedules
+                // it when the crew crosses into the hunger band). Modest pool
+                // weight + short cooldown; the scheduling carries the cadence.
+                'requires' => ['crew_hunger' => ['op' => '>=', 'value' => 25]],
+                'base_weight' => 8, 'cooldown_days' => 1,
                 'choices' => [
                     $this->one('Razione piena per tutti', [['resource' => 'food', 'delta' => -16], ['character' => 'all', 'hunger' => -28], ['resource' => 'morale', 'delta' => 5]], 'Stomaci pieni, dispensa più leggera.'),
                     $this->one('Mezza razione', [['resource' => 'food', 'delta' => -7], ['character' => 'all', 'hunger' => -12], ['character' => 'all', 'stress' => 4]], 'Nessuno è sazio, ma il cibo dura.'),
