@@ -19,7 +19,7 @@ function useHandle(): string {
 
 export default function App() {
   const handle = useHandle();
-  const { run, phase, busy, error, begin, choose, reset } = useRun(handle);
+  const { run, phase, busy, error, begin, choose, advance, reset } = useRun(handle);
   const [lastLog, setLastLog] = useState<string | null>(null);
 
   const onChoose = useCallback(
@@ -31,9 +31,14 @@ export default function App() {
   );
 
   return (
-    <div className="crt h-full">
+    <div style={{ height: "100%", background: "var(--color-bg)", position: "relative" }}>
       {error && (
-        <div className="absolute left-1/2 top-3 z-50 -translate-x-1/2 rounded-sm border border-alarm px-3 py-1 text-xs text-alarm">
+        <div style={{
+          position: "absolute", top: 12, left: "50%", transform: "translateX(-50%)",
+          zIndex: 50, border: "1px solid var(--color-red)", borderRadius: 6,
+          padding: "4px 12px", fontSize: 12, color: "var(--color-red)",
+          background: "var(--color-surface)",
+        }}>
           {error}
         </div>
       )}
@@ -48,7 +53,7 @@ export default function App() {
           busy={busy}
           lastLog={lastLog}
           onChoose={onChoose}
-          onAdvance={() => {}} // placeholder until Task 16
+          onAdvance={advance}
         />
       )}
 

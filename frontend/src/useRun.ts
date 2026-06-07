@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { resolveChoice, startRun, type RunState } from "./api";
+import { advanceRun, resolveChoice, startRun, type RunState } from "./api";
 
 // Drives a single run. State is server-authoritative: every choice POST returns
 // the *next* state (card included), so resolving and "prefetching the next
@@ -50,6 +50,19 @@ export function useRun(handle: string) {
     [run, busy],
   );
 
+  const advance = useCallback(async () => {
+    if (!run || busy) return;
+    setBusy(true);
+    try {
+      const state = await advanceRun(run.id);
+      setRun(state);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Errore");
+    } finally {
+      setBusy(false);
+    }
+  }, [run, busy]);
+
   const reset = useCallback(() => {
     setRun(null);
     setError(null);
@@ -57,5 +70,5 @@ export function useRun(handle: string) {
 
   const phase: RunPhase = !run ? "start" : run.status === "ended" ? "ended" : "playing";
 
-  return { run, phase, busy, error, begin, choose, reset };
+  return { run, phase, busy, error, begin, choose, advance, reset };
 }

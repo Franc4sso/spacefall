@@ -117,3 +117,9 @@ export function resolveChoice(id: number, choice: number): Promise<Resolution> {
     body: JSON.stringify({ choice }),
   }).then((r) => json<Resolution>(r));
 }
+
+export function advanceRun(id: number): Promise<RunState> {
+  return fetch(`${BASE}/runs/${id}/advance`, { method: "POST", headers }).then(
+    (r) => json<RunState>(r),
+  );
+}
