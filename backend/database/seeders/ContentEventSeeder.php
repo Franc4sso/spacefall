@@ -81,6 +81,7 @@ class ContentEventSeeder extends Seeder
             $this->crosstalkEvents(),
             $this->dilemmaEvents(),
             $this->hungerOpportunityEvents(),
+            $this->hungerRationEvents(),
         );
     }
 
@@ -1053,6 +1054,52 @@ class ContentEventSeeder extends Seeder
                 'choices' => [
                     $this->one('Apro le scorte', [['resource' => 'food', 'delta' => 40], ['character' => 'all', 'hunger' => -25], ['consume_item' => 'rations']], 'Stomaci pieni, ultimo cuscinetto bruciato.'),
                     $this->one('Non ancora', [['character' => 'all', 'stress' => 4]], 'Le tieni. Stringi i denti un altro po\'.'),
+                ],
+            ]),
+        ];
+    }
+
+    // ---- Fame: razionamento e triage (chi mangia) --------------------------
+    private function hungerRationEvents(): array
+    {
+        return [
+            // Razionamento: come distribuisci quel che c'è.
+            $this->ev([
+                'key' => 'food_ration', 'title' => 'Il pasto', 'speaker' => 'Bex',
+                'body' => "Il cibo cala e gli stomaci brontolano. Come lo distribuisci stasera?",
+                'requires' => ['all' => [
+                    ['resource' => 'food', 'op' => '<', 'value' => 40],
+                    ['crew_hunger' => ['op' => '>=', 'value' => 25]],
+                ]],
+                'base_weight' => 7, 'cooldown_days' => 2,
+                'weight_modifiers' => [
+                    ['when' => ['resource' => 'food', 'op' => '<', 'value' => 20], 'factor' => 2.5],
+                ],
+                'choices' => [
+                    $this->one('Razione piena per tutti', [['resource' => 'food', 'delta' => -16], ['character' => 'all', 'hunger' => -28], ['resource' => 'morale', 'delta' => 5]], 'Stomaci pieni, dispensa più leggera.'),
+                    $this->one('Mezza razione', [['resource' => 'food', 'delta' => -7], ['character' => 'all', 'hunger' => -12], ['character' => 'all', 'stress' => 4]], 'Nessuno è sazio, ma il cibo dura.'),
+                    array_merge(
+                        $this->one('Si salta il pasto stasera', [['character' => 'all', 'stress' => 10], ['resource' => 'morale', 'delta' => -6]], 'Pance vuote. La dispensa resta intatta — per ora.'),
+                        ['tags' => ['sacrifice_crew']]
+                    ),
+                ],
+            ]),
+
+            // Triage: non c'è per tutti — chi mangia.
+            $this->ev([
+                'key' => 'food_triage', 'title' => 'Non basta per tutti', 'speaker' => 'Bex',
+                'body' => "Quel poco che resta sfama uno, non tutti. Bex aspetta che tu decida. Non ti invidia.",
+                'requires' => ['all' => [
+                    ['resource' => 'food', 'op' => '<', 'value' => 22],
+                    ['crew_hunger' => ['op' => '>=', 'value' => 45]],
+                ]],
+                'base_weight' => 10, 'cooldown_days' => 2,
+                'choices' => [
+                    array_merge(
+                        $this->one('Sfama chi ci tiene in vita (l\'ingegnere)', [['resource' => 'food', 'delta' => -8], ['character' => 'Anna', 'hunger' => -45], ['modify_standing' => ['who' => 'Anna', 'delta' => 8]]], 'Anna mangia. Gli altri guardano. I sistemi reggeranno.', requires: ['has_role' => 'engineer']),
+                        ['tags' => ['il_freddo']]
+                    ),
+                    $this->one('Sfama il più affamato', [['resource' => 'food', 'delta' => -8], ['character' => 'hungriest', 'hunger' => -45]], 'Dai da mangiare a chi sta peggio. È umano, se non efficiente.'),
                 ],
             ]),
         ];
