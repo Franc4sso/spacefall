@@ -26,6 +26,7 @@ final class EventEngine
         private readonly ProfileSync $profileSync,
         private readonly EpithetEngine $epithet,
         private readonly TrustEngine $trust,
+        private readonly ReactionDeriver $reactions,
     ) {
     }
 
@@ -116,6 +117,17 @@ final class EventEngine
 
         $this->applier->apply($outcome['effects'] ?? [], $state, $rng);
 
+        // Crew reactions (spoken memory). Explicit on the outcome, else derived.
+        $reactions = $this->reactions->derive($choice, $outcome, $state);
+        foreach ($reactions as $r) {
+            $delta = $this->reactions->standingDelta($r['tone'] ?? '');
+            if ($delta !== 0) {
+                $key = 'standing_' . strtolower((string) ($r['who'] ?? ''));
+                $current = (int) ($state->flags[$key] ?? 0);
+                $state->flags[$key] = max(-100, min(100, $current + $delta));
+            }
+        }
+
         // Record cooldown and consume a scheduled occurrence if present.
         $state->recentEvents[$event->key] = $state->day;
         $state->scheduledEvents = array_values(array_filter(
@@ -125,11 +137,12 @@ final class EventEngine
 
         // Append this choice to the rolling log (capped at 30 entries).
         $entry = [
-            'day'          => $state->day,
-            'event_key'    => $event->key,
-            'choice_index' => $choiceIndex,
-            'choice_label' => $choice['label'] ?? '',
-            'tags'         => $choice['tags'] ?? [],
+            'day'              => $state->day,
+            'event_key'        => $event->key,
+            'choice_index'     => $choiceIndex,
+            'choice_label'     => $choice['label'] ?? '',
+            'tags'             => $choice['tags'] ?? [],
+            'reaction_summary' => $this->reactions->summary($reactions),
         ];
         $state->choiceLog = array_slice(
             array_merge($state->choiceLog, [$entry]),
@@ -157,9 +170,10 @@ final class EventEngine
         $ending = $this->endings->check($run);
 
         return [
-            'log' => $outcome['log'] ?? '',
-            'effects' => $outcome['effects'] ?? [],
-            'ending' => $ending,
+            'log'       => $outcome['log'] ?? '',
+            'effects'   => $outcome['effects'] ?? [],
+            'ending'    => $ending,
+            'reactions' => $reactions,
         ];
     }
 
