@@ -9,12 +9,19 @@ export type Health = { status: string; service: string };
 
 export type ResourceMeta = { max: number; two_sided: boolean };
 
+export type Reaction = {
+  who: string;
+  tone: "anger" | "approve" | "complicated";
+  line: string;
+};
+
 export type ChoiceLogEntry = {
   day: number;
   event_key: string;
   choice_index: number;
   choice_label: string;
   tags: string[];
+  reaction_summary: string | null;
 };
 
 export type Choice = {
@@ -39,6 +46,7 @@ export type Character = {
   traits: string[];
   stress: number;
   alive: boolean;
+  standing: number;
 };
 
 export type Item = { key: string; name: string; description: string };
@@ -69,7 +77,7 @@ export type RunState = {
 };
 
 export type Resolution = {
-  resolution: { log: string; effects: unknown[]; ending: Ending };
+  resolution: { log: string; effects: unknown[]; ending: Ending; reactions: Reaction[] };
   state: RunState;
 };
 
