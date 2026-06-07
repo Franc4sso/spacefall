@@ -83,6 +83,7 @@ class ContentEventSeeder extends Seeder
             $this->hungerOpportunityEvents(),
             $this->hungerRationEvents(),
             $this->hungerCrisisEvents(),
+            $this->expeditionEvents(),
         );
     }
 
@@ -1150,6 +1151,53 @@ class ContentEventSeeder extends Seeder
                 'choices' => [
                     $this->one('Butto il marcio', [['resource' => 'food', 'delta' => -14]], 'Meno scorte, ma sane.'),
                     $this->gamble('Salviamo il salvabile', [['resource' => 'food', 'delta' => -6]], 'Recuperato quasi tutto.', [['resource' => 'food', 'delta' => -10], ['character' => 'random', 'stress' => 10]], 'Qualcuno ci rimette lo stomaco.', 5, 5, 'azzardo'),
+                ],
+            ]),
+        ];
+    }
+
+    // ---- Spedizioni: opportunità (scegli chi mandare) ----------------------
+    private function expeditionEvents(): array
+    {
+        // A send choice for one crew member, gated on that member being present
+        // (alive, not already away) via their role. Hint "molto pericoloso" so
+        // the cautious simulator prefers to stay home (expedition deaths are
+        // opt-in). The dispatch itself is handled by the `expedition` field.
+        $send = function (string $label, string $who, string $role, int $days, int $danger, string $log): array {
+            return [
+                'label' => $label, 'hint' => 'molto pericoloso', 'tags' => [],
+                'requires' => ['has_role' => $role],
+                'expedition' => ['who' => $who, 'days' => $days, 'danger' => $danger],
+                'outcomes' => [['weight' => 1, 'effects' => [], 'log' => $log]],
+            ];
+        };
+
+        $noOneAway = ['not' => ['flag' => 'expedition_active', 'is' => true]];
+
+        return [
+            $this->ev([
+                'key' => 'exp_wreck', 'title' => 'Relitto alla deriva', 'speaker' => 'Cole',
+                'body' => "Un relitto è agganciato allo scanner, due giorni di distanza. Segnali deboli, forse scorte. Forse altro. Mandi qualcuno a guardare?",
+                'requires' => ['all' => [['day' => ['op' => '>=', 'value' => 5]], $noOneAway]],
+                'base_weight' => 6, 'cooldown_days' => 8,
+                'choices' => [
+                    $send('Manda Anna', 'Anna', 'engineer', 2, 2, 'Anna si infila nella tuta e sparisce nel portello.'),
+                    $send('Manda Bex', 'Bex', 'doctor', 2, 2, 'Bex prende il kit ed esce. Il portello si chiude.'),
+                    $send('Manda Cole', 'Cole', 'pilot', 2, 2, 'Cole parte. «Torno prima di cena», dice, senza crederci.'),
+                    $this->one('Lascia perdere', [['resource' => 'morale', 'delta' => -2]], 'Il relitto si allontana nel buio. Forse era meglio così.'),
+                ],
+            ]),
+
+            $this->ev([
+                'key' => 'exp_distress', 'title' => 'Un segnale di soccorso', 'speaker' => 'Cole',
+                'body' => "Una voce spezzata nella radio, da un settore profondo. Tre giorni per arrivarci. Potrebbe esserci qualcuno vivo — o solo un'eco.",
+                'requires' => ['all' => [['day' => ['op' => '>=', 'value' => 9]], $noOneAway]],
+                'base_weight' => 5, 'cooldown_days' => 10,
+                'choices' => [
+                    $send('Manda Anna', 'Anna', 'engineer', 3, 3, 'Anna segue il segnale. Sparisce oltre la paratia.'),
+                    $send('Manda Bex', 'Bex', 'doctor', 3, 3, 'Bex va: se c\'è un ferito, serve lei.'),
+                    $send('Manda Cole', 'Cole', 'pilot', 3, 3, 'Cole conosce quelle rotte. Parte.'),
+                    $this->one('Lascia perdere', [['resource' => 'morale', 'delta' => -4]], 'Spegni la radio. La voce resta lì, da qualche parte.'),
                 ],
             ]),
         ];
