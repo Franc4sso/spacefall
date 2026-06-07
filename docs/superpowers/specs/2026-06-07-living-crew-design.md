@@ -28,6 +28,8 @@ Introduciamo un valore di **standing** per ciascun membro del roster, conservato
 
 Lo standing **non** è mostrato come numero. Determina il *tono* (quale ramo di hint/testo) e abilita/disabilita i volti dei fili.
 
+**Indicatore qualitativo sull'avatar (decisione UI).** Nel pannello equipaggio l'avatar mostra lo *stato del rapporto* in modo visibile ma non numerico: un sottile **anello colorato** attorno all'avatar + una **parola di umore** quando il pannello è espanso — `ostile · freddo · neutro · fiducia · legame`. Il colore si muove (rosso → grigio → ciano → oro-legame) al variare dello standing. Questo dà lo *stato stabile* del rapporto; le reazioni momentanee (§3.1, avatar che pulsa + riga parlata) danno il *movimento*. Insieme comunicano «ho appena fatto arrabbiare Bex» + «Bex ora è fredda con me». Mai una barra numerica da riempire: niente min-maxing, resta una persona.
+
 ### 1.2 Pressione (derivata, non memorizzata)
 
 La "pressione" su un personaggio non è un nuovo campo: è una **combinazione** valutata al volo dal `ConditionEvaluator` dentro i `requires`/`weight_modifiers` di un evento, usando segnali già esistenti:
@@ -82,7 +84,7 @@ Almeno **3 eventi** in cui un personaggio commenta un altro, gated sui flag-test
 
 ## 3. Reazioni visibili (UI)
 
-Far *vedere* che l'equipaggio reagisce, su due livelli leggibili a colpo d'occhio.
+Far *vedere* che l'equipaggio reagisce, su tre livelli leggibili a colpo d'occhio: l'**anello di standing** (stato stabile, §1.1), le **reazioni momentanee** sugli avatar (§3.1) e il **Diario** (§3.2).
 
 ### 3.1 Reazioni sugli avatar
 
