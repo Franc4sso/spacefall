@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Card } from "../api";
 
 type Props = {
@@ -49,7 +49,7 @@ export function CardView({ card, busy, onChoose, onAdvance, relevantItems }: Pro
   const tellSide = drag >= 50 ? "tell-right" : drag <= -50 ? "tell-left" : "";
 
   if (isSilent) {
-    return <SilentCardInline card={card} onAdvance={onAdvance} />;
+    return <SilentCardInline key={card.key} card={card} onAdvance={onAdvance} />;
   }
 
   return (
@@ -145,20 +145,25 @@ export function CardView({ card, busy, onChoose, onAdvance, relevantItems }: Pro
 
 function SilentCardInline({ card, onAdvance }: { card: Card; onAdvance: () => void }) {
   const [progress, setProgress] = useState(0);
-  const started = useRef(false);
+  const fired = useRef(false);
 
-  if (!started.current) {
-    started.current = true;
+  useEffect(() => {
     const start = performance.now();
     const duration = 4000;
-    const tick = (now: number) => {
+    let raf = requestAnimationFrame(function tick(now: number) {
       const pct = Math.min(100, ((now - start) / duration) * 100);
       setProgress(pct);
-      if (pct < 100) requestAnimationFrame(tick);
-      else onAdvance();
-    };
-    requestAnimationFrame(tick);
-  }
+      if (pct < 100) {
+        raf = requestAnimationFrame(tick);
+      } else if (!fired.current) {
+        fired.current = true;
+        onAdvance();
+      }
+    });
+    return () => cancelAnimationFrame(raf);
+    // Re-arm for each distinct silent card (the component is also keyed by card.key).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [card.key]);
 
   return (
     <div className="card-shell card-enter fade-in-up" style={{ maxWidth: 420, width: "100%" }}>

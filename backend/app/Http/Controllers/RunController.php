@@ -71,17 +71,31 @@ class RunController extends Controller
     }
 
     /**
-     * POST /api/runs/{run}/advance — end-of-day processing.
+     * POST /api/runs/{run}/advance — consume the current card and end the day.
      *
-     * Folded out as its own endpoint for Phase 1. The choice-resolution
-     * endpoint (Phase 2) will drive advancement during normal play; this
-     * direct endpoint stays useful for the simulation harness.
+     * Used by the client for silent cards (no choices), which auto-advance.
+     * The pinned card is cleared first: a silent card never goes through choice
+     * resolution, so without unpinning it here the same card would be drawn
+     * again after the day advances and the UI would freeze on it. Also used by
+     * the simulation harness to step a day directly.
      */
     public function advance(Run $run): JsonResponse
     {
-        $this->dayProcessor->advance($run);
+        // Record the consumed card on cooldown (the same way choice resolution
+        // does) so a silent card cannot be drawn again on the very next turn,
+        // then unpin it before advancing the day.
+        $consumed = $run->current_event_key;
+        if ($consumed !== null) {
+            $recent = $run->recent_events ?? [];
+            $recent[$consumed] = $run->day;
+            $run->recent_events = $recent;
+        }
+        $run->current_event_key = null;
+        $run->save();
 
-        return response()->json($this->present($run));
+        $this->dayProcessor->advance($run->fresh());
+
+        return response()->json($this->present($run->fresh()));
     }
 
     /**
@@ -94,8 +108,14 @@ class RunController extends Controller
     }
 
     /**
-     * POST /api/runs/{run}/choices — resolve the pinned card's choice.
-     * Body: { choice: int } (index into the card's choices).
+     * POST /api/runs/{run}/choices — resolve the pinned card's choice, then end
+     * the day. Body: { choice: int } (index into the card's choices).
+     *
+     * One card = one turn = one day, matching the canonical loop the simulator
+     * runs (currentCard -> resolveChoice -> advance). Resolving a choice clears
+     * the pin; advancing the day then draws the next card for the new day. A
+     * choice that ends the run (death/win) short-circuits: DayProcessor::advance
+     * no-ops on an ended run, so the day does not tick past the ending.
      * Returns the resolution log + the new run state (with the next card).
      */
     public function resolveChoice(Run $run, Request $request): JsonResponse
@@ -105,6 +125,9 @@ class RunController extends Controller
         ]);
 
         $result = $this->engine->resolveChoice($run, $data['choice']);
+
+        // End the day and draw the next card (no-op if the choice ended the run).
+        $this->dayProcessor->advance($run->fresh());
 
         return response()->json([
             'resolution' => $result,
