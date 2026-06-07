@@ -48,6 +48,8 @@ export type Character = {
   alive: boolean;
   standing: number;
   hunger: number;
+  away: boolean;
+  away_until: number;
 };
 
 export type Item = { key: string; name: string; description: string };

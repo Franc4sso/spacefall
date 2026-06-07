@@ -278,3 +278,10 @@ button { font-family: var(--font-ui); cursor: pointer; }
 }
 .hunger-tag.hungry   { color: var(--color-orange); }
 .hunger-tag.starving { color: var(--color-red); }
+
+/* ---- Away on expedition ---- */
+.crew-avatar.away { filter: grayscale(0.7) brightness(0.7); opacity: 0.7; }
+.away-tag {
+  font-size: 9px; letter-spacing: 0.08em; margin-top: 2px;
+  font-family: var(--font-mono); color: var(--color-cyan);
+}

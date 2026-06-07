@@ -42,13 +42,16 @@ export function CrewPanel({ characters, epithet, reactions = [] }: Props) {
         const stressPct = c.stress;
         const stressColor = stressPct >= 85 ? "var(--color-red)" : stressPct >= 60 ? "var(--color-orange)" : "var(--color-cyan-dim)";
         const band = standingBand(c.standing ?? 0);
+        const away = c.away ?? false;
         const hunger = c.hunger ?? 0;
         const hungerClass = hunger >= 70 ? "starving" : hunger >= 40 ? "hungry" : "";
         const hungerWord = hunger >= 70 ? "allo stremo" : hunger >= 40 ? "affamato" : "";
         const reaction = c.alive ? reactionByName.get(c.name) : undefined;
-        const avatarClass = c.alive
-          ? `crew-avatar ${roleKey} ${reaction ? `react-${reaction.tone}` : band.ring} ${hungerClass}`
-          : "crew-avatar dead";
+        const avatarClass = !c.alive
+          ? "crew-avatar dead"
+          : away
+            ? `crew-avatar ${roleKey} away`
+            : `crew-avatar ${roleKey} ${reaction ? `react-${reaction.tone}` : band.ring} ${hungerClass}`;
 
         return (
           <div key={c.name} data-testid={`crew-${c.name}`}
@@ -63,7 +66,11 @@ export function CrewPanel({ characters, epithet, reactions = [] }: Props) {
                   {c.alive ? band.word : (ROLE_LABELS[roleKey] ?? roleKey)}
                 </span>
               </div>
-              {c.alive ? (
+              {!c.alive ? (
+                <div style={{ fontSize: 10, color: "var(--color-red)", marginTop: 2 }}>— perso —</div>
+              ) : away ? (
+                <div className="away-tag">● in spedizione · rientro g.{c.away_until}</div>
+              ) : (
                 <div style={{ marginTop: 4 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 3 }}>
                     <span style={{ fontSize: 10, color: "var(--color-text-dim)" }}>stress</span>
@@ -82,8 +89,6 @@ export function CrewPanel({ characters, epithet, reactions = [] }: Props) {
                     <div className={`react-line ${reaction.tone}`}>«{reaction.line}»</div>
                   )}
                 </div>
-              ) : (
-                <div style={{ fontSize: 10, color: "var(--color-red)", marginTop: 2 }}>— perso —</div>
               )}
             </div>
           </div>
