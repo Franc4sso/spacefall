@@ -77,6 +77,7 @@ class ContentEventSeeder extends Seeder
             $this->moralEvents(),
             $this->annaThread(),
             $this->bexThread(),
+            $this->coleThread(),
         );
     }
 
@@ -694,6 +695,124 @@ class ContentEventSeeder extends Seeder
                         'hint' => 'rischioso',
                         'tags' => ['cautious'],
                         'outcomes' => [['weight' => 1, 'effects' => [['resource' => 'oxygen', 'delta' => 10], ['character' => 'all', 'stress' => 8], ['modify_standing' => ['who' => 'Bex', 'delta' => 20]], $done], 'log' => 'Esci tu. Bex ti aspetta al portello, e non te lo dimentica.']],
+                    ],
+                ],
+            ]),
+        ];
+    }
+
+    // ---- Filo di Cole (pilota): il sopravvissuto con un occhio sull'uscita --
+    private function coleThread(): array
+    {
+        $done = ['set_flag' => 'cole_thread_done', 'value' => true];
+
+        return [
+            // 1. La via d'uscita — metà partita. Indaga (apre rotta) o ignora (lo risenti).
+            $this->ev([
+                'key' => 'cole_finds_exit', 'title' => 'Cole ha trovato qualcosa',
+                'body' => "Cole ti mostra uno schema di volo. «C'è una finestra. Una rotta. Non sarà comoda, ma è una via fuori da questa scatola di latta. Vale la pena guardarci dentro?»",
+                'requires' => ['all' => [
+                    ['has_role' => 'pilot'],
+                    ['not' => ['flag' => 'cole_thread_done', 'is' => true]],
+                    ['day' => ['op' => '>=', 'value' => 8]],
+                ]],
+                'base_weight' => 7, 'cooldown_days' => 999,
+                'choices' => [
+                    [
+                        'label' => 'Indaghiamo questa rotta',
+                        'hint' => 'incerto',
+                        'tags' => [],
+                        'outcomes' => [['weight' => 1, 'effects' => [['set_flag' => 'cole_found_exit', 'value' => true], ['modify_standing' => ['who' => 'Cole', 'delta' => 15]], ['resource' => 'power', 'delta' => -6]], 'log' => 'Cole si illumina. Per la prima volta sembra avere uno scopo.']],
+                    ],
+                    [
+                        'label' => 'Concentriamoci sulla stazione, non sulla fuga',
+                        'hint' => null,
+                        'tags' => [],
+                        'outcomes' => [['weight' => 1, 'effects' => [['set_flag' => 'cole_resentful', 'value' => true], ['modify_standing' => ['who' => 'Cole', 'delta' => -12]]], 'log' => 'Cole ripiega lo schema, lentamente. «Certo. Come vuoi tu.»']],
+                    ],
+                ],
+            ]),
+
+            // 2. La fuga — stress alto + risentito + oggetto di sopravvivenza.
+            $this->ev([
+                'key' => 'cole_defection', 'title' => 'Il posto di Cole è vuoto',
+                'body' => "Cole non è alla sua postazione. Lo trovi al modulo di fuga, uno zaino già pronto. «Non aspetterò di morire qui mentre tu giochi a fare l'eroe. Mi prendo la mia possibilità.»",
+                'requires' => ['all' => [
+                    ['has_role' => 'pilot'],
+                    ['not' => ['flag' => 'cole_thread_done', 'is' => true]],
+                    ['flag' => 'cole_resentful', 'is' => true],
+                    ['any' => [['has_item' => 'spacesuit'], ['has_item' => 'reactor_cell'], ['has_item' => 'rations']]],
+                ]],
+                'base_weight' => 9, 'cooldown_days' => 999,
+                'weight_modifiers' => [
+                    ['when' => ['standing' => ['who' => 'Cole', 'op' => '<=', 'value' => -25]], 'factor' => 2.0],
+                ],
+                'choices' => [
+                    [
+                        'label' => 'Fermalo. Abbiamo bisogno di tutti.',
+                        'hint' => 'rischioso',
+                        'tags' => [],
+                        'outcomes' => [
+                            ['weight' => 5, 'effects' => [['modify_standing' => ['who' => 'Cole', 'delta' => 20]], ['resource' => 'morale', 'delta' => -5], $done], 'log' => 'Lo convinci a restare. A fatica. Resta una crepa.'],
+                            ['weight' => 5, 'effects' => [['character' => 'all', 'stress' => 12], ['modify_trust' => -15], $done], 'log' => 'Degenera in rissa. Tutti hanno visto. Niente sarà come prima.'],
+                        ],
+                    ],
+                    [
+                        'label' => 'Lascialo andare.',
+                        'hint' => null,
+                        'tags' => ['sacrifice_crew'],
+                        'outcomes' => [['weight' => 1, 'effects' => [['kill' => 'Cole'], ['consume_item' => 'spacesuit'], ['resource' => 'morale', 'delta' => -10], ['set_flag' => 'cole_left', 'value' => true], $done], 'log' => 'Il modulo si stacca nel buio. Non saprai mai se ce l\'ha fatta.']],
+                    ],
+                ],
+            ]),
+
+            // 3. Il momento di coraggio — standing alto + finale disperato.
+            $this->ev([
+                'key' => 'cole_heroics', 'title' => 'Cole prende i comandi',
+                'body' => "La stazione sta perdendo assetto. Cole è già al sedile di pilotaggio. «So che ho paura di tutto. Ma questo — questo lo so fare. Reggetevi a qualcosa.» Le sue mani, per una volta, non tremano.",
+                'requires' => ['all' => [
+                    ['has_role' => 'pilot'],
+                    ['not' => ['flag' => 'cole_thread_done', 'is' => true]],
+                    ['standing' => ['who' => 'Cole', 'op' => '>=', 'value' => 40]],
+                    ['day' => ['op' => '>=', 'value' => 14]],
+                    ['resource' => 'hull', 'op' => '<', 'value' => 45],
+                ]],
+                'base_weight' => 7, 'cooldown_days' => 999,
+                'choices' => [
+                    [
+                        'label' => 'Affidati a lui',
+                        'hint' => 'incerto',
+                        'tags' => [],
+                        'outcomes' => [
+                            ['weight' => 7, 'effects' => [['resource' => 'hull', 'delta' => 25], ['resource' => 'morale', 'delta' => 12], ['set_flag' => 'cole_heroics', 'value' => true], ['modify_standing' => ['who' => 'Cole', 'delta' => 15]], $done], 'log' => 'La manovra è folle e perfetta. Cole ride, incredulo di se stesso.'],
+                            ['weight' => 3, 'effects' => [['resource' => 'hull', 'delta' => -5], ['character' => 'Cole', 'stress' => 20], $done], 'log' => 'Quasi. Reggete tutti, a malapena. Cole è scosso ma vivo.'],
+                        ],
+                    ],
+                ],
+            ]),
+
+            // 4. Il prezzo della paura — la sua paura ha causato una morte.
+            $this->ev([
+                'key' => 'cole_guilt', 'title' => 'Il peso di Cole',
+                'body' => "Cole non si perdona. «Mi sono bloccato. Se mi fossi mosso un secondo prima, forse... » Non finisce la frase. Aspetta che tu dica qualcosa.",
+                'requires' => ['all' => [
+                    ['has_role' => 'pilot'],
+                    ['not' => ['flag' => 'cole_thread_done', 'is' => true]],
+                    ['flag' => 'cole_caused_death', 'is' => true],
+                ]],
+                'base_weight' => 8, 'cooldown_days' => 999,
+                'choices' => [
+                    [
+                        'label' => 'Non è stata colpa tua',
+                        'hint' => null,
+                        'tags' => ['generous'],
+                        'outcomes' => [['weight' => 1, 'effects' => [['character' => 'Cole', 'stress' => -20], ['modify_standing' => ['who' => 'Cole', 'delta' => 20]], $done], 'log' => 'Cole annuisce, gli occhi lucidi. Forse ci crederà, un giorno.']],
+                    ],
+                    [
+                        'label' => 'Devi conviverci. Come tutti noi.',
+                        'hint' => null,
+                        'tags' => [],
+                        'outcomes' => [['weight' => 1, 'effects' => [['character' => 'Cole', 'stress' => 10], ['resource' => 'morale', 'delta' => -3], $done], 'log' => 'Cole incassa. È una verità dura, e lo sa.']],
                     ],
                 ],
             ]),
