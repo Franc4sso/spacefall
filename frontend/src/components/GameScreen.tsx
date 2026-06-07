@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { RunState, Reaction } from "../api";
 import { CardView } from "./CardView";
 import { CrewPanel } from "./CrewPanel";
+import { Diario } from "./Diario";
 import { Inventory } from "./Inventory";
 import { ResourceBars } from "./ResourceBars";
 import { SystemsBar } from "./SystemsBar";
@@ -17,6 +18,7 @@ type Props = {
 
 export function GameScreen({ run, busy, lastLog, reactions, onChoose, onAdvance }: Props) {
   const [flash, setFlash] = useState<{ text: string; good: boolean } | null>(null);
+  const [diaryOpen, setDiaryOpen] = useState(false);
 
   useEffect(() => {
     if (!lastLog) return;
@@ -40,6 +42,7 @@ export function GameScreen({ run, busy, lastLog, reactions, onChoose, onAdvance 
       height: "100%",
       background: "var(--color-bg)",
       overflow: "hidden",
+      position: "relative",
     }}>
       {/* Header */}
       <header style={{
@@ -55,12 +58,26 @@ export function GameScreen({ run, busy, lastLog, reactions, onChoose, onAdvance 
         }}>
           STARFALL STATION
         </span>
-        <span data-testid="day" style={{
-          fontFamily: "var(--font-mono)", fontSize: 13,
-          color: "var(--color-cyan)", fontWeight: 700,
-        }}>
-          GIORNO {run.day}
-        </span>
+        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <button
+            data-testid="diary-toggle"
+            onClick={() => setDiaryOpen((v) => !v)}
+            style={{
+              background: "transparent", border: "1px solid var(--color-border-hi)",
+              borderRadius: 8, color: "var(--color-text-dim)", cursor: "pointer",
+              fontSize: 11, fontFamily: "var(--font-mono)", padding: "3px 10px",
+              letterSpacing: "0.1em",
+            }}
+          >
+            DIARIO
+          </button>
+          <span data-testid="day" style={{
+            fontFamily: "var(--font-mono)", fontSize: 13,
+            color: "var(--color-cyan)", fontWeight: 700,
+          }}>
+            GIORNO {run.day}
+          </span>
+        </div>
       </header>
 
       {/* Main body: 3 columns */}
@@ -120,6 +137,7 @@ export function GameScreen({ run, busy, lastLog, reactions, onChoose, onAdvance 
         <Inventory items={run.items} relevantItems={relevantItems} />
         <SystemsBar systems={run.systems} crewTrust={run.crew_trust} />
       </footer>
+      <Diario log={run.choice_log} open={diaryOpen} onClose={() => setDiaryOpen(false)} />
     </div>
   );
 }
