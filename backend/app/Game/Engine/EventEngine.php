@@ -27,6 +27,7 @@ final class EventEngine
         private readonly EpithetEngine $epithet,
         private readonly TrustEngine $trust,
         private readonly ReactionDeriver $reactions,
+        private readonly ExpeditionResolver $expeditions,
     ) {
     }
 
@@ -126,6 +127,31 @@ final class EventEngine
                 $current = (int) ($state->flags[$key] ?? 0);
                 $state->flags[$key] = max(-100, min(100, $current + $delta));
             }
+        }
+
+        // Expedition dispatch: a choice may send a crew member away. Mark them
+        // away, stash the return params, roll the outcome tier, and schedule
+        // the matching return event (forced — it cannot be lost in the pool).
+        if (! empty($choice['expedition'])) {
+            $exp = $choice['expedition'];
+            $who = (string) ($exp['who'] ?? '');
+            $days = max(1, (int) ($exp['days'] ?? 3));
+            $danger = (int) ($exp['danger'] ?? 1);
+
+            foreach ($state->characters as $i => $c) {
+                if (($c['name'] ?? null) === $who) {
+                    $state->characters[$i]['away_until'] = $state->day + $days;
+                }
+            }
+            $state->flags['expedition_active'] = true;
+            $state->flags['away_member'] = $who;
+            $state->flags['away_days'] = $days;
+
+            $tier = $this->expeditions->resolve($who, $days, $danger, $state, $rng);
+            $state->scheduledEvents[] = [
+                'key' => 'exp_return_' . $tier,
+                'fire_on_day' => $state->day + $days,
+            ];
         }
 
         // Record cooldown and consume a scheduled occurrence if present.
