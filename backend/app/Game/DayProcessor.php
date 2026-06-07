@@ -132,7 +132,9 @@ final class DayProcessor
         $someoneStarved = false;
 
         foreach ($characters as $i => $c) {
-            if (! ($c['alive'] ?? true)) {
+            // Skip the dead and anyone away on an expedition (they don't eat at
+            // the table; their fate is decided by the expedition return).
+            if (! ($c['alive'] ?? true) || (int) ($c['away_until'] ?? 0) > $day) {
                 continue;
             }
             $hunger = $this->clampResource((int) ($c['hunger'] ?? 0) + $rise, 100);

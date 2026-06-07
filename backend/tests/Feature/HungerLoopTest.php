@@ -80,3 +80,16 @@ it('does not re-schedule the meal while staying within the same band', function 
     $fresh = $run->fresh();
     expect(collect($fresh->scheduled_events)->pluck('key'))->not->toContain('food_ration');
 });
+
+it('does not make away crew hungrier', function () {
+    $run = Run::factory()->create([
+        'day' => 3,
+        'characters' => [
+            ['name' => 'Anna', 'role' => 'engineer', 'traits' => [], 'stress' => 0, 'hunger' => 50, 'away_until' => 7, 'alive' => true],
+        ],
+    ]);
+
+    app(DayProcessor::class)->advance($run);
+
+    expect($run->fresh()->characters[0]['hunger'])->toBe(50); // away -> unchanged
+});
