@@ -163,3 +163,20 @@ it('evaluates not_chosen condition', function () {
     expect($ev->evaluate(['not_chosen' => 'hull_warning:0'], $state))->toBeTrue();
     expect($ev->evaluate(['not_chosen' => 'hull_warning:1'], $state))->toBeFalse();
 });
+
+it('evaluates crew_hunger against the hungriest living survivor', function () {
+    $s = stateWith(['characters' => [
+        ['name' => 'Anna', 'alive' => true, 'hunger' => 30],
+        ['name' => 'Bex', 'alive' => true, 'hunger' => 75],
+    ]]);
+    expect($this->eval->evaluate(['crew_hunger' => ['op' => '>=', 'value' => 70]], $s))->toBeTrue();
+    expect($this->eval->evaluate(['crew_hunger' => ['op' => '>=', 'value' => 80]], $s))->toBeFalse();
+});
+
+it('ignores dead survivors for crew_hunger', function () {
+    $s = stateWith(['characters' => [
+        ['name' => 'Anna', 'alive' => false, 'hunger' => 100],
+        ['name' => 'Bex', 'alive' => true, 'hunger' => 10],
+    ]]);
+    expect($this->eval->evaluate(['crew_hunger' => ['op' => '>=', 'value' => 50]], $s))->toBeFalse();
+});

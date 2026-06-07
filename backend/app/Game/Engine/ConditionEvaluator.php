@@ -143,6 +143,16 @@ final class ConditionEvaluator
             return $this->compare($have, $spec['op'] ?? '=', $spec['value'] ?? 0);
         }
 
+        if (array_key_exists('crew_hunger', $condition)) {
+            $spec = $condition['crew_hunger'];
+            foreach ($state->characters as $c) {
+                if (($c['alive'] ?? true) && $this->compare((int) ($c['hunger'] ?? 0), $spec['op'] ?? '=', $spec['value'] ?? 0)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         // Unknown shape: fail closed (not eligible) rather than throw.
         return false;
     }
