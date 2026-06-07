@@ -86,6 +86,7 @@ final class EffectApplier
                 'role' => $effect['recruit']['role'] ?? 'survivor',
                 'alive' => true,
                 'stress' => 0,
+                'hunger' => 0,
                 'traits' => [],
             ];
             return;
