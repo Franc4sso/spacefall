@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { RunState } from "../api";
+import type { RunState, Reaction } from "../api";
 import { CardView } from "./CardView";
 import { CrewPanel } from "./CrewPanel";
 import { Inventory } from "./Inventory";
@@ -10,11 +10,12 @@ type Props = {
   run: RunState;
   busy: boolean;
   lastLog: string | null;
+  reactions: Reaction[];
   onChoose: (index: number) => void;
   onAdvance: () => void;
 };
 
-export function GameScreen({ run, busy, lastLog, onChoose, onAdvance }: Props) {
+export function GameScreen({ run, busy, lastLog, reactions, onChoose, onAdvance }: Props) {
   const [flash, setFlash] = useState<{ text: string; good: boolean } | null>(null);
 
   useEffect(() => {
@@ -105,7 +106,7 @@ export function GameScreen({ run, busy, lastLog, onChoose, onAdvance }: Props) {
 
         {/* Right: Crew */}
         <aside style={{ overflow: "hidden" }}>
-          <CrewPanel characters={run.characters} epithet={run.epithet} />
+          <CrewPanel characters={run.characters} epithet={run.epithet} reactions={reactions} />
         </aside>
       </div>
 

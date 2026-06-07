@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import type { Reaction } from "./api";
 import { GameOverScreen } from "./components/GameOverScreen";
 import { GameScreen } from "./components/GameScreen";
 import { StartScreen } from "./components/StartScreen";
@@ -21,11 +22,13 @@ export default function App() {
   const handle = useHandle();
   const { run, phase, busy, error, begin, choose, advance, reset } = useRun(handle);
   const [lastLog, setLastLog] = useState<string | null>(null);
+  const [reactions, setReactions] = useState<Reaction[]>([]);
 
   const onChoose = useCallback(
     async (index: number) => {
-      const log = await choose(index);
-      setLastLog(log);
+      const result = await choose(index);
+      setLastLog(result?.log ?? null);
+      setReactions(result?.reactions ?? []);
     },
     [choose],
   );
@@ -52,6 +55,7 @@ export default function App() {
           run={run}
           busy={busy}
           lastLog={lastLog}
+          reactions={reactions}
           onChoose={onChoose}
           onAdvance={advance}
         />

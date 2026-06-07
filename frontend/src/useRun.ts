@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { advanceRun, resolveChoice, startRun, type RunState } from "./api";
+import { advanceRun, resolveChoice, startRun, type RunState, type Reaction } from "./api";
 
 // Drives a single run. State is server-authoritative: every choice POST returns
 // the *next* state (card included), so resolving and "prefetching the next
@@ -30,16 +30,16 @@ export function useRun(handle: string) {
     [handle],
   );
 
-  // Resolve a choice. Returns the log line so the UI can flash it. The next
-  // card arrives in the same response — no extra fetch.
+  // Resolve a choice. Returns the log line and reactions so the UI can flash
+  // it and animate crew. The next card arrives in the same response — no extra fetch.
   const choose = useCallback(
-    async (choiceIndex: number): Promise<string | null> => {
+    async (choiceIndex: number): Promise<{ log: string | null; reactions: Reaction[] } | null> => {
       if (!run || busy) return null;
       setBusy(true);
       try {
         const res = await resolveChoice(run.id, choiceIndex);
         setRun(res.state);
-        return res.resolution.log ?? null;
+        return { log: res.resolution.log ?? null, reactions: res.resolution.reactions ?? [] };
       } catch (e) {
         setError(e instanceof Error ? e.message : "Errore");
         return null;

@@ -1,4 +1,4 @@
-import type { Character } from "../api";
+import type { Character, Reaction } from "../api";
 
 const ROLE_LABELS: Record<string, string> = {
   engineer: "Ingegnere", doctor: "Medico", pilot: "Pilota", survivor: "Superstite",
@@ -12,34 +12,52 @@ const EPITHET_LABELS: Record<string, string> = {
   il_solitario: "il Solitario",
 };
 
-type Props = { characters: Character[]; epithet?: string | null };
+// Standing → qualitative band (never a number on screen).
+function standingBand(s: number): { ring: string; word: string } {
+  if (s <= -40) return { ring: "standing-hostile", word: "ostile" };
+  if (s <= -15) return { ring: "standing-cold", word: "freddo" };
+  if (s < 15) return { ring: "standing-neutral", word: "neutro" };
+  if (s < 40) return { ring: "standing-trust", word: "fiducia" };
+  return { ring: "standing-bond", word: "legame" };
+}
 
-export function CrewPanel({ characters, epithet }: Props) {
+type Props = {
+  characters: Character[];
+  epithet?: string | null;
+  reactions?: Reaction[];
+};
+
+export function CrewPanel({ characters, epithet, reactions = [] }: Props) {
+  const reactionByName = new Map(reactions.map((r) => [r.who, r]));
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
       <div style={{ fontSize: 10, letterSpacing: "0.14em", color: "var(--color-text-muted)", fontFamily: "var(--font-mono)" }}>
         EQUIPAGGIO
       </div>
 
-      {characters.map(c => {
+      {characters.map((c) => {
         const roleKey = c.role ?? "survivor";
-        const initials = c.name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
+        const initials = c.name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
         const stressPct = c.stress;
         const stressColor = stressPct >= 85 ? "var(--color-red)" : stressPct >= 60 ? "var(--color-orange)" : "var(--color-cyan-dim)";
+        const band = standingBand(c.standing ?? 0);
+        const reaction = c.alive ? reactionByName.get(c.name) : undefined;
+        const avatarClass = c.alive
+          ? `crew-avatar ${roleKey} ${reaction ? `react-${reaction.tone}` : band.ring}`
+          : "crew-avatar dead";
 
         return (
           <div key={c.name} data-testid={`crew-${c.name}`}
                style={{ display: "flex", gap: 10, alignItems: "flex-start", opacity: c.alive ? 1 : 0.4 }}>
-            <div className={`crew-avatar ${c.alive ? roleKey : "dead"}`}>
-              {initials}
-            </div>
+            <div className={avatarClass}>{initials}</div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
                 <span style={{ fontSize: 13, fontWeight: 600, textDecoration: c.alive ? "none" : "line-through", color: "var(--color-text)" }}>
                   {c.name}
                 </span>
                 <span style={{ fontSize: 10, color: "var(--color-text-muted)" }}>
-                  {ROLE_LABELS[roleKey] ?? roleKey}
+                  {c.alive ? band.word : (ROLE_LABELS[roleKey] ?? roleKey)}
                 </span>
               </div>
               {c.alive ? (
@@ -51,10 +69,12 @@ export function CrewPanel({ characters, epithet }: Props) {
                   <div className="bar-track" style={{ height: 4 }}>
                     <div style={{
                       height: "100%", borderRadius: 4, width: `${stressPct}%`,
-                      background: stressColor,
-                      transition: "width 500ms ease",
+                      background: stressColor, transition: "width 500ms ease",
                     }} />
                   </div>
+                  {reaction && (
+                    <div className={`react-line ${reaction.tone}`}>«{reaction.line}»</div>
+                  )}
                 </div>
               ) : (
                 <div style={{ fontSize: 10, color: "var(--color-red)", marginTop: 2 }}>— perso —</div>
