@@ -148,6 +148,10 @@ final class EffectApplier
                 $cur = $state->characters[$index]['stress'] ?? 0;
                 $state->characters[$index]['stress'] = $this->clamp($cur + (int) $effect['stress'], 100);
             }
+            if (array_key_exists('hunger', $effect)) {
+                $cur = $state->characters[$index]['hunger'] ?? 0;
+                $state->characters[$index]['hunger'] = $this->clamp($cur + (int) $effect['hunger'], 100);
+            }
         }
     }
 
@@ -192,6 +196,7 @@ final class EffectApplier
             'random' => array_keys($living)[$rng->nextInt(0, count($living) - 1)],
             'highest_stress' => $this->pickBy($living, fn ($c) => $c['stress'] ?? 0, max: true),
             'lowest_loyalty' => $this->pickBy($living, fn ($c) => $c['loyalty'] ?? 0, max: false),
+            'hungriest' => $this->pickBy($living, fn ($c) => $c['hunger'] ?? 0, max: true),
             default => $this->pickByName($living, $selector),
         };
     }

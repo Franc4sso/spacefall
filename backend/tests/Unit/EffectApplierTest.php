@@ -212,3 +212,34 @@ it('is deterministic for random targeting given the same seed', function () {
     $stress2 = array_column($s2->characters, 'stress');
     expect($stress1)->toBe($stress2);
 });
+
+it('reduces hunger on all living survivors', function () {
+    $s = freshState(['characters' => [
+        ['name' => 'Anna', 'alive' => true, 'stress' => 0, 'hunger' => 60],
+        ['name' => 'Bex', 'alive' => true, 'stress' => 0, 'hunger' => 50],
+    ]]);
+    applier()->apply([['character' => 'all', 'hunger' => -40]], $s, new SeededRng(1));
+    expect($s->characters[0]['hunger'])->toBe(20);
+    expect($s->characters[1]['hunger'])->toBe(10);
+});
+
+it('clamps hunger to [0, 100]', function () {
+    $s = freshState(['characters' => [
+        ['name' => 'Anna', 'alive' => true, 'stress' => 0, 'hunger' => 30],
+    ]]);
+    applier()->apply([['character' => 'Anna', 'hunger' => -50]], $s, new SeededRng(1));
+    expect($s->characters[0]['hunger'])->toBe(0);
+    applier()->apply([['character' => 'Anna', 'hunger' => 130]], $s, new SeededRng(1));
+    expect($s->characters[0]['hunger'])->toBe(100);
+});
+
+it('targets the hungriest living survivor', function () {
+    $s = freshState(['characters' => [
+        ['name' => 'Anna', 'alive' => true, 'stress' => 0, 'hunger' => 30],
+        ['name' => 'Bex', 'alive' => true, 'stress' => 0, 'hunger' => 80],
+        ['name' => 'Cole', 'alive' => false, 'stress' => 0, 'hunger' => 100],
+    ]]);
+    applier()->apply([['character' => 'hungriest', 'hunger' => -30]], $s, new SeededRng(1));
+    expect($s->characters[1]['hunger'])->toBe(50); // Bex was hungriest among the living
+    expect($s->characters[0]['hunger'])->toBe(30); // Anna untouched
+});
