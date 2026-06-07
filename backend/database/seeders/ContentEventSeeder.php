@@ -76,6 +76,7 @@ class ContentEventSeeder extends Seeder
             $this->silentEvents(),
             $this->moralEvents(),
             $this->annaThread(),
+            $this->bexThread(),
         );
     }
 
@@ -253,7 +254,10 @@ class ContentEventSeeder extends Seeder
             $this->ev([
                 'key' => 'c_doctor_call', 'title' => 'Visita medica', 'speaker' => 'Bex',
                 'body' => 'Bex vuole controllare tutti. Costa tempo ed energia.',
-                'requires' => ['has_role' => 'doctor'],
+                'requires' => ['all' => [
+                    ['has_role' => 'doctor'],
+                    ['not' => ['flag' => 'bex_broken', 'is' => true]],
+                ]],
                 'choices' => [
                     $this->one('Sì, controllo generale', [['resource' => 'power', 'delta' => -4], ['character' => 'all', 'stress' => -8]], 'Tutti un po\' più saldi.'),
                     $this->one('Non c\'è tempo', [['character' => 'random', 'stress' => 6]], 'Un malanno cova.'),
@@ -562,6 +566,134 @@ class ContentEventSeeder extends Seeder
                         'hint' => null,
                         'tags' => ['generous'],
                         'outcomes' => [['weight' => 1, 'effects' => [['resource' => 'morale', 'delta' => 10], ['character' => 'all', 'stress' => -6], ['modify_standing' => ['who' => 'Anna', 'delta' => 10]], $done], 'log' => "L'equipaggio si stringe un po' di più. Funziona, per oggi."]],
+                    ],
+                ],
+            ]),
+        ];
+    }
+
+    // ---- Filo di Bex (medico): la coscienza che conta il prezzo ------------
+    private function bexThread(): array
+    {
+        $done = ['set_flag' => 'bex_thread_done', 'value' => true];
+
+        return [
+            // 1. La verità scomoda — hai fatto scelte fredde o nascosto qualcosa.
+            $this->ev([
+                'key' => 'bex_confronts', 'title' => 'Bex non ci sta',
+                'body' => "Bex ti ferma davanti a tutti. «So cosa hai scelto. Lo sappiamo tutti. Volevo solo che lo dicessi ad alta voce, almeno una volta.» Il corridoio è silenzioso.",
+                'requires' => ['all' => [
+                    ['has_role' => 'doctor'],
+                    ['not' => ['flag' => 'bex_thread_done', 'is' => true]],
+                    ['any' => [
+                        ['chosen_tag' => 'sacrifice_crew'],
+                        ['chosen_tag' => 'il_freddo'],
+                        ['flag' => 'log_falsified', 'is' => true],
+                    ]],
+                ]],
+                'base_weight' => 8, 'cooldown_days' => 999,
+                'choices' => [
+                    [
+                        'label' => 'Prenditi la responsabilità, davanti a tutti',
+                        'hint' => 'dovrebbe reggere',
+                        'tags' => ['honest'],
+                        'outcomes' => [['weight' => 1, 'effects' => [['resource' => 'morale', 'delta' => 8], ['modify_trust' => 12], ['modify_standing' => ['who' => 'Bex', 'delta' => 25]], ['set_flag' => 'bex_confronted', 'value' => true], $done], 'log' => "Lo dici. Bex annuisce, lentamente. L'aria cambia."]],
+                    ],
+                    [
+                        'label' => 'Sono scelte da comandante. Punto.',
+                        'hint' => null,
+                        'tags' => [],
+                        'outcomes' => [['weight' => 1, 'effects' => [['resource' => 'morale', 'delta' => -12], ['modify_trust' => -15], ['modify_standing' => ['who' => 'Bex', 'delta' => -20]], ['set_flag' => 'bex_confronted', 'value' => true], $done], 'log' => 'Bex ti fissa un secondo di troppo, poi se ne va.']],
+                    ],
+                ],
+            ]),
+
+            // 2. Il crollo — stress altissimo + una morte. Imposta bex_broken.
+            $this->ev([
+                'key' => 'bex_breaks', 'title' => 'Bex ha le mani che tremano',
+                'body' => "Bex fissa lo strumentario senza vederlo. «Continuo a rivedere chi non sono riuscita a salvare. Non posso operare così. Non oggi.» Non sta esagerando.",
+                'requires' => ['all' => [
+                    ['has_role' => 'doctor'],
+                    ['not' => ['flag' => 'bex_thread_done', 'is' => true]],
+                    ['flag' => 'bex_saw_death', 'is' => true],
+                ]],
+                'base_weight' => 7, 'cooldown_days' => 999,
+                'weight_modifiers' => [
+                    ['when' => ['resource' => 'morale', 'op' => '<', 'value' => 30], 'factor' => 2.5],
+                ],
+                'choices' => [
+                    [
+                        'label' => 'Sollevala dai turni. Ne ha bisogno.',
+                        'hint' => null,
+                        'tags' => [],
+                        'outcomes' => [['weight' => 1, 'effects' => [['set_flag' => 'bex_broken', 'value' => true], ['character' => 'Bex', 'stress' => -25], $done], 'log' => 'Bex si ritira. Finché non torna, la medicina è un lusso che non hai.']],
+                    ],
+                    [
+                        'label' => 'Abbiamo bisogno di te. Resisti.',
+                        'hint' => 'rischioso',
+                        'tags' => ['sacrifice_crew'],
+                        'outcomes' => [
+                            ['weight' => 5, 'effects' => [['character' => 'Bex', 'stress' => 15], ['modify_standing' => ['who' => 'Bex', 'delta' => -10]], $done], 'log' => 'Bex stringe i denti e continua. Ti costerà.'],
+                            ['weight' => 5, 'effects' => [['character' => 'Bex', 'stress' => 25], ['resource' => 'morale', 'delta' => -8], $done], 'log' => 'Regge per un\'ora, poi cede del tutto. Era troppo.'],
+                        ],
+                    ],
+                ],
+            ]),
+
+            // 3. La diagnosi — standing alto + medkit/scanner. Annulla uno spawn negativo.
+            $this->ev([
+                'key' => 'bex_catch', 'title' => 'Bex ha notato qualcosa',
+                'body' => "Bex ti prende da parte. «Uno di noi sta covando qualcosa. Sintomi minimi, ma li riconosco. Se intervengo ora, con quello che abbiamo, lo fermo prima che diventi un problema per tutti.»",
+                'requires' => ['all' => [
+                    ['has_role' => 'doctor'],
+                    ['not' => ['flag' => 'bex_thread_done', 'is' => true]],
+                    ['standing' => ['who' => 'Bex', 'op' => '>=', 'value' => 30]],
+                    ['any' => [['has_item' => 'medkit'], ['has_item' => 'scanner']]],
+                ]],
+                'base_weight' => 6, 'cooldown_days' => 999,
+                'choices' => [
+                    [
+                        'label' => 'Fidati di lei. Intervieni ora.',
+                        'hint' => 'dovrebbe reggere',
+                        'tags' => ['cautious'],
+                        'outcomes' => [['weight' => 1, 'effects' => [['character' => 'all', 'stress' => -5], ['set_flag' => 'illness_caught', 'value' => true], ['modify_standing' => ['who' => 'Bex', 'delta' => 10]], $done], 'log' => 'Bex agisce in silenzio. Un disastro che non vedrai mai succedere.']],
+                    ],
+                    [
+                        'label' => 'Non abbiamo risorse da sprecare su un sospetto',
+                        'hint' => null,
+                        'tags' => [],
+                        'outcomes' => [['weight' => 1, 'effects' => [['spawn_event' => ['key' => 'c_sick_survivor', 'in_days' => 3]], ['modify_standing' => ['who' => 'Bex', 'delta' => -12]], $done], 'log' => '«Spero di sbagliarmi», dice Bex. Non si sbaglia quasi mai.']],
+                    ],
+                ],
+            ]),
+
+            // 4. Il suo sacrificio — tardi + disperato + standing alto. Può morire.
+            $this->ev([
+                'key' => 'bex_sacrifice', 'title' => 'Bex non esita',
+                'body' => "C'è da entrare nel settore contaminato per tirare fuori chi è rimasto bloccato. Bex si sta già infilando la maschera. «Sono il medico. È letteralmente il mio lavoro. Non discutere.»",
+                'requires' => ['all' => [
+                    ['has_role' => 'doctor'],
+                    ['not' => ['flag' => 'bex_thread_done', 'is' => true]],
+                    ['standing' => ['who' => 'Bex', 'op' => '>=', 'value' => 40]],
+                    ['day' => ['op' => '>=', 'value' => 14]],
+                    ['resource' => 'oxygen', 'op' => '<', 'value' => 45],
+                ]],
+                'base_weight' => 7, 'cooldown_days' => 999,
+                'choices' => [
+                    [
+                        'label' => 'Lasciala andare. È la sua scelta.',
+                        'hint' => 'molto pericoloso',
+                        'tags' => [],
+                        'outcomes' => [
+                            ['weight' => 6, 'effects' => [['resource' => 'oxygen', 'delta' => 15], ['resource' => 'morale', 'delta' => 8], ['modify_standing' => ['who' => 'Bex', 'delta' => 15]], $done], 'log' => 'Bex torna, sfinita ma viva, trascinando chi era bloccato.'],
+                            ['weight' => 4, 'effects' => [['kill' => 'Bex'], ['resource' => 'morale', 'delta' => -15], ['set_flag' => 'bex_saw_death', 'value' => true], $done], 'log' => 'Bex non torna. Ha salvato qualcuno. Non se stessa.'],
+                        ],
+                    ],
+                    [
+                        'label' => 'No. Vai tu al posto suo.',
+                        'hint' => 'rischioso',
+                        'tags' => ['cautious'],
+                        'outcomes' => [['weight' => 1, 'effects' => [['resource' => 'oxygen', 'delta' => 10], ['character' => 'all', 'stress' => 8], ['modify_standing' => ['who' => 'Bex', 'delta' => 20]], $done], 'log' => 'Esci tu. Bex ti aspetta al portello, e non te lo dimentica.']],
                     ],
                 ],
             ]),
