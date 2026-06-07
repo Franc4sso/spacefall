@@ -82,6 +82,7 @@ class ContentEventSeeder extends Seeder
             $this->dilemmaEvents(),
             $this->hungerOpportunityEvents(),
             $this->hungerRationEvents(),
+            $this->hungerCrisisEvents(),
         );
     }
 
@@ -1100,6 +1101,54 @@ class ContentEventSeeder extends Seeder
                         ['tags' => ['il_freddo']]
                     ),
                     $this->one('Sfama il più affamato', [['resource' => 'food', 'delta' => -8], ['character' => 'hungriest', 'hunger' => -45]], 'Dai da mangiare a chi sta peggio. È umano, se non efficiente.'),
+                ],
+            ]),
+        ];
+    }
+
+    // ---- Fame: sacrificio e oscillazioni -----------------------------------
+    private function hungerCrisisEvents(): array
+    {
+        return [
+            // Il sacrificio — esito di fallimento, raro e pesante. Sopravvivibile
+            // sull'altra scelta (stringere i denti ha un ramo che salva tutti).
+            $this->ev([
+                'key' => 'food_sacrifice', 'title' => 'Non c\'è abbastanza per tutti', 'speaker' => null,
+                'body' => "La dispensa è vuota e qualcuno non vedrà l'alba a stomaco vuoto. C'è un pensiero che nessuno osa dire ad alta voce. Tocca a te dirlo, o rifiutarlo.",
+                'requires' => ['all' => [
+                    ['resource' => 'food', 'op' => '<', 'value' => 6],
+                    ['crew_hunger' => ['op' => '>=', 'value' => 70]],
+                ]],
+                'base_weight' => 14, 'cooldown_days' => 999,
+                'choices' => [
+                    array_merge(
+                        $this->one('Uno perché gli altri vivano', [['kill' => 'hungriest'], ['resource' => 'food', 'delta' => 30], ['character' => 'all', 'hunger' => -30], ['resource' => 'morale', 'delta' => -30], ['modify_trust' => -35], ['modify_standing' => ['who' => 'Anna', 'delta' => -25]], ['modify_standing' => ['who' => 'Bex', 'delta' => -25]], ['modify_standing' => ['who' => 'Cole', 'delta' => -25]], ['set_flag' => 'cannibalism', 'value' => true], ['set_flag' => 'bex_saw_death', 'value' => true]], 'È fatto. Nessuno ti guarderà più come prima. Nemmeno tu.'),
+                        ['tags' => ['sacrifice_crew', 'il_freddo']]
+                    ),
+                    $this->gamble('Si stringe i denti, tutti insieme', [['character' => 'all', 'stress' => 12], ['resource' => 'morale', 'delta' => 6], ['modify_trust' => 10]], 'Vi tenete in piedi a vicenda. Stanotte non muore nessuno.', [['kill' => 'hungriest'], ['resource' => 'morale', 'delta' => -10]], 'Il più debole non passa la notte. Almeno non l\'hai scelto tu.', 6, 4, 'molto pericoloso'),
+                ],
+            ]),
+
+            // Manna: una cache trovata.
+            $this->ev([
+                'key' => 'food_cache', 'title' => 'Una scorta dimenticata', 'speaker' => 'Cole',
+                'body' => "Dietro un pannello allentato, casse di razioni che qualcuno aveva nascosto e dimenticato. Oggi la fortuna gira.",
+                'requires' => ['resource' => 'food', 'op' => '<', 'value' => 45],
+                'base_weight' => 4, 'cooldown_days' => 14,
+                'choices' => [
+                    $this->one('Le porto in dispensa', [['resource' => 'food', 'delta' => 28], ['resource' => 'morale', 'delta' => 6]], 'Un respiro di sollievo, raro.'),
+                ],
+            ]),
+
+            // Mazzata: cibo contaminato (morde di più quando hai ancora scorte).
+            $this->ev([
+                'key' => 'food_spoilage', 'title' => 'Qualcosa è andato a male', 'speaker' => 'Bex',
+                'body' => "Una guarnizione del frigo ha ceduto. Parte delle scorte è da buttare prima che faccia ammalare tutti.",
+                'requires' => ['resource' => 'food', 'op' => '>', 'value' => 25],
+                'base_weight' => 5, 'cooldown_days' => 8,
+                'choices' => [
+                    $this->one('Butto il marcio', [['resource' => 'food', 'delta' => -14]], 'Meno scorte, ma sane.'),
+                    $this->gamble('Salviamo il salvabile', [['resource' => 'food', 'delta' => -6]], 'Recuperato quasi tutto.', [['resource' => 'food', 'delta' => -10], ['character' => 'random', 'stress' => 10]], 'Qualcuno ci rimette lo stomaco.', 5, 5, 'azzardo'),
                 ],
             ]),
         ];
