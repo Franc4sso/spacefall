@@ -540,7 +540,7 @@ class ContentEventSeeder extends Seeder
                         'tags' => [],
                         'outcomes' => [
                             ['weight' => 6, 'effects' => [['resource' => 'power', 'delta' => 25], ['resource' => 'hull', 'delta' => 20], ['modify_standing' => ['who' => 'Anna', 'delta' => 20]], $done], 'log' => 'Il colpo riesce. Anna sorride per la prima volta da giorni.'],
-                            ['weight' => 4, 'effects' => [['consume_item' => 'welder'], ['consume_item' => 'toolkit'], ['character' => 'Anna', 'stress' => 15], $done], 'log' => "L'attrezzo si fonde tra le sue mani. Niente. Ci aveva creduto."],
+                            ['weight' => 4, 'effects' => [['consume_item' => 'welder'], ['consume_item' => 'toolkit'], ['consume_item' => 'fabricator'], ['consume_item' => 'manual'], ['character' => 'Anna', 'stress' => 15], $done], 'log' => "L'attrezzo si fonde tra le sue mani. Niente. Ci aveva creduto."],
                         ],
                     ],
                     [
@@ -689,7 +689,7 @@ class ContentEventSeeder extends Seeder
                         'tags' => [],
                         'outcomes' => [
                             ['weight' => 6, 'effects' => [['resource' => 'oxygen', 'delta' => 15], ['resource' => 'morale', 'delta' => 8], ['modify_standing' => ['who' => 'Bex', 'delta' => 15]], $done], 'log' => 'Bex torna, sfinita ma viva, trascinando chi era bloccato.'],
-                            ['weight' => 4, 'effects' => [['kill' => 'Bex'], ['resource' => 'morale', 'delta' => -15], ['set_flag' => 'bex_saw_death', 'value' => true], $done], 'log' => 'Bex non torna. Ha salvato qualcuno. Non se stessa.'],
+                            ['weight' => 4, 'effects' => [['kill' => 'Bex'], ['resource' => 'morale', 'delta' => -15], $done], 'log' => 'Bex non torna. Ha salvato qualcuno. Non se stessa.'],
                         ],
                     ],
                     [
