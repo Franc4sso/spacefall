@@ -144,6 +144,7 @@ class RunController extends Controller
                     'traits' => $c['traits'] ?? [],
                     'stress' => $c['stress'] ?? 0,
                     'alive' => $c['alive'] ?? true,
+                    'standing' => (int) ($run->flags['standing_' . strtolower((string) ($c['name'] ?? ''))] ?? 0),
                 ])->all(),
             // Inventory as full item objects (key + Italian name/description)
             // so the client can render it without re-fetching the catalogue.
