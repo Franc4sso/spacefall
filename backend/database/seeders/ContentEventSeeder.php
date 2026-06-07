@@ -78,6 +78,7 @@ class ContentEventSeeder extends Seeder
             $this->annaThread(),
             $this->bexThread(),
             $this->coleThread(),
+            $this->crosstalkEvents(),
         );
     }
 
@@ -813,6 +814,81 @@ class ContentEventSeeder extends Seeder
                         'hint' => null,
                         'tags' => [],
                         'outcomes' => [['weight' => 1, 'effects' => [['character' => 'Cole', 'stress' => 10], ['resource' => 'morale', 'delta' => -3], $done], 'log' => 'Cole incassa. È una verità dura, e lo sa.']],
+                    ],
+                ],
+            ]),
+        ];
+    }
+
+    // ---- Intreccio: i personaggi reagiscono l'uno all'altro -----------------
+    private function crosstalkEvents(): array
+    {
+        return [
+            // Bex commenta Anna che ha agito da sola.
+            $this->ev([
+                'key' => 'cross_bex_on_anna', 'title' => 'Bex parla di Anna',
+                'body' => "Bex ti raggiunge a bassa voce. «Anna fa di testa sua. Stavolta è andata bene. Ma un giorno una delle sue 'soluzioni' la ucciderà, e nessuno l'avrà fermata.»",
+                'requires' => ['all' => [
+                    ['has_role' => 'doctor'], ['has_role' => 'engineer'],
+                    ['flag' => 'anna_overruled', 'is' => true],
+                ]],
+                'base_weight' => 5, 'cooldown_days' => 999,
+                'choices' => [
+                    [
+                        'label' => 'Parlerò con Anna',
+                        'hint' => null, 'tags' => [],
+                        'outcomes' => [['weight' => 1, 'effects' => [['modify_standing' => ['who' => 'Bex', 'delta' => 8]], ['relationship' => ['a' => 'Anna', 'b' => 'Bex', 'delta' => 10]]], 'log' => 'Bex sembra sollevata che qualcuno la ascolti.']],
+                    ],
+                    [
+                        'label' => 'Anna sa quello che fa',
+                        'hint' => null, 'tags' => [],
+                        'outcomes' => [['weight' => 1, 'effects' => [['modify_standing' => ['who' => 'Bex', 'delta' => -8]], ['relationship' => ['a' => 'Anna', 'b' => 'Bex', 'delta' => -10]]], 'log' => '«Certo. Lo sa sempre», dice Bex, e se ne va.']],
+                    ],
+                ],
+            ]),
+
+            // Cole reagisce se Bex ti ha contestato pubblicamente.
+            $this->ev([
+                'key' => 'cross_cole_on_bex', 'title' => 'Cole ci scherza su',
+                'body' => "Cole abbassa la voce, mezzo sorriso nervoso. «Bex ti ha messo con le spalle al muro, eh? Almeno qualcuno qui dice le cose come stanno. Anche se non serve a niente.»",
+                'requires' => ['all' => [
+                    ['has_role' => 'pilot'], ['has_role' => 'doctor'],
+                    ['flag' => 'bex_confronted', 'is' => true],
+                ]],
+                'base_weight' => 5, 'cooldown_days' => 999,
+                'choices' => [
+                    [
+                        'label' => 'Anche tu hai qualcosa da dirmi?',
+                        'hint' => null, 'tags' => [],
+                        'outcomes' => [['weight' => 1, 'effects' => [['modify_standing' => ['who' => 'Cole', 'delta' => 5]], ['character' => 'Cole', 'stress' => -5]], 'log' => '«No, no. Io guido e basta», alza le mani Cole.']],
+                    ],
+                    [
+                        'label' => 'Torna alla tua postazione',
+                        'hint' => null, 'tags' => [],
+                        'outcomes' => [['weight' => 1, 'effects' => [['modify_standing' => ['who' => 'Cole', 'delta' => -8]], ['set_flag' => 'cole_resentful', 'value' => true]], 'log' => 'Cole si chiude. Hai chiuso una porta che era socchiusa.']],
+                    ],
+                ],
+            ]),
+
+            // Anna giudica come gestisci Cole.
+            $this->ev([
+                'key' => 'cross_anna_on_cole', 'title' => 'Anna dice la sua su Cole',
+                'body' => "Anna ti ferma vicino ai motori. «Cole è spaventato, non stupido. Lo stai trattando come un peso morto. Continua così e quando ti servirà davvero, non ci sarà.»",
+                'requires' => ['all' => [
+                    ['has_role' => 'engineer'], ['has_role' => 'pilot'],
+                    ['flag' => 'cole_resentful', 'is' => true],
+                ]],
+                'base_weight' => 5, 'cooldown_days' => 999,
+                'choices' => [
+                    [
+                        'label' => 'Hai ragione. Cambierò.',
+                        'hint' => null, 'tags' => [],
+                        'outcomes' => [['weight' => 1, 'effects' => [['modify_standing' => ['who' => 'Cole', 'delta' => 12]], ['modify_standing' => ['who' => 'Anna', 'delta' => 6]]], 'log' => 'Anna annuisce. «Bene. Allora forse ce la caviamo.»']],
+                    ],
+                    [
+                        'label' => 'Ognuno porti il suo peso',
+                        'hint' => null, 'tags' => ['il_freddo'],
+                        'outcomes' => [['weight' => 1, 'effects' => [['modify_standing' => ['who' => 'Anna', 'delta' => -10]], ['resource' => 'morale', 'delta' => -4]], 'log' => '«Come vuoi. Ma te l\'ho detto», dice Anna.']],
                     ],
                 ],
             ]),
