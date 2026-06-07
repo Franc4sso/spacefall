@@ -79,6 +79,24 @@ return [
     ],
 
     /*
+     | Hunger. A per-character survival meter (0–100) that rises each day and is
+     | reduced by eating (meal/opportunity cards). Above thresholds it inflicts
+     | stress; at `starve_at` the survivor dies of starvation (a slow, visible
+     | spiral — never a trap death). Tuned via the simulation harness (Task 9).
+     |
+     | daily_rise starts at 0 (DORMANT): the mechanic is wired but inert so the
+     | suite stays green; Task 9 raises it to the tuned value.
+     */
+    'hunger' => [
+        'daily_rise' => 0,
+        'starve_at' => 100,
+        'stress_bands' => [
+            ['at_or_above' => 70, 'stress' => 8],
+            ['at_or_above' => 40, 'stress' => 4],
+        ],
+    ],
+
+    /*
      | Traits. Each is pure data the engine consults; no trait name is ever
      | hard-coded in code. Two levers:
      |

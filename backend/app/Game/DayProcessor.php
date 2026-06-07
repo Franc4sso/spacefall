@@ -57,6 +57,11 @@ final class DayProcessor
         // 3. Hardship stress from scarce resources.
         $characters = $this->applyHardship($characters, $resources);
 
+        // 3b. Hunger: rises daily, inflicts stress above thresholds, and kills
+        //     at the starvation point. A slow, visible spiral — the player has
+        //     seen it climbing for days and could have fed the crew.
+        [$characters, $hungerDeath] = $this->applyHunger($characters);
+
         // 4. Stress-band self-initiated behaviour.
         [$characters, $scheduled] = $this->processStress($characters, $scheduled, $run->day);
 
@@ -64,6 +69,12 @@ final class DayProcessor
         $run->systems = $systems;
         $run->characters = $characters;
         $run->scheduled_events = $scheduled;
+
+        if ($hungerDeath) {
+            $flags = $run->flags ?? [];
+            $flags['died_of_hunger'] = true;
+            $run->flags = $flags;
+        }
 
         // 5. Advance day.
         $run->day = $run->day + 1;
@@ -99,6 +110,50 @@ final class DayProcessor
         }
 
         return [$systems, $resources];
+    }
+
+    /**
+     * Daily hunger: every living survivor gets hungrier; above the configured
+     * bands hunger inflicts stress; at starve_at the survivor dies. Returns the
+     * updated roster and whether anyone starved (for the witness flag).
+     *
+     * @param  list<array<string,mixed>>  $characters
+     * @return array{0: list<array<string,mixed>>, 1: bool}
+     */
+    private function applyHunger(array $characters): array
+    {
+        $cfg = config('game.hunger');
+        $rise = (int) ($cfg['daily_rise'] ?? 0);
+        $starveAt = (int) ($cfg['starve_at'] ?? 100);
+        $bands = $cfg['stress_bands'] ?? [];
+        $someoneStarved = false;
+
+        foreach ($characters as $i => $c) {
+            if (! ($c['alive'] ?? true)) {
+                continue;
+            }
+            $hunger = $this->clampResource((int) ($c['hunger'] ?? 0) + $rise, 100);
+            $characters[$i]['hunger'] = $hunger;
+
+            if ($hunger >= $starveAt) {
+                $characters[$i]['alive'] = false;
+                $someoneStarved = true;
+                continue;
+            }
+
+            // Highest matching stress band applies.
+            $add = 0;
+            foreach ($bands as $band) {
+                if ($hunger >= ($band['at_or_above'] ?? 0)) {
+                    $add = max($add, (int) ($band['stress'] ?? 0));
+                }
+            }
+            if ($add > 0) {
+                $characters[$i]['stress'] = $this->clampResource((int) ($c['stress'] ?? 0) + $add, 100);
+            }
+        }
+
+        return [$characters, $someoneStarved];
     }
 
     /**
