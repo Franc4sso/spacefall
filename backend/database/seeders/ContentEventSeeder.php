@@ -75,6 +75,7 @@ class ContentEventSeeder extends Seeder
             $this->trapEvents(),
             $this->silentEvents(),
             $this->moralEvents(),
+            $this->annaThread(),
         );
     }
 
@@ -231,7 +232,10 @@ class ContentEventSeeder extends Seeder
             $this->ev([
                 'key' => 'c_anna_idea', 'title' => 'Anna ha un\'idea', 'speaker' => 'Anna',
                 'body' => 'Dice di poter recuperare energia da un condotto morto.',
-                'requires' => ['has_role' => 'engineer'],
+                'requires' => ['all' => [
+                    ['has_role' => 'engineer'],
+                    ['not' => ['flag' => 'anna_withdrawn', 'is' => true]],
+                ]],
                 'choices' => [
                     $this->gamble('La lascio provare', [['resource' => 'power', 'delta' => 14]], 'Funziona. Ovvio.', [['resource' => 'power', 'delta' => -4], ['character' => 'random', 'stress' => 8]], 'Salta tutto.', 7, 3, 'dovrebbe reggere'),
                     $this->one('Troppo rischioso', [['resource' => 'morale', 'delta' => -3]], 'Ci resta male.'),
@@ -428,6 +432,137 @@ class ContentEventSeeder extends Seeder
                 'choices' => [
                     $this->one('Onoro il ricordo', [['character' => 'all', 'stress' => -6], ['set_flag' => 'lost_one', 'scope' => 'profile', 'value' => true]], 'Un minuto di silenzio nel vuoto.'),
                     $this->one('Vado avanti, freddo', [['resource' => 'morale', 'delta' => -10]], 'Nessuno ti guarda allo stesso modo.'),
+                ],
+            ]),
+        ];
+    }
+
+    // ---- Filo di Anna (ingegnere): competenza che non chiede permesso -------
+    private function annaThread(): array
+    {
+        $done = ['set_flag' => 'anna_thread_done', 'value' => true];
+
+        return [
+            // 1. Lo fa comunque — ribaltamento: ha già iniziato.
+            $this->ev([
+                'key' => 'anna_does_it_anyway', 'title' => 'Anna non ha aspettato',
+                'body' => "Trovi Anna a metà di una riparazione che non le hai autorizzato. «Stava cedendo. Non c'era tempo per chiederti il permesso.» Ormai è fatta.",
+                'requires' => ['all' => [
+                    ['has_role' => 'engineer'],
+                    ['not' => ['flag' => 'anna_thread_done', 'is' => true]],
+                    ['any' => [
+                        ['system' => 'power_grid', 'field' => 'efficiency', 'op' => '<', 'value' => 55],
+                        ['system' => 'hull_integrity', 'field' => 'efficiency', 'op' => '<', 'value' => 55],
+                    ]],
+                ]],
+                'base_weight' => 6, 'cooldown_days' => 999,
+                'weight_modifiers' => [
+                    ['when' => ['system' => 'power_grid', 'field' => 'efficiency', 'op' => '<', 'value' => 35], 'factor' => 3.0],
+                ],
+                'choices' => [
+                    [
+                        'label' => 'Coprila — è la migliore che abbiamo',
+                        'hint' => 'incerto',
+                        'tags' => ['cautious'],
+                        'outcomes' => [
+                            ['weight' => 6, 'effects' => [['resource' => 'power', 'delta' => 12], ['modify_standing' => ['who' => 'Anna', 'delta' => 15]], $done], 'log' => 'Funziona. Ti guarda con gratitudine.'],
+                            ['weight' => 4, 'effects' => [['damage_system' => 'power_grid', 'amount' => 10], ['character' => 'Anna', 'stress' => 10], $done], 'log' => 'Stavolta no. Ma ci ha provato per tutti.'],
+                        ],
+                    ],
+                    [
+                        'label' => 'Mettila a rapporto davanti a tutti',
+                        'hint' => null,
+                        'tags' => ['lone_decision'],
+                        'outcomes' => [
+                            ['weight' => 1, 'effects' => [['modify_standing' => ['who' => 'Anna', 'delta' => -25]], ['set_flag' => 'anna_overruled', 'value' => true], ['resource' => 'morale', 'delta' => -4], $done], 'log' => 'Anna incassa in silenzio. Qualcosa si raffredda.'],
+                        ],
+                    ],
+                ],
+            ]),
+
+            // 2. Si spegne — stress altissimo + scavalcata/sfruttata. Imposta anna_withdrawn.
+            $this->ev([
+                'key' => 'anna_withdraws', 'title' => 'Anna si è fermata',
+                'body' => "Anna è seduta a terra accanto a una paratia aperta, le mani ferme. «Faccio tutto io. Sbaglio io. Pago io. Ho finito.» Non è una minaccia. È stanchezza vera.",
+                'requires' => ['all' => [
+                    ['has_role' => 'engineer'],
+                    ['not' => ['flag' => 'anna_thread_done', 'is' => true]],
+                    ['any' => [
+                        ['flag' => 'anna_overruled', 'is' => true],
+                        ['standing' => ['who' => 'Anna', 'op' => '<=', 'value' => -20]],
+                    ]],
+                ]],
+                'base_weight' => 8, 'cooldown_days' => 999,
+                'choices' => [
+                    [
+                        'label' => 'Lasciala respirare. Te la cavi senza di lei.',
+                        'hint' => null,
+                        'tags' => [],
+                        'outcomes' => [['weight' => 1, 'effects' => [['set_flag' => 'anna_withdrawn', 'value' => true], ['character' => 'Anna', 'stress' => -20], $done], 'log' => 'Anna si ritira nel suo silenzio. La prossima crisi tecnica è tua.']],
+                    ],
+                    [
+                        'label' => 'Siediti accanto a lei. Ascolta.',
+                        'hint' => 'dovrebbe reggere',
+                        'tags' => [],
+                        'outcomes' => [['weight' => 1, 'effects' => [['modify_standing' => ['who' => 'Anna', 'delta' => 30]], ['character' => 'Anna', 'stress' => -10], ['resource' => 'morale', 'delta' => -3], $done], 'log' => 'Non risolvi niente. Ma lei resta. A volte basta.']],
+                    ],
+                ],
+            ]),
+
+            // 3. La scommessa — scafo/energia critici + oggetto tecnico. Consuma l'oggetto.
+            $this->ev([
+                'key' => 'anna_gambit', 'title' => 'La scommessa di Anna',
+                'body' => "Anna posa l'attrezzo sul tavolo come una carta da gioco. «Una possibilità. La sfrutto tutta o niente. Se va, siamo a posto per giorni. Se non va, l'ho bruciata.» Decidi tu.",
+                'requires' => ['all' => [
+                    ['has_role' => 'engineer'],
+                    ['not' => ['flag' => 'anna_thread_done', 'is' => true]],
+                    ['any' => [
+                        ['has_item' => 'welder'], ['has_item' => 'toolkit'],
+                        ['has_item' => 'fabricator'], ['has_item' => 'manual'],
+                    ]],
+                    ['any' => [
+                        ['resource' => 'power', 'op' => '<', 'value' => 40],
+                        ['resource' => 'hull', 'op' => '<', 'value' => 40],
+                    ]],
+                ]],
+                'base_weight' => 7, 'cooldown_days' => 999,
+                'choices' => [
+                    [
+                        'label' => 'Lasciala scommettere',
+                        'hint' => 'rischioso',
+                        'tags' => [],
+                        'outcomes' => [
+                            ['weight' => 6, 'effects' => [['resource' => 'power', 'delta' => 25], ['resource' => 'hull', 'delta' => 20], ['modify_standing' => ['who' => 'Anna', 'delta' => 20]], $done], 'log' => 'Il colpo riesce. Anna sorride per la prima volta da giorni.'],
+                            ['weight' => 4, 'effects' => [['consume_item' => 'welder'], ['consume_item' => 'toolkit'], ['character' => 'Anna', 'stress' => 15], $done], 'log' => "L'attrezzo si fonde tra le sue mani. Niente. Ci aveva creduto."],
+                        ],
+                    ],
+                    [
+                        'label' => 'Troppo rischio. Si tiene l\'attrezzo.',
+                        'hint' => 'dovrebbe reggere',
+                        'tags' => ['cautious'],
+                        'outcomes' => [['weight' => 1, 'effects' => [['modify_standing' => ['who' => 'Anna', 'delta' => -8]], ['resource' => 'morale', 'delta' => -2], $done], 'log' => 'Anna rimette via tutto. «Come vuoi.»']],
+                    ],
+                ],
+            ]),
+
+            // 4. Il salvataggio silenzioso — standing alto + situazione non disperata.
+            $this->ev([
+                'key' => 'anna_quiet_save', 'title' => 'Quello che Anna ha fatto',
+                'body' => "Scopri solo dopo cosa ha fatto Anna: ha reinstradato l'energia da sola, di notte, per tenere caldo il settore dove dormiva chi era più sfinito. «Non dovevi saperlo. L'avrei fatto comunque.»",
+                'requires' => ['all' => [
+                    ['has_role' => 'engineer'],
+                    ['not' => ['flag' => 'anna_thread_done', 'is' => true]],
+                    ['standing' => ['who' => 'Anna', 'op' => '>=', 'value' => 35]],
+                    ['day' => ['op' => '>=', 'value' => 10]],
+                ]],
+                'base_weight' => 6, 'cooldown_days' => 999,
+                'choices' => [
+                    [
+                        'label' => 'Ringraziala. Davvero.',
+                        'hint' => null,
+                        'tags' => ['generous'],
+                        'outcomes' => [['weight' => 1, 'effects' => [['resource' => 'morale', 'delta' => 10], ['character' => 'all', 'stress' => -6], ['modify_standing' => ['who' => 'Anna', 'delta' => 10]], $done], 'log' => "L'equipaggio si stringe un po' di più. Funziona, per oggi."]],
+                    ],
                 ],
             ]),
         ];
