@@ -79,6 +79,7 @@ class ContentEventSeeder extends Seeder
             $this->bexThread(),
             $this->coleThread(),
             $this->crosstalkEvents(),
+            $this->dilemmaEvents(),
         );
     }
 
@@ -895,6 +896,113 @@ class ContentEventSeeder extends Seeder
         ];
     }
 
+    // ---- Bivii ardui: due opzioni legittime, costi in valute diverse --------
+    private function dilemmaEvents(): array
+    {
+        return [
+            // L'ultima cella d'ossigeno — Anna intrappolata vs ferito curato da Bex.
+            $this->ev([
+                'key' => 'dilemma_oxygen_cell', 'title' => "L'ultima cella d'ossigeno",
+                'body' => "Due settori perdono aria. Anna si è sigillata in uno per ripararlo. Bex tiene in vita un ferito nell'altro. Puoi pressurizzarne uno solo. L'altro lo perdi.",
+                'requires' => ['all' => [
+                    ['has_role' => 'engineer'],
+                    ['resource' => 'oxygen', 'op' => '<', 'value' => 60],
+                    ['day' => ['op' => '>=', 'value' => 6]],
+                ]],
+                'base_weight' => 10, 'cooldown_days' => 999,
+                'choices' => [
+                    [
+                        'label' => 'Salva il settore di Anna',
+                        'hint' => null, 'tags' => [],
+                        'outcomes' => [['weight' => 1, 'effects' => [['resource' => 'oxygen', 'delta' => 10], ['modify_standing' => ['who' => 'Anna', 'delta' => 15]], ['modify_standing' => ['who' => 'Bex', 'delta' => -25]], ['resource' => 'morale', 'delta' => -12]], 'log' => 'Anna è salva. Il ferito no. Bex non ti guarda più.',
+                            'reactions' => [['who' => 'Bex', 'tone' => 'anger', 'line' => 'Era vivo. Potevo salvarlo.']]]],
+                    ],
+                    [
+                        'label' => 'Salva il ferito di Bex',
+                        'hint' => null, 'tags' => [],
+                        'outcomes' => [['weight' => 1, 'effects' => [['resource' => 'oxygen', 'delta' => 5], ['modify_standing' => ['who' => 'Bex', 'delta' => 15]], ['modify_standing' => ['who' => 'Anna', 'delta' => -20]], ['character' => 'Anna', 'stress' => 30], ['damage_system' => 'life_support', 'amount' => 15]], 'log' => 'Tiri fuori Anna all\'ultimo, sotto shock. Il settore è perso.',
+                            'reactions' => [['who' => 'Anna', 'tone' => 'complicated', 'line' => 'Hai scelto. Lo capisco. Credo.']]]],
+                    ],
+                ],
+            ]),
+
+            // Il razionamento — equo vs efficiente.
+            $this->ev([
+                'key' => 'dilemma_rationing', 'title' => 'Come tagli le razioni',
+                'body' => "Il cibo non basta per tutti alla razione piena. Tagli uguale per tutti, e tutti si indeboliscono. O togli ai più fragili per tenere in forza chi lavora. Non c'è una scelta pulita.",
+                'requires' => ['resource' => 'food', 'op' => '<', 'value' => 35],
+                'base_weight' => 9, 'cooldown_days' => 999,
+                'choices' => [
+                    [
+                        'label' => 'Taglio uguale per tutti',
+                        'hint' => null, 'tags' => [],
+                        'outcomes' => [['weight' => 1, 'effects' => [['character' => 'all', 'stress' => 10], ['resource' => 'morale', 'delta' => 3], ['modify_trust' => 5]], 'log' => 'Nessuno è contento. Ma nessuno è stato abbandonato.']],
+                    ],
+                    [
+                        'label' => 'Tolgo ai più deboli',
+                        'hint' => null, 'tags' => ['sacrifice_crew'],
+                        'outcomes' => [['weight' => 1, 'effects' => [['resource' => 'food', 'delta' => 8], ['character' => 'highest_stress', 'stress' => 20], ['modify_trust' => -15]], 'log' => 'La stazione continua a funzionare. Qualcuno ti guarda diverso.']],
+                    ],
+                ],
+            ]),
+
+            // La trasmissione — SOS (rischio) vs dati di ricerca (significato).
+            $this->ev([
+                'key' => 'dilemma_transmission', 'title' => 'Un solo messaggio',
+                'body' => "L'antenna ha energia per una trasmissione sola, poi tace. Un SOS — forse qualcuno viene, forse riveli la tua posizione a ciò che è là fuori. O i dati di ricerca, che danno un senso a tutto questo, ma non porteranno nessun soccorso.",
+                'requires' => ['all' => [
+                    ['has_item' => 'comms'],
+                    ['day' => ['op' => '>=', 'value' => 10]],
+                ]],
+                'base_weight' => 9, 'cooldown_days' => 999,
+                'choices' => [
+                    [
+                        'label' => 'Lancia l\'SOS',
+                        'hint' => 'incerto', 'tags' => [],
+                        'outcomes' => [
+                            ['weight' => 6, 'effects' => [['resource' => 'morale', 'delta' => 15], ['set_flag' => 'sos_sent', 'value' => true]], 'log' => 'Il segnale parte nel buio. Ora si aspetta.'],
+                            ['weight' => 4, 'effects' => [['resource' => 'morale', 'delta' => 8], ['spawn_event' => ['key' => 'c_real_threat', 'in_days' => 2]]], 'log' => 'Il segnale parte. Forse non eri l\'unico ad ascoltare.'],
+                        ],
+                    ],
+                    [
+                        'label' => 'Trasmetti i dati di ricerca',
+                        'hint' => null, 'tags' => ['lone_decision'],
+                        'outcomes' => [['weight' => 1, 'effects' => [['set_flag' => 'research_complete', 'value' => true], ['resource' => 'morale', 'delta' => -8], ['character' => 'all', 'stress' => 6]], 'log' => 'I dati volano via. Qualcuno, un giorno, saprà. Voi resterete soli.']],
+                    ],
+                ],
+            ]),
+
+            // Chi tiene il pannello — vai tu (rischi il comando) o mandi un altro.
+            $this->ev([
+                'key' => 'dilemma_panel', 'title' => 'Chi tiene il pannello',
+                'body' => "Una breccia. Qualcuno deve tenere un pannello dall'esterno mentre lo scafo vibra. Vai tu — e se non torni, chi guida? O mandi qualcuno dell'equipaggio, e tutti ti vedono scegliere chi rischia al posto tuo.",
+                'requires' => ['all' => [
+                    ['resource' => 'hull', 'op' => '<', 'value' => 40],
+                    ['day' => ['op' => '>=', 'value' => 8]],
+                ]],
+                'base_weight' => 9, 'cooldown_days' => 999,
+                'choices' => [
+                    [
+                        'label' => 'Vai tu',
+                        'hint' => 'rischioso', 'tags' => ['cautious'],
+                        'outcomes' => [
+                            ['weight' => 7, 'effects' => [['resource' => 'hull', 'delta' => 25], ['modify_trust' => 20], ['character' => 'all', 'stress' => -5]], 'log' => 'Torni dentro intirizzito. L\'equipaggio ti guarda diversamente — meglio.'],
+                            ['weight' => 3, 'effects' => [['resource' => 'hull', 'delta' => 20], ['resource' => 'oxygen', 'delta' => -12], ['character' => 'all', 'stress' => 8]], 'log' => 'Tieni il pannello, ma quasi non rientri. È costato caro.'],
+                        ],
+                    ],
+                    [
+                        'label' => 'Mandi qualcuno',
+                        'hint' => null, 'tags' => ['sacrifice_crew'],
+                        'outcomes' => [
+                            ['weight' => 7, 'effects' => [['resource' => 'hull', 'delta' => 22], ['character' => 'random', 'stress' => 20], ['modify_trust' => -10]], 'log' => 'Regge. Chi è uscito rientra tremando, e non ti ringrazia.'],
+                            ['weight' => 3, 'effects' => [['resource' => 'hull', 'delta' => 18], ['kill' => 'random'], ['set_flag' => 'cole_caused_death', 'value' => true], ['set_flag' => 'bex_saw_death', 'value' => true]], 'log' => 'Lo scafo regge. La persona che hai mandato no.'],
+                        ],
+                    ],
+                ],
+            ]),
+        ];
+    }
+
     // ---- Domino chains (ignored choice → future crisis) ---------------------
     private function dominoEvents(): array
     {
@@ -966,7 +1074,7 @@ class ContentEventSeeder extends Seeder
                 'body' => "Quello che hai fatto con le razioni ha bollito sotto la superficie. Ora è esploso. Due membri si rifiutano di lavorare finché il sistema non cambia.",
                 'base_weight' => 0, 'cooldown_days' => 999,
                 'choices' => [
-                    $this->one('Cedi e ridistribuisci', [['resource' => 'food', 'delta' => -10], ['modify_trust' => 15], ['resource' => 'morale', 'delta' => 10]], 'La tensione cala. Il cibo diminuisce.'),
+                    $this->one('Cedi e ridistribuisci', [['modify_trust' => 15], ['resource' => 'morale', 'delta' => 10]], 'La tensione cala. Hai ceduto, ma l\'equipaggio torna a respirare.'),
                     $this->one('Mantieni la linea', [['modify_trust' => -25], ['resource' => 'morale', 'delta' => -15], ['set_flag' => 'mutiny_occurred', 'value' => true]], 'Silenzio. Del tipo sbagliato.'),
                 ],
             ]),
