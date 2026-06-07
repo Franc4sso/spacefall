@@ -352,26 +352,32 @@ return [
     ],
 
     'items' => [
+        // The starting grid: 9 hand-picked items, each with real content (events
+        // and/or win endings gate on them). Kept deliberately small so the pick
+        // screen is a clear choice, not an overwhelming wall.
         ['key' => 'drone',        'name' => 'Drone da ricognizione', 'description' => 'Esplora i settori sigillati al posto tuo.'],
         ['key' => 'scanner',      'name' => 'Scanner portatile',     'description' => 'Legge guasti e minacce prima che esplodano.'],
         ['key' => 'welder',       'name' => 'Saldatrice',            'description' => 'Ripara brecce nello scafo sul posto.'],
         ['key' => 'medkit',       'name' => 'Kit medico',            'description' => 'Tiene in piedi chi sta cedendo.'],
         ['key' => 'rifle',        'name' => 'Fucile a impulsi',      'description' => 'Quando parlare non basta.'],
         ['key' => 'seedbank',     'name' => 'Banca semi',            'description' => 'Coltivi cibo invece di razionarlo.'],
-        ['key' => 'reactor_cell', 'name' => 'Cella di riserva',      'description' => 'Energia d\'emergenza per un giorno nero.'],
         ['key' => 'spacesuit',    'name' => 'Tuta EVA',              'description' => 'Uscire fuori smette di essere un suicidio.'],
         ['key' => 'comms',        'name' => 'Radio a lungo raggio',  'description' => 'Una possibilità di chiamare aiuto.'],
-        ['key' => 'toolkit',      'name' => 'Cassetta attrezzi',     'description' => 'Improvvisi riparazioni che altri non possono.'],
-        ['key' => 'rebreather',   'name' => 'Riciclatore d\'aria',   'description' => 'Allunga ogni respiro.'],
-        ['key' => 'battery',      'name' => 'Pacco batterie',        'description' => 'Accumuli energia per dopo.'],
         ['key' => 'rations',      'name' => 'Razioni extra',         'description' => 'Un cuscinetto contro la fame.'],
-        ['key' => 'manual',       'name' => 'Manuale tecnico',       'description' => 'Sai cosa stai toccando, per una volta.'],
+
+        // Locked: real content still gates on them, but they're off the starting
+        // grid (reserved for the meta-unlock system). Trimmed to keep the pick
+        // screen focused. rebreather/battery were removed entirely — they had no
+        // content at all.
+        ['key' => 'toolkit',      'name' => 'Cassetta attrezzi',     'description' => 'Improvvisi riparazioni che altri non possono.', 'locked' => true],
+        ['key' => 'manual',       'name' => 'Manuale tecnico',       'description' => 'Sai cosa stai toccando, per una volta.', 'locked' => true],
+        ['key' => 'reactor_cell', 'name' => 'Cella di riserva',      'description' => 'Energia d\'emergenza per un giorno nero.', 'locked' => true],
+        ['key' => 'sensors',      'name' => 'Rete di sensori',       'description' => 'La stazione ti avvisa, a volte.', 'locked' => true],
+        ['key' => 'flare',        'name' => 'Razzi di segnalazione', 'description' => 'Un grido visibile nel vuoto.', 'locked' => true],
+        ['key' => 'logbank',      'name' => 'Archivio di bordo',     'description' => 'Sai cosa è successo a chi c\'era prima.', 'locked' => true],
         ['key' => 'turret',       'name' => 'Torretta automatica',   'description' => 'Difende un settore senza il tuo presidio.', 'locked' => true],
         ['key' => 'cryopod',      'name' => 'Cella criogenica',      'description' => 'Metti qualcuno in pausa per salvarlo.', 'locked' => true],
-        ['key' => 'sensors',      'name' => 'Rete di sensori',       'description' => 'La stazione ti avvisa, a volte.'],
         ['key' => 'fabricator',   'name' => 'Fabbricatore',          'description' => 'Stampi pezzi che non hai.', 'locked' => true],
-        ['key' => 'flare',        'name' => 'Razzi di segnalazione', 'description' => 'Un grido visibile nel vuoto.'],
-        ['key' => 'logbank',      'name' => 'Archivio di bordo',     'description' => 'Sai cosa è successo a chi c\'era prima.'],
     ],
 
 ];
