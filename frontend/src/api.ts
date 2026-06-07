@@ -47,6 +47,7 @@ export type Character = {
   stress: number;
   alive: boolean;
   standing: number;
+  hunger: number;
 };
 
 export type Item = { key: string; name: string; description: string };

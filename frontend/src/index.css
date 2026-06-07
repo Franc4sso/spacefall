@@ -268,3 +268,13 @@ button { font-family: var(--font-ui); cursor: pointer; }
 .react-line.anger       { color: var(--color-red); }
 .react-line.approve     { color: var(--color-cyan); }
 .react-line.complicated { color: var(--color-gold); }
+
+/* ---- Hunger (visible on avatars) ---- */
+.crew-avatar.hungry   { filter: grayscale(0.5) brightness(0.85); }
+.crew-avatar.starving { filter: grayscale(0.85) brightness(0.65) contrast(1.05); }
+.hunger-tag {
+  font-size: 9px; letter-spacing: 0.08em; margin-top: 2px;
+  font-family: var(--font-mono);
+}
+.hunger-tag.hungry   { color: var(--color-orange); }
+.hunger-tag.starving { color: var(--color-red); }

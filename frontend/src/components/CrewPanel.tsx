@@ -42,9 +42,12 @@ export function CrewPanel({ characters, epithet, reactions = [] }: Props) {
         const stressPct = c.stress;
         const stressColor = stressPct >= 85 ? "var(--color-red)" : stressPct >= 60 ? "var(--color-orange)" : "var(--color-cyan-dim)";
         const band = standingBand(c.standing ?? 0);
+        const hunger = c.hunger ?? 0;
+        const hungerClass = hunger >= 70 ? "starving" : hunger >= 40 ? "hungry" : "";
+        const hungerWord = hunger >= 70 ? "allo stremo" : hunger >= 40 ? "affamato" : "";
         const reaction = c.alive ? reactionByName.get(c.name) : undefined;
         const avatarClass = c.alive
-          ? `crew-avatar ${roleKey} ${reaction ? `react-${reaction.tone}` : band.ring}`
+          ? `crew-avatar ${roleKey} ${reaction ? `react-${reaction.tone}` : band.ring} ${hungerClass}`
           : "crew-avatar dead";
 
         return (
@@ -72,6 +75,9 @@ export function CrewPanel({ characters, epithet, reactions = [] }: Props) {
                       background: stressColor, transition: "width 500ms ease",
                     }} />
                   </div>
+                  {hungerWord && (
+                    <div className={`hunger-tag ${hungerClass}`}>● {hungerWord}</div>
+                  )}
                   {reaction && (
                     <div className={`react-line ${reaction.tone}`}>«{reaction.line}»</div>
                   )}
