@@ -22,7 +22,7 @@ final class EventSchema
     private const EFFECT_KEYS = [
         'resource', 'set_flag', 'spawn_event', 'character', 'relationship',
         'damage_system', 'recruit', 'kill', 'grant_research_points',
-        'consume_item', 'grant_item', 'modify_trust', 'modify_standing',
+        'consume_item', 'grant_item', 'modify_trust', 'modify_standing', 'end_expedition',
     ];
 
     private const CONDITION_KEYS = [

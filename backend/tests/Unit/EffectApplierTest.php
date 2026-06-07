@@ -280,3 +280,37 @@ it('treats crew as present once their return day arrives', function () {
     applier()->apply([['character' => 'all', 'stress' => 5]], $s, new SeededRng(1));
     expect($s->characters[0]['stress'])->toBe(5);
 });
+
+it('resolves the expeditioner selector from the away_member flag', function () {
+    $s = freshState([
+        'day' => 7,
+        'characters' => [
+            ['name' => 'Anna', 'alive' => true, 'stress' => 0, 'hunger' => 0, 'away_until' => 7],
+            ['name' => 'Bex', 'alive' => true, 'stress' => 0, 'hunger' => 0],
+        ],
+    ]);
+    $s->flags['away_member'] = 'Anna';
+    applier()->apply([['character' => 'expeditioner', 'stress' => 15]], $s, new SeededRng(1));
+    expect($s->characters[0]['stress'])->toBe(15); // Anna (the expeditioner)
+    expect($s->characters[1]['stress'])->toBe(0);
+});
+
+it('ends an expedition: clears away state and applies a duration-scaled toll', function () {
+    $s = freshState([
+        'day' => 7,
+        'characters' => [
+            ['name' => 'Anna', 'alive' => true, 'stress' => 0, 'hunger' => 0, 'away_until' => 7],
+        ],
+    ]);
+    $s->flags['away_member'] = 'Anna';
+    $s->flags['away_days'] = 4;
+    $s->flags['expedition_active'] = true;
+
+    applier()->apply([['end_expedition' => true]], $s, new SeededRng(1));
+
+    expect($s->characters[0]['away_until'])->toBe(0);     // present again
+    expect($s->characters[0]['hunger'])->toBe(16);        // 4 days * 4
+    expect($s->characters[0]['stress'])->toBe(8);         // 4 days * 2
+    expect($s->flags['away_member'] ?? null)->toBeNull();
+    expect($s->flags['expedition_active'] ?? null)->toBeNull();
+});

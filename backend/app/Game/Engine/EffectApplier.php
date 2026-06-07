@@ -132,6 +132,22 @@ final class EffectApplier
             return;
         }
 
+        if (array_key_exists('end_expedition', $effect)) {
+            $name = $state->flags['away_member'] ?? null;
+            $days = (int) ($state->flags['away_days'] ?? 0);
+            if ($name !== null) {
+                foreach ($state->characters as $i => $c) {
+                    if (($c['name'] ?? null) === $name) {
+                        $state->characters[$i]['away_until'] = 0;
+                        $state->characters[$i]['hunger'] = $this->clamp((int) ($c['hunger'] ?? 0) + $days * 4, 100);
+                        $state->characters[$i]['stress'] = $this->clamp((int) ($c['stress'] ?? 0) + $days * 2, 100);
+                    }
+                }
+            }
+            unset($state->flags['away_member'], $state->flags['away_days'], $state->flags['expedition_active']);
+            return;
+        }
+
         // Unknown effect: ignore (total, never throws). Malformed content is
         // caught at seed time by the validator, not at runtime.
     }
@@ -189,6 +205,21 @@ final class EffectApplier
      */
     private function resolveTarget(string $selector, RunState $state, SeededRng $rng): ?int
     {
+        // The expeditioner is away (excluded from the present pool), so resolve
+        // it directly from the flag rather than the present-crew list.
+        if ($selector === 'expeditioner') {
+            $name = $state->flags['away_member'] ?? null;
+            if ($name === null) {
+                return null;
+            }
+            foreach ($state->characters as $i => $c) {
+                if (($c['name'] ?? null) === $name && ($c['alive'] ?? true)) {
+                    return $i;
+                }
+            }
+            return null;
+        }
+
         $living = [];
         foreach ($state->characters as $i => $c) {
             if ($this->isPresent($c, $state)) {
