@@ -19,3 +19,15 @@ it('exposes per-character standing in the run payload', function () {
     expect($byName['Bex']['standing'])->toBe(-20);
     expect($byName['Cole']['standing'])->toBe(0); // default
 });
+
+it('exposes per-character hunger in the run payload', function () {
+    $run = Run::factory()->create([
+        'characters' => [
+            ['name' => 'Anna', 'role' => 'engineer', 'traits' => [], 'stress' => 0, 'hunger' => 42, 'alive' => true],
+        ],
+    ]);
+
+    $payload = $this->getJson("/api/runs/{$run->id}")->assertOk()->json();
+
+    expect($payload['characters'][0]['hunger'])->toBe(42);
+});
