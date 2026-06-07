@@ -156,12 +156,18 @@ final class EffectApplier
         }
     }
 
-    /** @return list<int> indices of living survivors */
+    /** Present = alive and not currently away on an expedition. */
+    private function isPresent(array $c, RunState $state): bool
+    {
+        return ($c['alive'] ?? true) && (int) ($c['away_until'] ?? 0) <= $state->day;
+    }
+
+    /** @return list<int> indices of present survivors (alive, not away) */
     private function livingIndices(RunState $state): array
     {
         $out = [];
         foreach ($state->characters as $i => $c) {
-            if ($c['alive'] ?? true) {
+            if ($this->isPresent($c, $state)) {
                 $out[] = $i;
             }
         }
@@ -185,7 +191,7 @@ final class EffectApplier
     {
         $living = [];
         foreach ($state->characters as $i => $c) {
-            if ($c['alive'] ?? true) {
+            if ($this->isPresent($c, $state)) {
                 $living[$i] = $c;
             }
         }

@@ -243,3 +243,40 @@ it('targets the hungriest living survivor', function () {
     expect($s->characters[1]['hunger'])->toBe(50); // Bex was hungriest among the living
     expect($s->characters[0]['hunger'])->toBe(30); // Anna untouched
 });
+
+it('excludes away crew from "all" targeting', function () {
+    $s = freshState([
+        'day' => 5,
+        'characters' => [
+            ['name' => 'Anna', 'alive' => true, 'stress' => 0, 'hunger' => 0],
+            ['name' => 'Bex', 'alive' => true, 'stress' => 0, 'hunger' => 0, 'away_until' => 8], // away (8 > 5)
+        ],
+    ]);
+    applier()->apply([['character' => 'all', 'stress' => 10]], $s, new SeededRng(1));
+    expect($s->characters[0]['stress'])->toBe(10); // Anna present -> hit
+    expect($s->characters[1]['stress'])->toBe(0);  // Bex away -> spared
+});
+
+it('excludes away crew from selector targeting', function () {
+    $s = freshState([
+        'day' => 5,
+        'characters' => [
+            ['name' => 'Anna', 'alive' => true, 'stress' => 0, 'hunger' => 90, 'away_until' => 8], // hungriest but away
+            ['name' => 'Bex', 'alive' => true, 'stress' => 0, 'hunger' => 40],
+        ],
+    ]);
+    applier()->apply([['character' => 'hungriest', 'hunger' => -20]], $s, new SeededRng(1));
+    expect($s->characters[0]['hunger'])->toBe(90); // away -> untouched
+    expect($s->characters[1]['hunger'])->toBe(20); // present hungriest
+});
+
+it('treats crew as present once their return day arrives', function () {
+    $s = freshState([
+        'day' => 8,
+        'characters' => [
+            ['name' => 'Bex', 'alive' => true, 'stress' => 0, 'hunger' => 0, 'away_until' => 8], // back today (8 <= 8)
+        ],
+    ]);
+    applier()->apply([['character' => 'all', 'stress' => 5]], $s, new SeededRng(1));
+    expect($s->characters[0]['stress'])->toBe(5);
+});

@@ -131,6 +131,7 @@ final class RunFactory
                 'traits' => $member['traits'] ?? [],
                 'stress' => 0,
                 'hunger' => 0,
+                'away_until' => 0,
                 'alive' => true,
             ];
         }
