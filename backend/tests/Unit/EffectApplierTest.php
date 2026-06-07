@@ -180,6 +180,22 @@ it('clamps crew_trust to 100 maximum', function () {
     expect($s->flags['crew_trust'])->toBe(100);
 });
 
+it('modifies a character standing flag', function () {
+    $s = freshState();
+    $s->flags['standing_anna'] = 10;
+    applier()->apply([['modify_standing' => ['who' => 'Anna', 'delta' => 15]]], $s, new SeededRng(1));
+    expect($s->flags['standing_anna'])->toBe(25);
+});
+
+it('defaults standing to zero and clamps to [-100, 100]', function () {
+    $s = freshState();
+    applier()->apply([['modify_standing' => ['who' => 'Bex', 'delta' => -130]]], $s, new SeededRng(1));
+    expect($s->flags['standing_bex'])->toBe(-100);
+
+    applier()->apply([['modify_standing' => ['who' => 'Bex', 'delta' => 250]]], $s, new SeededRng(1));
+    expect($s->flags['standing_bex'])->toBe(100);
+});
+
 it('is deterministic for random targeting given the same seed', function () {
     $build = fn () => freshState(['characters' => [
         ['name' => 'A', 'alive' => true, 'stress' => 0],

@@ -22,13 +22,13 @@ final class EventSchema
     private const EFFECT_KEYS = [
         'resource', 'set_flag', 'spawn_event', 'character', 'relationship',
         'damage_system', 'recruit', 'kill', 'grant_research_points',
-        'consume_item', 'grant_item', 'modify_trust',
+        'consume_item', 'grant_item', 'modify_trust', 'modify_standing',
     ];
 
     private const CONDITION_KEYS = [
         'all', 'any', 'not', 'resource', 'day', 'flag', 'has_item',
         'has_role', 'trait_present', 'relationship', 'system',
-        'chosen', 'chosen_tag', 'not_chosen',
+        'chosen', 'chosen_tag', 'not_chosen', 'standing',
     ];
 
     /** @param list<string> $resourceCodes */

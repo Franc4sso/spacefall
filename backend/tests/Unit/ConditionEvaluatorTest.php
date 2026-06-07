@@ -140,6 +140,17 @@ it('evaluates chosen_tag condition', function () {
     expect($ev->evaluate(['chosen_tag' => 'nonexistent'], $state))->toBeFalse();
 });
 
+it('evaluates a standing condition against the run flag', function () {
+    $s = stateWith(['flags' => ['standing_cole' => 45]]);
+    expect($this->eval->evaluate(['standing' => ['who' => 'Cole', 'op' => '>=', 'value' => 40]], $s))->toBeTrue();
+    expect($this->eval->evaluate(['standing' => ['who' => 'Cole', 'op' => '<', 'value' => 40]], $s))->toBeFalse();
+});
+
+it('treats a missing standing as zero', function () {
+    $s = stateWith();
+    expect($this->eval->evaluate(['standing' => ['who' => 'Anna', 'op' => '=', 'value' => 0]], $s))->toBeTrue();
+});
+
 it('evaluates not_chosen condition', function () {
     $state = new \App\Game\Engine\RunState(
         day: 5,

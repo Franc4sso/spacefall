@@ -136,6 +136,13 @@ final class ConditionEvaluator
             return true;
         }
 
+        if (array_key_exists('standing', $condition)) {
+            $spec = $condition['standing'];
+            $key = 'standing_' . strtolower((string) ($spec['who'] ?? ''));
+            $have = (int) ($state->flags[$key] ?? 0);
+            return $this->compare($have, $spec['op'] ?? '=', $spec['value'] ?? 0);
+        }
+
         // Unknown shape: fail closed (not eligible) rather than throw.
         return false;
     }

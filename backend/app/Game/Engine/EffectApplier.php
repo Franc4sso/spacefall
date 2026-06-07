@@ -123,6 +123,14 @@ final class EffectApplier
             return;
         }
 
+        if (array_key_exists('modify_standing', $effect)) {
+            $spec = $effect['modify_standing'];
+            $key = 'standing_' . strtolower((string) ($spec['who'] ?? ''));
+            $current = (int) ($state->flags[$key] ?? 0);
+            $state->flags[$key] = max(-100, min(100, $current + (int) ($spec['delta'] ?? 0)));
+            return;
+        }
+
         // Unknown effect: ignore (total, never throws). Malformed content is
         // caught at seed time by the validator, not at runtime.
     }
