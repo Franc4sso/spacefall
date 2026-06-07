@@ -167,6 +167,8 @@ class RunController extends Controller
                     'traits' => $c['traits'] ?? [],
                     'stress' => $c['stress'] ?? 0,
                     'hunger' => $c['hunger'] ?? 0,
+                    'away_until' => (int) ($c['away_until'] ?? 0),
+                    'away' => (int) ($c['away_until'] ?? 0) > $run->day,
                     'alive' => $c['alive'] ?? true,
                     'standing' => (int) ($run->flags['standing_' . strtolower((string) ($c['name'] ?? ''))] ?? 0),
                 ])->all(),

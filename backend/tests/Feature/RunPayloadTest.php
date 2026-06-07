@@ -31,3 +31,18 @@ it('exposes per-character hunger in the run payload', function () {
 
     expect($payload['characters'][0]['hunger'])->toBe(42);
 });
+
+it('exposes the away state per character', function () {
+    $run = Run::factory()->create([
+        'day' => 5,
+        'characters' => [
+            ['name' => 'Anna', 'role' => 'engineer', 'traits' => [], 'stress' => 0, 'hunger' => 0, 'away_until' => 9, 'alive' => true],
+            ['name' => 'Bex', 'role' => 'doctor', 'traits' => [], 'stress' => 0, 'hunger' => 0, 'away_until' => 0, 'alive' => true],
+        ],
+    ]);
+
+    $byName = collect($this->getJson("/api/runs/{$run->id}")->assertOk()->json('characters'))->keyBy('name');
+    expect($byName['Anna']['away'])->toBeTrue();
+    expect($byName['Anna']['away_until'])->toBe(9);
+    expect($byName['Bex']['away'])->toBeFalse();
+});
