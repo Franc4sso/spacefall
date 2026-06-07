@@ -82,10 +82,10 @@ return [
      | Hunger. A per-character survival meter (0–100) that rises each day and is
      | reduced by eating (meal/opportunity cards). Above thresholds it inflicts
      | stress; at `starve_at` the survivor dies of starvation (a slow, visible
-     | spiral — never a trap death). Tuned via the simulation harness (Task 9).
+     | spiral — never a trap death). Tuned via the simulation harness.
      |
-     | daily_rise starts at 0 (DORMANT): the mechanic is wired but inert so the
-     | suite stays green; Task 9 raises it to the tuned value.
+     | spawn_bands: crossing UP into a band schedules its event next day (forced,
+     | jumps the queue) so the meal decision reliably surfaces at the inflection.
      */
     'hunger' => [
         'daily_rise' => 8,
