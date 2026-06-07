@@ -174,7 +174,7 @@ return [
      | it. `unlock` items are reserved for the meta system (Phase 7) — left out of
      | the default pool for now.
      */
-    'items_pick' => 5,
+    'items_pick' => 4,
 
     /*
      | Endings. Each is a data-driven ending: a `when` Condition (the same DSL),

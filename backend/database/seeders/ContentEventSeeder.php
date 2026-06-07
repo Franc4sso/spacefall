@@ -1211,6 +1211,7 @@ class ContentEventSeeder extends Seeder
             $this->ev([
                 'key' => 'exp_return_rich', 'title' => 'Tornano carichi', 'speaker' => null,
                 'body' => "Il portello si apre. Chi avevi mandato torna — e non a mani vuote. Scorte, e qualcosa di utile recuperato dal buio.",
+                'requires' => ['flag' => 'expedition_active', 'is' => true],
                 'base_weight' => 0, 'cooldown_days' => 0,
                 'choices' => [
                     $this->one('Bentornati', [['resource' => 'food', 'delta' => 30], ['grant_item' => 'scanner'], ['resource' => 'morale', 'delta' => 10], ['end_expedition' => true]], 'Una giornata buona, di quelle rare.'),
@@ -1220,6 +1221,7 @@ class ContentEventSeeder extends Seeder
             $this->ev([
                 'key' => 'exp_return_modest', 'title' => 'Tornano provati', 'speaker' => null,
                 'body' => "Rientrano stremati, ma rientrano. Qualche razione recuperata: meglio di niente.",
+                'requires' => ['flag' => 'expedition_active', 'is' => true],
                 'base_weight' => 0, 'cooldown_days' => 0,
                 'choices' => [
                     $this->one('Aiutali a rientrare', [['resource' => 'food', 'delta' => 14], ['end_expedition' => true]], 'Si lasciano cadere, esausti. Ma vivi.'),
@@ -1229,6 +1231,7 @@ class ContentEventSeeder extends Seeder
             $this->ev([
                 'key' => 'exp_return_wounded', 'title' => 'Tornano feriti', 'speaker' => null,
                 'body' => "Rientrano, ma qualcosa è andato storto là fuori. Pochissimo bottino e una ferita che peserà.",
+                'requires' => ['flag' => 'expedition_active', 'is' => true],
                 'base_weight' => 0, 'cooldown_days' => 0,
                 'choices' => [
                     $this->one('Curali come puoi', [['resource' => 'food', 'delta' => 4], ['character' => 'expeditioner', 'stress' => 20], ['resource' => 'morale', 'delta' => -6], ['end_expedition' => true]], 'Respirano a fatica. Per ora basta che respirino.'),
@@ -1238,6 +1241,7 @@ class ContentEventSeeder extends Seeder
             $this->ev([
                 'key' => 'exp_return_lost', 'title' => 'Non tornano', 'speaker' => null,
                 'body' => "Il giorno del rientro arriva. Poi il giorno dopo. La radio resta muta. Chi avevi mandato non torna.",
+                'requires' => ['flag' => 'expedition_active', 'is' => true],
                 'base_weight' => 0, 'cooldown_days' => 0,
                 'choices' => [
                     $this->one('Chiudi il portello', [['kill' => 'expeditioner'], ['resource' => 'morale', 'delta' => -18], ['modify_trust' => -12], ['set_flag' => 'lost_on_expedition', 'value' => true], ['end_expedition' => true]], 'Aspetti un\'ora di troppo prima di sigillare. Poi lo fai.'),
@@ -1247,6 +1251,7 @@ class ContentEventSeeder extends Seeder
             $this->ev([
                 'key' => 'exp_return_discovery', 'title' => 'Tornano in due', 'speaker' => null,
                 'body' => "Il portello si apre e non c'è solo chi avevi mandato: dietro, una figura barcollante. Un altro superstite, vivo per miracolo.",
+                'requires' => ['flag' => 'expedition_active', 'is' => true],
                 'base_weight' => 0, 'cooldown_days' => 0,
                 'choices' => [
                     $this->one('Falli entrare', [['recruit' => ['role' => 'survivor']], ['resource' => 'morale', 'delta' => 8], ['resource' => 'food', 'delta' => -4], ['end_expedition' => true]], 'Una bocca in più, due mani in più. Una storia in più.'),

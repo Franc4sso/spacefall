@@ -134,8 +134,10 @@ class EventSeeder extends Seeder
                 'title' => 'La camera stagna',
                 'body' => 'Passi davanti al portello. Dentro non c\'è più niente da sentire.',
                 'speaker' => null,
-                'base_weight' => 30,
-                'cooldown_days' => 0,
+                // A rare haunting, not a constant nag: low weight + cooldown so
+                // the guilt callback surfaces once in a while, not every day.
+                'base_weight' => 3,
+                'cooldown_days' => 6,
                 'is_filler' => false,
                 'requires' => ['flag' => 'vented_the_technician', 'is' => true],
                 'choices' => [
