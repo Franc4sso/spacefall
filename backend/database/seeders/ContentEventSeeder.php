@@ -80,6 +80,7 @@ class ContentEventSeeder extends Seeder
             $this->coleThread(),
             $this->crosstalkEvents(),
             $this->dilemmaEvents(),
+            $this->hungerOpportunityEvents(),
         );
     }
 
@@ -998,6 +999,60 @@ class ContentEventSeeder extends Seeder
                             ['weight' => 3, 'effects' => [['resource' => 'hull', 'delta' => 18], ['kill' => 'random'], ['set_flag' => 'cole_caused_death', 'value' => true], ['set_flag' => 'bex_saw_death', 'value' => true]], 'log' => 'Lo scafo regge. La persona che hai mandato no.'],
                         ],
                     ],
+                ],
+            ]),
+        ];
+    }
+
+    // ---- Fame: opportunità (fonti di cibo guidate dagli oggetti) -----------
+    private function hungerOpportunityEvents(): array
+    {
+        return [
+            // Orto: fonte rinnovabile, cooldown lungo.
+            $this->ev([
+                'key' => 'food_harvest', 'title' => 'Il raccolto è pronto', 'speaker' => 'Bex',
+                'body' => "I germogli dell'orto hanno dato frutto. C'è di che riempire qualche stomaco, se raccogli ora.",
+                'requires' => ['all' => [['has_item' => 'seedbank'], ['resource' => 'food', 'op' => '<', 'value' => 60], ['crew_hunger' => ['op' => '>=', 'value' => 15]]]],
+                'base_weight' => 9, 'cooldown_days' => 6,
+                'choices' => [
+                    $this->one('Raccolgo tutto', [['resource' => 'food', 'delta' => 26], ['character' => 'all', 'hunger' => -10]], 'Mani sporche di terra, dispensa più piena.'),
+                    $this->one('Lascio crescere ancora un po\'', [['resource' => 'morale', 'delta' => -2]], 'Pazienza. Forse domani rende di più.'),
+                ],
+            ]),
+
+            // Caccia col fucile: +cibo ma rischio.
+            $this->ev([
+                'key' => 'food_hunt', 'title' => 'Qualcosa si muove nei condotti', 'speaker' => 'Cole',
+                'body' => "Non sei solo su questa stazione. Qualcosa scricchiola nei condotti — e la carne è carne. Col fucile potresti procurartene.",
+                'requires' => ['all' => [['has_item' => 'rifle'], ['resource' => 'food', 'op' => '<', 'value' => 50], ['crew_hunger' => ['op' => '>=', 'value' => 15]]]],
+                'base_weight' => 8, 'cooldown_days' => 4,
+                'choices' => [
+                    $this->gamble('Vado a caccia', [['resource' => 'food', 'delta' => 20], ['character' => 'all', 'hunger' => -8]], 'Preda abbattuta. Si mangia.', [['character' => 'random', 'stress' => 12], ['resource' => 'food', 'delta' => 4]], 'Ti è quasi saltato addosso. Poca roba, tanto spavento.', 6, 4, 'rischioso'),
+                    $this->one('Troppo pericoloso', [], 'Meglio la fame del morso.'),
+                ],
+            ]),
+
+            // Drone: +cibo ma rischio di perderlo.
+            $this->ev([
+                'key' => 'food_drone_scavenge', 'title' => 'Settore dispensa sigillato', 'speaker' => 'Anna',
+                'body' => "C'è un magazzino viveri oltre la paratia crollata. Il drone può entrarci — se non resta incastrato là dentro.",
+                'requires' => ['all' => [['has_item' => 'drone'], ['resource' => 'food', 'op' => '<', 'value' => 50], ['crew_hunger' => ['op' => '>=', 'value' => 15]]]],
+                'base_weight' => 8, 'cooldown_days' => 5,
+                'choices' => [
+                    $this->gamble('Mando il drone', [['resource' => 'food', 'delta' => 22], ['character' => 'all', 'hunger' => -6]], 'Torna carico. Scorte recuperate.', [['consume_item' => 'drone'], ['resource' => 'food', 'delta' => 6]], 'Il drone non torna. Solo qualche scatoletta nel vano di carico.', 6, 4, 'incerto'),
+                    $this->one('Non rischio il drone', [], 'Resta sigillato. Per ora.'),
+                ],
+            ]),
+
+            // Razioni d'emergenza: grosso colpo una tantum, consuma l'oggetto.
+            $this->ev([
+                'key' => 'food_emergency_rations', 'title' => 'Le scorte d\'emergenza', 'speaker' => null,
+                'body' => "Hai tenuto da parte le razioni sigillate per il giorno peggiore. Forse è oggi. Una volta aperte, sono finite.",
+                'requires' => ['all' => [['has_item' => 'rations'], ['resource' => 'food', 'op' => '<', 'value' => 30], ['crew_hunger' => ['op' => '>=', 'value' => 15]]]],
+                'base_weight' => 12, 'cooldown_days' => 999,
+                'choices' => [
+                    $this->one('Apro le scorte', [['resource' => 'food', 'delta' => 40], ['character' => 'all', 'hunger' => -25], ['consume_item' => 'rations']], 'Stomaci pieni, ultimo cuscinetto bruciato.'),
+                    $this->one('Non ancora', [['character' => 'all', 'stress' => 4]], 'Le tieni. Stringi i denti un altro po\'.'),
                 ],
             ]),
         ];
