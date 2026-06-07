@@ -180,3 +180,24 @@ it('ignores dead survivors for crew_hunger', function () {
     ]]);
     expect($this->eval->evaluate(['crew_hunger' => ['op' => '>=', 'value' => 50]], $s))->toBeFalse();
 });
+
+it('ignores away crew for has_role', function () {
+    $s = stateWith([
+        'day' => 5,
+        'characters' => [
+            ['name' => 'Anna', 'role' => 'engineer', 'alive' => true, 'away_until' => 9],
+        ],
+    ]);
+    expect($this->eval->evaluate(['has_role' => 'engineer'], $s))->toBeFalse();
+});
+
+it('ignores away crew for crew_hunger', function () {
+    $s = stateWith([
+        'day' => 5,
+        'characters' => [
+            ['name' => 'Anna', 'alive' => true, 'hunger' => 90, 'away_until' => 9],
+            ['name' => 'Bex', 'alive' => true, 'hunger' => 10],
+        ],
+    ]);
+    expect($this->eval->evaluate(['crew_hunger' => ['op' => '>=', 'value' => 50]], $s))->toBeFalse();
+});

@@ -79,7 +79,7 @@ final class ConditionEvaluator
 
         if (array_key_exists('has_role', $condition)) {
             foreach ($state->characters as $c) {
-                if (($c['role'] ?? null) === $condition['has_role'] && ($c['alive'] ?? true)) {
+                if (($c['role'] ?? null) === $condition['has_role'] && $this->isPresent($c, $state)) {
                     return true;
                 }
             }
@@ -146,7 +146,7 @@ final class ConditionEvaluator
         if (array_key_exists('crew_hunger', $condition)) {
             $spec = $condition['crew_hunger'];
             foreach ($state->characters as $c) {
-                if (($c['alive'] ?? true) && $this->compare((int) ($c['hunger'] ?? 0), $spec['op'] ?? '=', $spec['value'] ?? 0)) {
+                if ($this->isPresent($c, $state) && $this->compare((int) ($c['hunger'] ?? 0), $spec['op'] ?? '=', $spec['value'] ?? 0)) {
                     return true;
                 }
             }
@@ -182,6 +182,11 @@ final class ConditionEvaluator
             $value > 10 => 'bond',
             default => 'neutral',
         };
+    }
+
+    private function isPresent(array $c, RunState $state): bool
+    {
+        return ($c['alive'] ?? true) && (int) ($c['away_until'] ?? 0) <= $state->day;
     }
 
     private function compare(int|float $left, string $op, int|float $right): bool
