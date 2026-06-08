@@ -119,6 +119,20 @@ class EventSeeder extends Seeder
                 'requires' => ['day' => ['op' => '>=', 'value' => 2]],
                 'choices' => [
                     [
+                        'label' => 'Scansiono l\'aria per dargli torto',
+                        'hint' => 'la verità, comunque sia',
+                        'requires' => ['has_item' => 'scanner'],
+                        'requires_item' => 'scanner',
+                        'outcomes' => [
+                            ['weight' => 6, 'effects' => [['resource' => 'morale', 'delta' => 6]],
+                                'log' => 'Lo scanner non trova niente. Glielo mostri. Respira, finalmente.'],
+                            ['weight' => 4, 'effects' => [
+                                ['resource' => 'morale', 'delta' => -4],
+                                ['spawn_event' => ['key' => 'c_oxygen_leak', 'in_days' => 1]],
+                            ], 'log' => 'Lo scanner lampeggia rosso. Aveva ragione. C\'è una perdita.'],
+                        ],
+                    ],
+                    [
                         'label' => 'Lo chiudo nella camera stagna',
                         'hint' => 'lo zittisce',
                         'outcomes' => [

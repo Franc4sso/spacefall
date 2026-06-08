@@ -33,4 +33,12 @@ it('seeds the 7 tool-gated crisis choices', function () {
     expect($c['outcomes'])->toHaveCount(1);
     $deltas = collect($c['outcomes'][0]['effects'])->where('resource', 'power')->pluck('delta');
     expect($deltas->sum())->toBeGreaterThan(0);
+
+    $c2 = gatedChoice('technician_panic', 'scanner');
+    // Two outcomes: a good one (morale up) and a bad one that reveals a real leak.
+    expect($c2['outcomes'])->toHaveCount(2);
+    $spawns = collect($c2['outcomes'])->contains(
+        fn ($o) => collect($o['effects'])->contains(fn ($e) => array_key_exists('spawn_event', $e))
+    );
+    expect($spawns)->toBeTrue('scanner outcome should sometimes reveal a real leak via spawn_event');
 });
