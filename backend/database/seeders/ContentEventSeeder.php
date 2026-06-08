@@ -1125,6 +1125,17 @@ class ContentEventSeeder extends Seeder
                 'base_weight' => 14, 'cooldown_days' => 999,
                 'choices' => [
                     array_merge(
+                        $this->gamble(
+                            'Germoglio d\'emergenza dalla banca semi',
+                            [['resource' => 'food', 'delta' => 16], ['character' => 'all', 'hunger' => -15]],
+                            'I germogli spuntano in fretta sotto le lampade. Pochi, ma bastano per stanotte.',
+                            [['resource' => 'food', 'delta' => 4], ['character' => 'all', 'stress' => 8]],
+                            'Crescono troppo lenti. Qualche foglia amara, e fame ancora.',
+                            5, 5, 'lento, incerto'
+                        ),
+                        ['requires' => ['has_item' => 'seedbank'], 'requires_item' => 'seedbank']
+                    ),
+                    array_merge(
                         $this->one('Uno perché gli altri vivano', [['kill' => 'hungriest'], ['resource' => 'food', 'delta' => 30], ['character' => 'all', 'hunger' => -30], ['resource' => 'morale', 'delta' => -30], ['modify_trust' => -35], ['modify_standing' => ['who' => 'Anna', 'delta' => -25]], ['modify_standing' => ['who' => 'Bex', 'delta' => -25]], ['modify_standing' => ['who' => 'Cole', 'delta' => -25]], ['set_flag' => 'cannibalism', 'value' => true], ['set_flag' => 'bex_saw_death', 'value' => true]], 'È fatto. Nessuno ti guarderà più come prima. Nemmeno tu.'),
                         ['tags' => ['sacrifice_crew', 'il_freddo']]
                     ),

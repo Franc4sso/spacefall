@@ -74,4 +74,12 @@ it('seeds the 7 tool-gated crisis choices', function () {
         ->toBeTrue('comms choice should still damage a system (reduced, not zero)');
     expect($effects->contains(fn ($e) => ($e['resource'] ?? null) === 'oxygen' && ($e['delta'] ?? 0) < 0))
         ->toBeTrue('comms choice should cost oxygen');
+
+    $c7 = gatedChoice('food_sacrifice', 'seedbank');
+    // A gamble that AVOIDS the kill: no outcome may contain a 'kill' effect.
+    expect($c7['outcomes'])->toHaveCount(2);
+    $hasKill = collect($c7['outcomes'])->contains(
+        fn ($o) => collect($o['effects'])->contains(fn ($e) => array_key_exists('kill', $e))
+    );
+    expect($hasKill)->toBeFalse('seedbank path must avoid any kill effect');
 });
