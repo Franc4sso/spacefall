@@ -100,7 +100,7 @@ class ContentEventSeeder extends Seeder
                 'requires' => ['phase' => 'isolation'],
                 'base_weight' => 8, 'cooldown_days' => 6,
                 'choices' => [
-                    $this->one('Registralo', [['resource' => 'morale', 'delta' => 4]], 'Forse non è niente. Ma è qualcosa a cui pensare.'),
+                    $this->one('Registralo', [['resource' => 'morale', 'delta' => 2]], 'Forse non è niente. Ma è qualcosa a cui pensare.'),
                     $this->one('Lascia perdere, abbiamo altro', [['resource' => 'morale', 'delta' => -2]], 'Il segnale svanisce. Resta il silenzio.'),
                 ],
             ]),
@@ -110,7 +110,7 @@ class ContentEventSeeder extends Seeder
                 'requires' => ['phase' => 'isolation'],
                 'base_weight' => 7, 'cooldown_days' => 8,
                 'choices' => [
-                    $this->one('La tengo', [['resource' => 'morale', 'delta' => 3]], 'La metti in tasca. Non sei il primo, qui.'),
+                    $this->one('La tengo', [['resource' => 'morale', 'delta' => 1]], 'La metti in tasca. Non sei il primo, qui.'),
                     $this->one('La rimetto a posto', [], 'Richiudi il cassetto. Alcune cose è meglio non saperle.'),
                 ],
             ]),
@@ -122,8 +122,8 @@ class ContentEventSeeder extends Seeder
                 'requires' => ['phase' => 'deterioration'],
                 'base_weight' => 12, 'cooldown_days' => 4,
                 'choices' => [
-                    $this->one('Tieni in piedi l\'energia', [['damage_system' => 'life_support', 'amount' => 15], ['resource' => 'power', 'delta' => 6]], 'Le luci reggono. L\'aria si fa un po\' più pesante.'),
-                    $this->one('Tieni in piedi il supporto vitale', [['damage_system' => 'power_grid', 'amount' => 15], ['resource' => 'oxygen', 'delta' => 4]], 'Si respira. Ma qualcosa, al buio, smette di funzionare.'),
+                    $this->one('Tieni in piedi l\'energia', [['damage_system' => 'life_support', 'amount' => 15]], 'Le luci reggono. L\'aria si fa un po\' più pesante.'),
+                    $this->one('Tieni in piedi il supporto vitale', [['damage_system' => 'power_grid', 'amount' => 15]], 'Si respira. Ma qualcosa, al buio, smette di funzionare.'),
                 ],
             ]),
             $this->ev([
@@ -133,7 +133,7 @@ class ContentEventSeeder extends Seeder
                 'base_weight' => 11, 'cooldown_days' => 5,
                 'choices' => [
                     $this->gamble('Imponi il razionamento', [['character' => 'all', 'stress' => 6]], 'Mugugnano, ma obbediscono.', [['character' => 'all', 'stress' => 12], ['resource' => 'morale', 'delta' => -6]], 'Qualcuno sbatte la porta. La frattura si allarga.', 6, 4, 'rischioso'),
-                    $this->one('Dividi la tua parte', [['resource' => 'morale', 'delta' => 6], ['character' => 'random', 'hunger' => 8]], 'Un gesto che pesa. Loro lo notano.'),
+                    $this->one('Dividi la tua parte', [['resource' => 'morale', 'delta' => 2], ['character' => 'random', 'hunger' => 8]], 'Un gesto che pesa. Loro lo notano.'),
                 ],
             ]),
 
