@@ -1371,6 +1371,14 @@ class ContentEventSeeder extends Seeder
                 'requires' => ['resource' => 'morale', 'op' => '<', 'value' => 20],
                 'base_weight' => 20, 'cooldown_days' => 999,
                 'choices' => [
+                    array_merge(
+                        $this->one(
+                            'Sedativi dal kit medico — un sonno vero, per una notte',
+                            [['resource' => 'morale', 'delta' => 18], ['consume_item' => 'medkit']],
+                            'Dormono davvero, la prima volta da settimane. Il kit ora è vuoto.'
+                        ),
+                        ['requires' => ['has_item' => 'medkit'], 'requires_item' => 'medkit']
+                    ),
                     $this->one('Consuma le ultime riserve di cibo per un pasto vero', [['resource' => 'food', 'delta' => -30], ['resource' => 'morale', 'delta' => 25]], 'Un pasto. Un momento di umanità. Costerà.'),
                     $this->one('Discorso motivazionale — le parole costano poco', [['resource' => 'morale', 'delta' => 5], ['modify_trust' => -10]], 'Le parole cadono nel vuoto. Sanno che non credi nemmeno tu.'),
                 ],

@@ -57,4 +57,12 @@ it('seeds the 7 tool-gated crisis choices', function () {
         fn ($o) => collect($o['effects'])->contains(fn ($e) => ($e['consume_item'] ?? null) === 'drone')
     );
     expect($consumes)->toBeTrue('drone outcome should be able to consume the drone');
+
+    $c5 = gatedChoice('trap_morale_collapse', 'medkit');
+    expect($c5['outcomes'])->toHaveCount(1);
+    $effects = collect($c5['outcomes'][0]['effects']);
+    expect($effects->contains(fn ($e) => ($e['consume_item'] ?? null) === 'medkit'))
+        ->toBeTrue('medkit choice should consume the medkit');
+    expect($effects->contains(fn ($e) => ($e['resource'] ?? null) === 'morale' && ($e['delta'] ?? 0) > 0))
+        ->toBeTrue('medkit choice should raise morale');
 });
