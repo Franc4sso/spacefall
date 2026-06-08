@@ -67,6 +67,50 @@ return [
     ],
 
     /*
+     | Phases (acts). The run evolves through ordered phases. The current phase is
+     | DERIVED (never stored): max of the day-band, the resource-pressure band, and
+     | a persisted monotonic floor (a run that recovers never drops to a calmer
+     | phase). All thresholds here; the engine reads them.
+     |
+     |   order          canonical ordering; index drives `phase_index` conditions
+     |   day_bands      [{ phase, from_day }] — highest from_day <= day wins
+     |   pressure       a resource is "critical" at/below `critical_at_or_below`;
+     |                  `bands` map a minimum critical-count to a phase floor
+     |   labels         key => Italian display string (for the UI)
+     */
+    'phases' => [
+        'order' => ['isolation', 'deterioration', 'reckoning'],
+        'day_bands' => [
+            ['phase' => 'isolation', 'from_day' => 1],
+            ['phase' => 'deterioration', 'from_day' => 10],
+            ['phase' => 'reckoning', 'from_day' => 21],
+        ],
+        'pressure' => [
+            'critical_at_or_below' => 20,
+            // Conservative: only 3+ critical resources pull the phase forward.
+            'bands' => [
+                ['min_critical' => 3, 'phase' => 'deterioration'],
+                ['min_critical' => 5, 'phase' => 'reckoning'],
+            ],
+        ],
+        'labels' => [
+            'isolation' => 'Isolamento',
+            'deterioration' => 'Deterioramento',
+            'reckoning' => 'Resa dei conti',
+        ],
+    ],
+
+    /*
+     | Per-phase decay multiplier. DayProcessor multiplies resource daily drain and
+     | system daily_decay by this factor. isolation = 1.0 => early game unchanged.
+     */
+    'phase_decay' => [
+        'isolation' => 1.0,
+        'deterioration' => 1.25,
+        'reckoning' => 1.6,
+    ],
+
+    /*
      | Hardship stress: when a resource sits at or below its `at_or_below`
      | threshold at end of day, every living survivor gains `stress`. Scarcity
      | wears people down, which feeds the stress-band behaviour above — the
