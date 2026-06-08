@@ -106,8 +106,8 @@ return [
      */
     'phase_decay' => [
         'isolation' => 1.0,
-        'deterioration' => 1.25,
-        'reckoning' => 1.6,
+        'deterioration' => 1.05,
+        'reckoning' => 1.2,
     ],
 
     /*

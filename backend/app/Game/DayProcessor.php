@@ -4,6 +4,7 @@ namespace App\Game;
 
 use App\Game\Engine\EndingService;
 use App\Models\Run;
+use App\Game\Engine\PhaseResolver;
 
 /**
  * End-of-day processing — the full daily pipeline (Phase 5).
@@ -45,14 +46,19 @@ final class DayProcessor
         $characters = $run->characters ?? [];
         $scheduled = $run->scheduled_events ?? [];
 
-        // 1. Resource consumption.
+        $resolver = new PhaseResolver();
+        $phase = $resolver->resolve($run->day, $resources, $run->phase_floor ?? 'isolation');
+        $decay = (float) config("game.phase_decay.$phase", 1.0);
+
+        // 1. Resource consumption (scaled by the current phase).
         foreach (config('game.resources') as $code => $def) {
             $value = $resources[$code] ?? $def['start'];
-            $resources[$code] = $this->clampResource($value - $def['daily'], $def['max']);
+            $drain = (int) round($def['daily'] * $decay);
+            $resources[$code] = $this->clampResource($value - $drain, $def['max']);
         }
 
         // 2. System degradation + below-threshold resource penalties.
-        [$systems, $resources] = $this->degradeSystems($systems, $resources);
+        [$systems, $resources] = $this->degradeSystems($systems, $resources, $decay);
 
         // 3. Hardship stress from scarce resources.
         $characters = $this->applyHardship($characters, $resources);
@@ -91,11 +97,11 @@ final class DayProcessor
     /**
      * @return array{0: array<string,array{efficiency:int}>, 1: array<string,int>}
      */
-    private function degradeSystems(array $systems, array $resources): array
+    private function degradeSystems(array $systems, array $resources, float $decay = 1.0): array
     {
         foreach (config('game.systems') as $key => $def) {
             $eff = $systems[$key]['efficiency'] ?? $def['start'];
-            $eff = $this->clampResource($eff - $def['daily_decay'], 100);
+            $eff = $this->clampResource($eff - (int) round($def['daily_decay'] * $decay), 100);
             $systems[$key] = ['efficiency' => $eff];
 
             // Below threshold: bleed the named resource.
