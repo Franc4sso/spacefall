@@ -28,6 +28,9 @@ function gatedChoice(string $key, string $item): array
 }
 
 it('seeds the 7 tool-gated crisis choices', function () {
-    // Filled in per card by later tasks.
-    expect(true)->toBeTrue();
+    $c = gatedChoice('power_flicker', 'welder');
+    // Deterministic fix: single outcome, net positive power.
+    expect($c['outcomes'])->toHaveCount(1);
+    $deltas = collect($c['outcomes'][0]['effects'])->where('resource', 'power')->pluck('delta');
+    expect($deltas->sum())->toBeGreaterThan(0);
 });

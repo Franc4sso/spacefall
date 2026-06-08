@@ -43,6 +43,16 @@ class EventSeeder extends Seeder
                 'requires' => null,
                 'choices' => [
                     [
+                        'label' => 'Salgo il bus e risaldo il fusibile',
+                        'hint' => 'regge, ma scotta',
+                        'requires' => ['has_item' => 'welder'],
+                        'requires_item' => 'welder',
+                        'outcomes' => [
+                            ['weight' => 1, 'effects' => [['resource' => 'power', 'delta' => 10]],
+                                'log' => 'Saldi il contatto. Il quadro torna fermo. La punta ti resta calda in mano.'],
+                        ],
+                    ],
+                    [
                         'label' => 'Spengo tutto il non essenziale',
                         'hint' => 'dovrebbe reggere',
                         'outcomes' => [
