@@ -65,4 +65,13 @@ it('seeds the 7 tool-gated crisis choices', function () {
         ->toBeTrue('medkit choice should consume the medkit');
     expect($effects->contains(fn ($e) => ($e['resource'] ?? null) === 'morale' && ($e['delta'] ?? 0) > 0))
         ->toBeTrue('medkit choice should raise morale');
+
+    $c6 = gatedChoice('trap_cascade_failure', 'comms');
+    expect($c6['outcomes'])->toHaveCount(1);
+    $effects = collect($c6['outcomes'][0]['effects']);
+    // Reduced damage to one system, paid for in oxygen.
+    expect($effects->contains(fn ($e) => array_key_exists('damage_system', $e)))
+        ->toBeTrue('comms choice should still damage a system (reduced, not zero)');
+    expect($effects->contains(fn ($e) => ($e['resource'] ?? null) === 'oxygen' && ($e['delta'] ?? 0) < 0))
+        ->toBeTrue('comms choice should cost oxygen');
 });

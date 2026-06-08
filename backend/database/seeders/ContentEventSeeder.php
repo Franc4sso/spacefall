@@ -1360,6 +1360,14 @@ class ContentEventSeeder extends Seeder
                 'requires' => ['chosen_tag' => 'ignored_warning'],
                 'base_weight' => 15, 'cooldown_days' => 999,
                 'choices' => [
+                    array_merge(
+                        $this->one(
+                            'Chiamo guida remota via radio',
+                            [['damage_system' => 'power_grid', 'amount' => 20], ['resource' => 'oxygen', 'delta' => -10]],
+                            'Una voce gracchiante ti guida nodo per nodo. Salvi metà rete. L\'aria si fa rada.'
+                        ),
+                        ['requires' => ['has_item' => 'comms'], 'requires_item' => 'comms']
+                    ),
                     $this->one('Salva il sistema vita', [['damage_system' => 'power_grid', 'amount' => 40], ['damage_system' => 'hull_integrity', 'amount' => 20]], 'Il supporto vitale regge. Tutto il resto no.'),
                     $this->one('Salva la propulsione', [['damage_system' => 'life_support', 'amount' => 35], ['resource' => 'oxygen', 'delta' => -20]], "Potete muovervi. Ma l'aria si sta rarefacendo."),
                 ],
