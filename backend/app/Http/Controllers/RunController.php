@@ -151,6 +151,10 @@ class RunController extends Controller
             ];
         }
 
+        $state = \App\Game\Engine\RunState::fromRun($run);
+        $phase = $state->phase;
+        $phaseLabel = config("game.phases.labels.$phase", $phase);
+
         $payload = [
             'id' => $run->id,
             'day' => $run->day,
@@ -158,6 +162,9 @@ class RunController extends Controller
             'seed' => $run->seed,
             'resources' => $run->resources,
             'resource_meta' => $meta,
+            // Current phase key + its Italian label for the UI.
+            'phase' => $phase,
+            'phase_label' => $phaseLabel,
             // Living survivors for the roster panel (Phase 9). Internal fields
             // (stress_band tracking) are not surfaced.
             'characters' => collect($run->characters ?? [])

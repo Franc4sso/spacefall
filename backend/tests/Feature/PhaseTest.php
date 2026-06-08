@@ -68,6 +68,18 @@ it('raises the floor and schedules a marker when the phase advances', function (
     expect($keys)->toContain('phase_enter_deterioration');
 });
 
+it('surfaces the current phase and its label in the run state payload', function () {
+    $run = app(RunFactory::class)->create(1, ['welder']);
+    $run->day = 25;
+    $run->phase_floor = 'reckoning';
+    $run->save();
+
+    $res = $this->getJson("/api/runs/{$run->id}")->assertOk();
+
+    expect($res->json('phase'))->toBe('reckoning');
+    expect($res->json('phase_label'))->toBe('Resa dei conti');
+});
+
 it('does not re-schedule a marker when the phase does not advance', function () {
     $run = app(RunFactory::class)->create(1, ['welder']);
     $run->day = 2; // stays isolation after advancing to day 3
