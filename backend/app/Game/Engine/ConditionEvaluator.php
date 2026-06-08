@@ -14,6 +14,7 @@ namespace App\Game\Engine;
  *   { all: [Cond...] } | { any: [Cond...] } | { not: Cond }
  *   { resource, op, value }
  *   { day: { op, value } }
+ *   { phase } | { phase_index: { op, value } }
  *   { has_role } | { has_item } | { trait_present }
  *   { flag, scope?, is }
  *   { relationship: { state, scope } }
@@ -63,6 +64,15 @@ final class ConditionEvaluator
         if (array_key_exists('day', $condition)) {
             $spec = $condition['day'];
             return $this->compare($state->day, $spec['op'] ?? '=', $spec['value'] ?? 0);
+        }
+
+        if (array_key_exists('phase', $condition)) {
+            return $state->phase === $condition['phase'];
+        }
+
+        if (array_key_exists('phase_index', $condition)) {
+            $spec = $condition['phase_index'];
+            return $this->compare($state->phaseIndex, $spec['op'] ?? '=', $spec['value'] ?? 0);
         }
 
         if (array_key_exists('flag', $condition)) {
