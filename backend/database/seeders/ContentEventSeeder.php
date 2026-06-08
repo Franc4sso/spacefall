@@ -1125,6 +1125,11 @@ class ContentEventSeeder extends Seeder
                 'base_weight' => 14, 'cooldown_days' => 999,
                 'choices' => [
                     array_merge(
+                        $this->one('Uno perché gli altri vivano', [['kill' => 'hungriest'], ['resource' => 'food', 'delta' => 30], ['character' => 'all', 'hunger' => -30], ['resource' => 'morale', 'delta' => -30], ['modify_trust' => -35], ['modify_standing' => ['who' => 'Anna', 'delta' => -25]], ['modify_standing' => ['who' => 'Bex', 'delta' => -25]], ['modify_standing' => ['who' => 'Cole', 'delta' => -25]], ['set_flag' => 'cannibalism', 'value' => true], ['set_flag' => 'bex_saw_death', 'value' => true]], 'È fatto. Nessuno ti guarderà più come prima. Nemmeno tu.'),
+                        ['tags' => ['sacrifice_crew', 'il_freddo']]
+                    ),
+                    $this->gamble('Si stringe i denti, tutti insieme', [['character' => 'all', 'stress' => 12], ['resource' => 'morale', 'delta' => 6], ['modify_trust' => 10]], 'Vi tenete in piedi a vicenda. Stanotte non muore nessuno.', [['kill' => 'hungriest'], ['resource' => 'morale', 'delta' => -10]], 'Il più debole non passa la notte. Almeno non l\'hai scelto tu.', 6, 4, 'molto pericoloso'),
+                    array_merge(
                         $this->gamble(
                             'Germoglio d\'emergenza dalla banca semi',
                             [['resource' => 'food', 'delta' => 16], ['character' => 'all', 'hunger' => -15]],
@@ -1135,11 +1140,6 @@ class ContentEventSeeder extends Seeder
                         ),
                         ['requires' => ['has_item' => 'seedbank'], 'requires_item' => 'seedbank']
                     ),
-                    array_merge(
-                        $this->one('Uno perché gli altri vivano', [['kill' => 'hungriest'], ['resource' => 'food', 'delta' => 30], ['character' => 'all', 'hunger' => -30], ['resource' => 'morale', 'delta' => -30], ['modify_trust' => -35], ['modify_standing' => ['who' => 'Anna', 'delta' => -25]], ['modify_standing' => ['who' => 'Bex', 'delta' => -25]], ['modify_standing' => ['who' => 'Cole', 'delta' => -25]], ['set_flag' => 'cannibalism', 'value' => true], ['set_flag' => 'bex_saw_death', 'value' => true]], 'È fatto. Nessuno ti guarderà più come prima. Nemmeno tu.'),
-                        ['tags' => ['sacrifice_crew', 'il_freddo']]
-                    ),
-                    $this->gamble('Si stringe i denti, tutti insieme', [['character' => 'all', 'stress' => 12], ['resource' => 'morale', 'delta' => 6], ['modify_trust' => 10]], 'Vi tenete in piedi a vicenda. Stanotte non muore nessuno.', [['kill' => 'hungriest'], ['resource' => 'morale', 'delta' => -10]], 'Il più debole non passa la notte. Almeno non l\'hai scelto tu.', 6, 4, 'molto pericoloso'),
                 ],
             ]),
 
@@ -1371,6 +1371,8 @@ class ContentEventSeeder extends Seeder
                 'requires' => ['chosen_tag' => 'ignored_warning'],
                 'base_weight' => 15, 'cooldown_days' => 999,
                 'choices' => [
+                    $this->one('Salva il sistema vita', [['damage_system' => 'power_grid', 'amount' => 40], ['damage_system' => 'hull_integrity', 'amount' => 20]], 'Il supporto vitale regge. Tutto il resto no.'),
+                    $this->one('Salva la propulsione', [['damage_system' => 'life_support', 'amount' => 35], ['resource' => 'oxygen', 'delta' => -20]], "Potete muovervi. Ma l'aria si sta rarefacendo."),
                     array_merge(
                         $this->one(
                             'Chiamo guida remota via radio',
@@ -1379,8 +1381,6 @@ class ContentEventSeeder extends Seeder
                         ),
                         ['requires' => ['has_item' => 'comms'], 'requires_item' => 'comms']
                     ),
-                    $this->one('Salva il sistema vita', [['damage_system' => 'power_grid', 'amount' => 40], ['damage_system' => 'hull_integrity', 'amount' => 20]], 'Il supporto vitale regge. Tutto il resto no.'),
-                    $this->one('Salva la propulsione', [['damage_system' => 'life_support', 'amount' => 35], ['resource' => 'oxygen', 'delta' => -20]], "Potete muovervi. Ma l'aria si sta rarefacendo."),
                 ],
             ]),
 
@@ -1390,6 +1390,8 @@ class ContentEventSeeder extends Seeder
                 'requires' => ['resource' => 'morale', 'op' => '<', 'value' => 20],
                 'base_weight' => 20, 'cooldown_days' => 999,
                 'choices' => [
+                    $this->one('Consuma le ultime riserve di cibo per un pasto vero', [['resource' => 'food', 'delta' => -30], ['resource' => 'morale', 'delta' => 25]], 'Un pasto. Un momento di umanità. Costerà.'),
+                    $this->one('Discorso motivazionale — le parole costano poco', [['resource' => 'morale', 'delta' => 5], ['modify_trust' => -10]], 'Le parole cadono nel vuoto. Sanno che non credi nemmeno tu.'),
                     array_merge(
                         $this->one(
                             'Sedativi dal kit medico — un sonno vero, per una notte',
@@ -1398,8 +1400,6 @@ class ContentEventSeeder extends Seeder
                         ),
                         ['requires' => ['has_item' => 'medkit'], 'requires_item' => 'medkit']
                     ),
-                    $this->one('Consuma le ultime riserve di cibo per un pasto vero', [['resource' => 'food', 'delta' => -30], ['resource' => 'morale', 'delta' => 25]], 'Un pasto. Un momento di umanità. Costerà.'),
-                    $this->one('Discorso motivazionale — le parole costano poco', [['resource' => 'morale', 'delta' => 5], ['modify_trust' => -10]], 'Le parole cadono nel vuoto. Sanno che non credi nemmeno tu.'),
                 ],
             ]),
 

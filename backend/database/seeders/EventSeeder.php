@@ -43,16 +43,6 @@ class EventSeeder extends Seeder
                 'requires' => null,
                 'choices' => [
                     [
-                        'label' => 'Salgo il bus e risaldo il fusibile',
-                        'hint' => 'regge, ma scotta',
-                        'requires' => ['has_item' => 'welder'],
-                        'requires_item' => 'welder',
-                        'outcomes' => [
-                            ['weight' => 1, 'effects' => [['resource' => 'power', 'delta' => 10]],
-                                'log' => 'Saldi il contatto. Il quadro torna fermo. La punta ti resta calda in mano.'],
-                        ],
-                    ],
-                    [
                         'label' => 'Spengo tutto il non essenziale',
                         'hint' => 'dovrebbe reggere',
                         'outcomes' => [
@@ -70,6 +60,16 @@ class EventSeeder extends Seeder
                                 ['resource' => 'power', 'delta' => -8],
                                 ['spawn_event' => ['key' => 'power_cascade', 'in_days' => 2]],
                             ], 'log' => 'Qualcosa frigge dietro la paratia. Non è finita.'],
+                        ],
+                    ],
+                    [
+                        'label' => 'Salgo il bus e risaldo il fusibile',
+                        'hint' => 'regge, ma scotta',
+                        'requires' => ['has_item' => 'welder'],
+                        'requires_item' => 'welder',
+                        'outcomes' => [
+                            ['weight' => 1, 'effects' => [['resource' => 'power', 'delta' => 10]],
+                                'log' => 'Saldi il contatto. Il quadro torna fermo. La punta ti resta calda in mano.'],
                         ],
                     ],
                 ],
@@ -119,20 +119,6 @@ class EventSeeder extends Seeder
                 'requires' => ['day' => ['op' => '>=', 'value' => 2]],
                 'choices' => [
                     [
-                        'label' => 'Scansiono l\'aria per dargli torto',
-                        'hint' => 'la verità, comunque sia',
-                        'requires' => ['has_item' => 'scanner'],
-                        'requires_item' => 'scanner',
-                        'outcomes' => [
-                            ['weight' => 6, 'effects' => [['resource' => 'morale', 'delta' => 6]],
-                                'log' => 'Lo scanner non trova niente. Glielo mostri. Respira, finalmente.'],
-                            ['weight' => 4, 'effects' => [
-                                ['resource' => 'morale', 'delta' => -4],
-                                ['spawn_event' => ['key' => 'c_oxygen_leak', 'in_days' => 1]],
-                            ], 'log' => 'Lo scanner lampeggia rosso. Aveva ragione. C\'è una perdita.'],
-                        ],
-                    ],
-                    [
                         'label' => 'Lo chiudo nella camera stagna',
                         'hint' => 'lo zittisce',
                         'outcomes' => [
@@ -148,6 +134,20 @@ class EventSeeder extends Seeder
                         'outcomes' => [
                             ['weight' => 1, 'effects' => [['resource' => 'morale', 'delta' => 4]],
                                 'log' => 'Si calma. Forse aveva solo paura.'],
+                        ],
+                    ],
+                    [
+                        'label' => 'Scansiono l\'aria per dargli torto',
+                        'hint' => 'la verità, comunque sia',
+                        'requires' => ['has_item' => 'scanner'],
+                        'requires_item' => 'scanner',
+                        'outcomes' => [
+                            ['weight' => 6, 'effects' => [['resource' => 'morale', 'delta' => 6]],
+                                'log' => 'Lo scanner non trova niente. Glielo mostri. Respira, finalmente.'],
+                            ['weight' => 4, 'effects' => [
+                                ['resource' => 'morale', 'delta' => -4],
+                                ['spawn_event' => ['key' => 'c_oxygen_leak', 'in_days' => 1]],
+                            ], 'log' => 'Lo scanner lampeggia rosso. Aveva ragione. C\'è una perdita.'],
                         ],
                     ],
                 ],
@@ -186,20 +186,6 @@ class EventSeeder extends Seeder
                 'requires' => ['resource' => 'food', 'op' => '<', 'value' => 50],
                 'choices' => [
                     [
-                        'label' => 'Mando il drone a frugare',
-                        'hint' => 'potrebbe non tornare',
-                        'requires' => ['has_item' => 'drone'],
-                        'requires_item' => 'drone',
-                        'outcomes' => [
-                            ['weight' => 6, 'effects' => [['resource' => 'food', 'delta' => 14]],
-                                'log' => 'Il drone torna con due casse dimenticate in un condotto.'],
-                            ['weight' => 4, 'effects' => [
-                                ['consume_item' => 'drone'],
-                                ['resource' => 'food', 'delta' => 4],
-                            ], 'log' => 'Un sibilo, poi silenzio. Il drone non torna. Solo qualche scatoletta.'],
-                        ],
-                    ],
-                    [
                         'label' => 'Mangio io, mi serve la lucidità',
                         'hint' => 'egoista ma sensato',
                         'outcomes' => [
@@ -217,6 +203,20 @@ class EventSeeder extends Seeder
                                 ['resource' => 'morale', 'delta' => 6],
                                 ['resource' => 'oxygen', 'delta' => -2],
                             ], 'log' => 'La testa gira, ma stanotte si dorme in pace.'],
+                        ],
+                    ],
+                    [
+                        'label' => 'Mando il drone a frugare',
+                        'hint' => 'potrebbe non tornare',
+                        'requires' => ['has_item' => 'drone'],
+                        'requires_item' => 'drone',
+                        'outcomes' => [
+                            ['weight' => 6, 'effects' => [['resource' => 'food', 'delta' => 14]],
+                                'log' => 'Il drone torna con due casse dimenticate in un condotto.'],
+                            ['weight' => 4, 'effects' => [
+                                ['consume_item' => 'drone'],
+                                ['resource' => 'food', 'delta' => 4],
+                            ], 'log' => 'Un sibilo, poi silenzio. Il drone non torna. Solo qualche scatoletta.'],
                         ],
                     ],
                 ],
@@ -354,22 +354,6 @@ class EventSeeder extends Seeder
                 'requires' => ['resource' => 'food', 'op' => '<', 'value' => 30],
                 'choices' => [
                     [
-                        'label' => 'Esco a caccia col fucile',
-                        'hint' => 'rischioso, ma carne vera',
-                        'requires' => ['has_item' => 'rifle'],
-                        'requires_item' => 'rifle',
-                        'outcomes' => [
-                            ['weight' => 6, 'effects' => [
-                                ['resource' => 'food', 'delta' => 18],
-                                ['resource' => 'morale', 'delta' => 4],
-                            ], 'log' => 'Torni con qualcosa. Stanotte si mangia caldo.'],
-                            ['weight' => 4, 'effects' => [
-                                ['character' => 'random', 'stress' => 14],
-                                ['resource' => 'food', 'delta' => 3],
-                            ], 'log' => 'Torni a mani quasi vuote, e con un graffio che brucia.'],
-                        ],
-                    ],
-                    [
                         'label' => 'Dividiamo in parti uguali',
                         'hint' => 'dovrebbe reggere',
                         'outcomes' => [
@@ -399,6 +383,22 @@ class EventSeeder extends Seeder
                                 ['character' => 'highest_stress', 'stress' => 15],
                                 ['set_flag' => 'ate_alone', 'value' => true],
                             ], 'log' => 'Mangi voltando le spalle. Il rancore resta.'],
+                        ],
+                    ],
+                    [
+                        'label' => 'Esco a caccia col fucile',
+                        'hint' => 'rischioso, ma carne vera',
+                        'requires' => ['has_item' => 'rifle'],
+                        'requires_item' => 'rifle',
+                        'outcomes' => [
+                            ['weight' => 6, 'effects' => [
+                                ['resource' => 'food', 'delta' => 18],
+                                ['resource' => 'morale', 'delta' => 4],
+                            ], 'log' => 'Torni con qualcosa. Stanotte si mangia caldo.'],
+                            ['weight' => 4, 'effects' => [
+                                ['character' => 'random', 'stress' => 14],
+                                ['resource' => 'food', 'delta' => 3],
+                            ], 'log' => 'Torni a mani quasi vuote, e con un graffio che brucia.'],
                         ],
                     ],
                 ],
