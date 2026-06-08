@@ -15,6 +15,11 @@ pest()->extend(Tests\TestCase::class)
     ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
     ->in('Feature');
 
+// Unit tests need the Laravel application bootstrapped so config-driven,
+// pure classes (e.g. PhaseResolver) can resolve config() without a database.
+pest()->extend(Tests\TestCase::class)
+    ->in('Unit');
+
 /*
 |--------------------------------------------------------------------------
 | Expectations
