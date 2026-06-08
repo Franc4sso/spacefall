@@ -72,6 +72,19 @@ final class DayProcessor
         // 4. Stress-band self-initiated behaviour.
         [$characters, $scheduled] = $this->processStress($characters, $scheduled, $run->day);
 
+        // Phase transition: recompute on the NEW day's state. If the phase has
+        // advanced past the stored floor, raise the floor and enqueue the
+        // transition marker once (markers are keyed phase_enter_<phase>; there is
+        // no marker for the initial isolation phase).
+        $oldFloor = $run->phase_floor ?? 'isolation';
+        $newDay = $run->day + 1;
+        $newPhase = $resolver->resolve($newDay, $resources, $oldFloor);
+        if ($resolver->indexOf($newPhase) > $resolver->indexOf($oldFloor)) {
+            $run->phase_floor = $newPhase;
+            $marker = 'phase_enter_' . $newPhase;
+            $scheduled[] = ['key' => $marker, 'fire_on_day' => $newDay];
+        }
+
         $run->resources = $resources;
         $run->systems = $systems;
         $run->characters = $characters;

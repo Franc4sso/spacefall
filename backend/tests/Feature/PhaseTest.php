@@ -50,3 +50,37 @@ it('leaves isolation decay identical to the base daily drain', function () {
     // isolation multiplier = 1.0 => oxygen drain stays 3 => 100 - 3 = 97.
     expect($run->fresh()->resources['oxygen'])->toBe(97);
 });
+
+it('raises the floor and schedules a marker when the phase advances', function () {
+    $run = app(RunFactory::class)->create(1, ['welder']);
+    // Day 9 -> advancing makes it day 10 = deterioration band.
+    $run->day = 9;
+    $run->phase_floor = 'isolation';
+    $run->resources = ['oxygen' => 100, 'food' => 100, 'power' => 100, 'morale' => 100, 'hull' => 100];
+    $run->scheduled_events = [];
+    $run->save();
+
+    app(\App\Game\DayProcessor::class)->advance($run->fresh());
+    $after = $run->fresh();
+
+    expect($after->phase_floor)->toBe('deterioration');
+    $keys = collect($after->scheduled_events)->pluck('key');
+    expect($keys)->toContain('phase_enter_deterioration');
+});
+
+it('does not re-schedule a marker when the phase does not advance', function () {
+    $run = app(RunFactory::class)->create(1, ['welder']);
+    $run->day = 2; // stays isolation after advancing to day 3
+    $run->phase_floor = 'isolation';
+    $run->resources = ['oxygen' => 100, 'food' => 100, 'power' => 100, 'morale' => 100, 'hull' => 100];
+    $run->scheduled_events = [];
+    $run->save();
+
+    app(\App\Game\DayProcessor::class)->advance($run->fresh());
+    $after = $run->fresh();
+
+    expect($after->phase_floor)->toBe('isolation');
+    $keys = collect($after->scheduled_events)->pluck('key');
+    expect($keys)->not->toContain('phase_enter_deterioration');
+    expect($keys)->not->toContain('phase_enter_reckoning');
+});

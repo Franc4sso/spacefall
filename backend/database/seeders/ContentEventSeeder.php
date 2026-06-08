@@ -1437,6 +1437,30 @@ class ContentEventSeeder extends Seeder
                 'is_filler' => true, 'base_weight' => 3, 'cooldown_days' => 10,
                 'choices' => [],
             ]),
+
+            $this->ev([
+                'key' => 'phase_enter_deterioration',
+                'title' => 'Qualcosa è cambiato',
+                'speaker' => null,
+                'body' => "Lo senti nei suoni della stazione: un ronzio nuovo, una vibrazione che prima non c'era. I sistemi iniziano a cedere. Da qui in avanti, ogni giorno costa di più.",
+                'requires' => ['phase' => 'deterioration'],
+                'base_weight' => 1, 'cooldown_days' => 999,
+                'choices' => [
+                    $this->one('Stringo i denti', [], 'Non c\'è altro da fare. Si va avanti.'),
+                ],
+            ]),
+
+            $this->ev([
+                'key' => 'phase_enter_reckoning',
+                'title' => 'Non c\'è più tempo',
+                'speaker' => null,
+                'body' => "I margini si sono esauriti. Ogni scelta adesso pesa il doppio, e gli errori non si recuperano più. Qualunque cosa succeda, succede ora.",
+                'requires' => ['phase' => 'reckoning'],
+                'base_weight' => 1, 'cooldown_days' => 999,
+                'choices' => [
+                    $this->one('Affronto quello che viene', [], 'Qualunque cosa sia.'),
+                ],
+            ]),
         ];
     }
 
