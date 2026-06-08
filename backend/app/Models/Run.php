@@ -41,6 +41,7 @@ class Run extends Model
         'ending_type',
         'profile_id',
         'choice_log',
+        'phase_floor',
     ];
 
     protected $casts = [
@@ -67,6 +68,7 @@ class Run extends Model
         'items' => '[]',
         'systems' => '{}',
         'choice_log' => '[]',
+        'phase_floor' => 'isolation',
     ];
 
     public function profile(): BelongsTo

@@ -3,6 +3,7 @@
 namespace App\Game\Engine;
 
 use App\Models\Run;
+use App\Game\Engine\PhaseResolver;
 
 /**
  * A plain, mutable snapshot of everything the engine reads and writes for one
@@ -41,6 +42,9 @@ final class RunState
         public array $systems = [],
         public array $relationships = [],
         public array $choiceLog = [],
+        public string $phaseFloor = 'isolation',
+        public string $phase = 'isolation',
+        public int $phaseIndex = 0,
     ) {
     }
 
@@ -51,6 +55,10 @@ final class RunState
         // (cross-run memory). They are flushed back by ProfileSync after a
         // choice resolves.
         $profileFlags = $run->profile?->flags ?? [];
+
+        $resolver = new PhaseResolver();
+        $floor = $run->phase_floor ?? 'isolation';
+        $phase = $resolver->resolve($run->day, $run->resources ?? [], $floor);
 
         return new self(
             day: $run->day,
@@ -64,6 +72,9 @@ final class RunState
             items: $run->items ?? [],
             systems: $run->systems ?? [],
             choiceLog: $run->choice_log ?? [],
+            phaseFloor: $floor,
+            phase: $phase,
+            phaseIndex: $resolver->indexOf($phase),
         );
     }
 
@@ -81,5 +92,6 @@ final class RunState
         $run->relationships = $this->relationships;
         $run->systems = $this->systems;
         $run->choice_log = $this->choiceLog;
+        $run->phase_floor = $this->phaseFloor;
     }
 }
