@@ -49,4 +49,12 @@ it('seeds the 7 tool-gated crisis choices', function () {
         fn ($o) => collect($o['effects'])->contains(fn ($e) => ($e['resource'] ?? null) === 'food' && ($e['delta'] ?? 0) > 0)
     );
     expect($foodGain)->toBeTrue('rifle outcome should be able to gain food');
+
+    $c4 = gatedChoice('ration_night', 'drone');
+    // Gamble where the bad outcome consumes the drone.
+    expect($c4['outcomes'])->toHaveCount(2);
+    $consumes = collect($c4['outcomes'])->contains(
+        fn ($o) => collect($o['effects'])->contains(fn ($e) => ($e['consume_item'] ?? null) === 'drone')
+    );
+    expect($consumes)->toBeTrue('drone outcome should be able to consume the drone');
 });

@@ -186,6 +186,20 @@ class EventSeeder extends Seeder
                 'requires' => ['resource' => 'food', 'op' => '<', 'value' => 50],
                 'choices' => [
                     [
+                        'label' => 'Mando il drone a frugare',
+                        'hint' => 'potrebbe non tornare',
+                        'requires' => ['has_item' => 'drone'],
+                        'requires_item' => 'drone',
+                        'outcomes' => [
+                            ['weight' => 6, 'effects' => [['resource' => 'food', 'delta' => 14]],
+                                'log' => 'Il drone torna con due casse dimenticate in un condotto.'],
+                            ['weight' => 4, 'effects' => [
+                                ['consume_item' => 'drone'],
+                                ['resource' => 'food', 'delta' => 4],
+                            ], 'log' => 'Un sibilo, poi silenzio. Il drone non torna. Solo qualche scatoletta.'],
+                        ],
+                    ],
+                    [
                         'label' => 'Mangio io, mi serve la lucidità',
                         'hint' => 'egoista ma sensato',
                         'outcomes' => [
