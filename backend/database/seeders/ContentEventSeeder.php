@@ -85,7 +85,80 @@ class ContentEventSeeder extends Seeder
             $this->hungerCrisisEvents(),
             $this->expeditionEvents(),
             $this->expeditionReturnEvents(),
+            $this->phaseEvents(),
         );
+    }
+
+    // ---- Phase-flavoured events (acts: isolation / deterioration / reckoning) ----
+    private function phaseEvents(): array
+    {
+        return [
+            // --- ISOLATION: mystery, presentation, low stakes ---
+            $this->ev([
+                'key' => 'iso_signal', 'title' => 'Un segnale', 'speaker' => 'Anna',
+                'body' => "Una frequenza che non riconosci, debole, ripetitiva. Forse un eco, forse qualcuno. Anna ti guarda: 'Lo registro o lo lascio andare?'",
+                'requires' => ['phase' => 'isolation'],
+                'base_weight' => 8, 'cooldown_days' => 6,
+                'choices' => [
+                    $this->one('Registralo', [['resource' => 'morale', 'delta' => 4]], 'Forse non è niente. Ma è qualcosa a cui pensare.'),
+                    $this->one('Lascia perdere, abbiamo altro', [['resource' => 'morale', 'delta' => -2]], 'Il segnale svanisce. Resta il silenzio.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'iso_previous_crew', 'title' => 'Chi c\'era prima', 'speaker' => null,
+                'body' => "In un cassetto, una foto sbiadita: volti che non conosci, sorridenti davanti a questa stessa paratia. Sul retro, una data e una frase cancellata.",
+                'requires' => ['phase' => 'isolation'],
+                'base_weight' => 7, 'cooldown_days' => 8,
+                'choices' => [
+                    $this->one('La tengo', [['resource' => 'morale', 'delta' => 3]], 'La metti in tasca. Non sei il primo, qui.'),
+                    $this->one('La rimetto a posto', [], 'Richiudi il cassetto. Alcune cose è meglio non saperle.'),
+                ],
+            ]),
+
+            // --- DETERIORATION: systems failing, tension, medium stakes ---
+            $this->ev([
+                'key' => 'det_chain_fault', 'title' => 'Un guasto tira l\'altro', 'speaker' => 'Cole',
+                'body' => "Cole è coperto di grasso fino ai gomiti. 'Ho tamponato il primo, ma ne è saltato un altro. Posso tenerne in piedi uno solo. Quale?'",
+                'requires' => ['phase' => 'deterioration'],
+                'base_weight' => 12, 'cooldown_days' => 4,
+                'choices' => [
+                    $this->one('Tieni in piedi l\'energia', [['damage_system' => 'life_support', 'amount' => 15], ['resource' => 'power', 'delta' => 6]], 'Le luci reggono. L\'aria si fa un po\' più pesante.'),
+                    $this->one('Tieni in piedi il supporto vitale', [['damage_system' => 'power_grid', 'amount' => 15], ['resource' => 'oxygen', 'delta' => 4]], 'Si respira. Ma qualcosa, al buio, smette di funzionare.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'det_ration_strain', 'title' => 'La cinghia si stringe', 'speaker' => null,
+                'body' => "Le porzioni si sono ridotte di nuovo. Stavolta qualcuno lo dice ad alta voce, e l'aria nella stanza cambia.",
+                'requires' => ['phase' => 'deterioration'],
+                'base_weight' => 11, 'cooldown_days' => 5,
+                'choices' => [
+                    $this->gamble('Imponi il razionamento', [['character' => 'all', 'stress' => 6]], 'Mugugnano, ma obbediscono.', [['character' => 'all', 'stress' => 12], ['resource' => 'morale', 'delta' => -6]], 'Qualcuno sbatte la porta. La frattura si allarga.', 6, 4, 'rischioso'),
+                    $this->one('Dividi la tua parte', [['resource' => 'morale', 'delta' => 6], ['character' => 'random', 'hunger' => 8]], 'Un gesto che pesa. Loro lo notano.'),
+                ],
+            ]),
+
+            // --- RECKONING: terminal, irreversible, high stakes ---
+            $this->ev([
+                'key' => 'rec_unrecoverable', 'title' => 'Quello che non torna', 'speaker' => 'Anna',
+                'body' => "Anna posa gli strumenti. 'Non si ripara. Non con quello che abbiamo. Possiamo solo decidere come spenderlo, prima che se ne vada del tutto.'",
+                'requires' => ['phase' => 'reckoning'],
+                'base_weight' => 13, 'cooldown_days' => 999,
+                'choices' => [
+                    $this->one('Bruciamo tutto adesso', [['resource' => 'power', 'delta' => 20], ['damage_system' => 'power_grid', 'amount' => 60]], 'Un ultimo lampo di potenza. Poi il freddo.'),
+                    $this->one('Lo centelliniamo', [['resource' => 'power', 'delta' => -4]], 'Razioni di energia. Si tira avanti, per ora.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'rec_promises', 'title' => 'Il conto delle promesse', 'speaker' => null,
+                'body' => "Tutte le cose che hai detto che avresti sistemato, le persone che hai detto avresti protetto. Adesso il conto è qui, e va pagato.",
+                'requires' => ['phase' => 'reckoning'],
+                'base_weight' => 12, 'cooldown_days' => 999,
+                'choices' => [
+                    $this->one('Affronto chi ho deluso', [['resource' => 'morale', 'delta' => -8], ['modify_trust' => 12]], 'Parole dure. Ma alla fine, qualcosa si ricuce.'),
+                    $this->one('Tengo la testa bassa', [['resource' => 'morale', 'delta' => 4], ['modify_trust' => -10]], 'Eviti i loro occhi. È più facile, e peggio.'),
+                ],
+            ]),
+        ];
     }
 
     // ---- Resource-triggered -------------------------------------------------
@@ -1353,7 +1426,10 @@ class ContentEventSeeder extends Seeder
                 'base_weight' => 0, 'cooldown_days' => 999,
                 'choices' => [
                     // Survivable path: negotiate your way back, no mutiny flag.
-                    $this->one('Negozia', [['modify_trust' => 40], ['resource' => 'morale', 'delta' => -15]], 'Trovi un accordo duro. Il controllo è condiviso. La stazione respira ancora.'),
+                    // The accord must remain a genuine lifeline — a negotiated
+                    // shared-control deal lifts the mood rather than crushing it,
+                    // so this branch can never itself cross the lethal morale line.
+                    $this->one('Negozia', [['modify_trust' => 40], ['resource' => 'morale', 'delta' => 5]], 'Trovi un accordo duro. Il controllo è condiviso. La stazione respira ancora.'),
                     // Lose path: surrender leads to mutiny_end.
                     $this->one('Cedi il controllo', [['set_flag' => 'mutiny_occurred', 'value' => true], ['resource' => 'morale', 'delta' => 10]], 'Lasci andare. Forse è la cosa più saggia che hai fatto.'),
                 ],
