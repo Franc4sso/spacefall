@@ -340,6 +340,22 @@ class EventSeeder extends Seeder
                 'requires' => ['resource' => 'food', 'op' => '<', 'value' => 30],
                 'choices' => [
                     [
+                        'label' => 'Esco a caccia col fucile',
+                        'hint' => 'rischioso, ma carne vera',
+                        'requires' => ['has_item' => 'rifle'],
+                        'requires_item' => 'rifle',
+                        'outcomes' => [
+                            ['weight' => 6, 'effects' => [
+                                ['resource' => 'food', 'delta' => 18],
+                                ['resource' => 'morale', 'delta' => 4],
+                            ], 'log' => 'Torni con qualcosa. Stanotte si mangia caldo.'],
+                            ['weight' => 4, 'effects' => [
+                                ['character' => 'random', 'stress' => 14],
+                                ['resource' => 'food', 'delta' => 3],
+                            ], 'log' => 'Torni a mani quasi vuote, e con un graffio che brucia.'],
+                        ],
+                    ],
+                    [
                         'label' => 'Dividiamo in parti uguali',
                         'hint' => 'dovrebbe reggere',
                         'outcomes' => [

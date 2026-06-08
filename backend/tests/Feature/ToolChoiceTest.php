@@ -41,4 +41,12 @@ it('seeds the 7 tool-gated crisis choices', function () {
         fn ($o) => collect($o['effects'])->contains(fn ($e) => array_key_exists('spawn_event', $e))
     );
     expect($spawns)->toBeTrue('scanner outcome should sometimes reveal a real leak via spawn_event');
+
+    $c3 = gatedChoice('ration_crisis', 'rifle');
+    // Gamble: two outcomes, the good one adds food, the bad one costs stress.
+    expect($c3['outcomes'])->toHaveCount(2);
+    $foodGain = collect($c3['outcomes'])->contains(
+        fn ($o) => collect($o['effects'])->contains(fn ($e) => ($e['resource'] ?? null) === 'food' && ($e['delta'] ?? 0) > 0)
+    );
+    expect($foodGain)->toBeTrue('rifle outcome should be able to gain food');
 });
