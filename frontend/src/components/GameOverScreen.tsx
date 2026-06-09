@@ -59,6 +59,22 @@ export function GameOverScreen({ ending, day, onRestart }: Props) {
         {ending?.text}
       </p>
 
+      {ending?.epilogue?.map((section) => (
+        <div key={section.title} style={{ marginTop: 16, width: "100%", maxWidth: 380, textAlign: "left" }}>
+          <div style={{
+            fontSize: 11, fontFamily: "var(--font-mono)", letterSpacing: "0.2em",
+            color: accent, opacity: 0.7, marginBottom: 6,
+          }}>
+            {section.title.toUpperCase()}
+          </div>
+          {section.lines.map((line, i) => (
+            <p key={i} style={{ margin: "2px 0", fontSize: 13, lineHeight: 1.6, color: "rgba(232,244,253,0.8)" }}>
+              {line}
+            </p>
+          ))}
+        </div>
+      ))}
+
       {ending?.epithet && (
         <div style={{
           padding: "6px 14px",

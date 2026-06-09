@@ -59,6 +59,14 @@ export function Diario({ log, open, onClose }: Props) {
                     {e.reaction_summary}
                   </div>
                 )}
+                {e.effects_summary && (
+                  <div style={{ fontSize: 11, fontFamily: "var(--font-mono)", opacity: 0.6, marginTop: 2 }}>
+                    {[
+                      ...Object.entries(e.effects_summary.resources ?? {}).map(([k, v]) => `${k} ${v > 0 ? "+" + v : v}`),
+                      ...(e.effects_summary.notes ?? []),
+                    ].join(" · ")}
+                  </div>
+                )}
               </div>
             ))}
           </div>

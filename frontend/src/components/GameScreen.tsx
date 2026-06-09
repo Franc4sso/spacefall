@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type { RunState, Reaction } from "../api";
+import { formatEffects } from "../effectFormat";
 import { CardView } from "./CardView";
 import { CrewPanel } from "./CrewPanel";
 import { Diario } from "./Diario";
@@ -11,13 +12,14 @@ type Props = {
   run: RunState;
   busy: boolean;
   lastLog: string | null;
+  lastEffects: unknown[];
   reactions: Reaction[];
   onChoose: (index: number) => void;
   onAdvance: () => void;
 };
 
-export function GameScreen({ run, busy, lastLog, reactions, onChoose, onAdvance }: Props) {
-  const [flash, setFlash] = useState<{ text: string; good: boolean } | null>(null);
+export function GameScreen({ run, busy, lastLog, lastEffects, reactions, onChoose, onAdvance }: Props) {
+  const [flash, setFlash] = useState<{ text: string; good: boolean; deltas: string[] } | null>(null);
   const [diaryOpen, setDiaryOpen] = useState(false);
 
   useEffect(() => {
@@ -26,10 +28,10 @@ export function GameScreen({ run, busy, lastLog, reactions, onChoose, onAdvance 
                 lastLog.toLowerCase().includes("dann") ||
                 lastLog.toLowerCase().includes("croll") ||
                 lastLog.toLowerCase().includes("morto");
-    setFlash({ text: lastLog, good: !bad });
+    setFlash({ text: lastLog, good: !bad, deltas: formatEffects(lastEffects) });
     const t = setTimeout(() => setFlash(null), 3000);
     return () => clearTimeout(t);
-  }, [lastLog]);
+  }, [lastLog, lastEffects]);
 
   // Items required by the current card's choices
   const relevantItems = run.card?.choices
@@ -118,6 +120,25 @@ export function GameScreen({ run, busy, lastLog, reactions, onChoose, onAdvance 
             transition: "opacity 400ms ease",
           }}>
             {flash?.text}
+          </div>
+
+          {/* Effect deltas */}
+          <div data-testid="effects" style={{
+            display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 6,
+            minHeight: 18,
+            opacity: flash?.deltas.length ? 1 : 0,
+            transition: "opacity 400ms ease",
+          }}>
+            {flash?.deltas.map((d, i) => (
+              <span key={i} style={{
+                fontFamily: "var(--font-mono)", fontSize: 11,
+                color: "var(--color-text-dim)",
+                border: "1px solid var(--color-border-hi)", borderRadius: 6,
+                padding: "1px 7px", letterSpacing: "0.04em",
+              }}>
+                {d}
+              </span>
+            ))}
           </div>
         </main>
 

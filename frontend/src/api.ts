@@ -22,6 +22,7 @@ export type ChoiceLogEntry = {
   choice_label: string;
   tags: string[];
   reaction_summary: string | null;
+  effects_summary?: { resources: Record<string, number>; notes: string[] };
 };
 
 export type Choice = {
@@ -54,12 +55,15 @@ export type Character = {
 
 export type Item = { key: string; name: string; description: string };
 
+export type EpilogueSection = { title: string; lines: string[] };
+
 export type Ending = {
   key: string;
   type: "win" | "lose";
   name: string;
   text: string;
   epithet: string | null;
+  epilogue?: EpilogueSection[] | null;
 } | null;
 
 export type RunState = {

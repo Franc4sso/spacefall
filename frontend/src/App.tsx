@@ -23,12 +23,14 @@ export default function App() {
   const { run, phase, busy, error, begin, choose, advance, reset } = useRun(handle);
   const [lastLog, setLastLog] = useState<string | null>(null);
   const [reactions, setReactions] = useState<Reaction[]>([]);
+  const [lastEffects, setLastEffects] = useState<unknown[]>([]);
 
   const onChoose = useCallback(
     async (index: number) => {
       const result = await choose(index);
       setLastLog(result?.log ?? null);
       setReactions(result?.reactions ?? []);
+      setLastEffects(result?.effects ?? []);
     },
     [choose],
   );
@@ -55,6 +57,7 @@ export default function App() {
           run={run}
           busy={busy}
           lastLog={lastLog}
+          lastEffects={lastEffects}
           reactions={reactions}
           onChoose={onChoose}
           onAdvance={advance}

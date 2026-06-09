@@ -33,13 +33,19 @@ export function useRun(handle: string) {
   // Resolve a choice. Returns the log line and reactions so the UI can flash
   // it and animate crew. The next card arrives in the same response — no extra fetch.
   const choose = useCallback(
-    async (choiceIndex: number): Promise<{ log: string | null; reactions: Reaction[] } | null> => {
+    async (
+      choiceIndex: number,
+    ): Promise<{ log: string | null; reactions: Reaction[]; effects: unknown[] } | null> => {
       if (!run || busy) return null;
       setBusy(true);
       try {
         const res = await resolveChoice(run.id, choiceIndex);
         setRun(res.state);
-        return { log: res.resolution.log ?? null, reactions: res.resolution.reactions ?? [] };
+        return {
+          log: res.resolution.log ?? null,
+          reactions: res.resolution.reactions ?? [],
+          effects: res.resolution.effects ?? [],
+        };
       } catch (e) {
         setError(e instanceof Error ? e.message : "Errore");
         return null;
