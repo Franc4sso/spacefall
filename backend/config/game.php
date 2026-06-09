@@ -111,6 +111,18 @@ return [
     ],
 
     /*
+     | Crew relationship dynamics. death_drift: when a member dies, surviving
+     | pairs shift DIVERGENTLY — pairs already warm grow closer (grief unites),
+     | pairs already cold grow colder (blame). Neutral pairs are untouched.
+     | expedition: a relationship between the expeditioner and a staying member
+     | nudges trip risk (sending half of a hateful pair away frays the ship).
+     */
+    'relationships' => [
+        'death_drift' => 3,
+        'expedition_risk' => 3,
+    ],
+
+    /*
      | Hardship stress: when a resource sits at or below its `at_or_below`
      | threshold at end of day, every living survivor gains `stress`. Scarcity
      | wears people down, which feeds the stress-band behaviour above — the

@@ -193,8 +193,45 @@ final class EffectApplier
     private function applyKill(string $selector, RunState $state, SeededRng $rng): void
     {
         $index = $this->resolveTarget($selector, $state, $rng);
-        if ($index !== null) {
-            $state->characters[$index]['alive'] = false;
+        if ($index === null) {
+            return;
+        }
+
+        $deadName = $state->characters[$index]['name'] ?? null;
+        $state->characters[$index]['alive'] = false;
+
+        if ($deadName !== null) {
+            $this->applyDeathDrift($deadName, $state);
+        }
+    }
+
+    /**
+     * On a death, surviving pairs drift divergently: warm pairs (bond/devotion)
+     * grow closer, cold pairs (tension/hatred) grow colder. Pairs that include
+     * the dead member, and neutral pairs, are left alone.
+     */
+    private function applyDeathDrift(string $deadName, RunState $state): void
+    {
+        $mag = (int) config('game.relationships.death_drift', 0);
+        if ($mag === 0) {
+            return;
+        }
+
+        foreach ($state->relationships as $i => $rel) {
+            $a = $rel['a'] ?? null;
+            $b = $rel['b'] ?? null;
+            if ($a === $deadName || $b === $deadName) {
+                continue;
+            }
+            $band = $this->relationshipBand((int) ($rel['value'] ?? 0));
+            $delta = match ($band) {
+                'bond', 'devotion' => $mag,
+                'tension', 'hatred' => -$mag,
+                default => 0,
+            };
+            if ($delta !== 0) {
+                $state->relationships[$i]['value'] = $this->clampSigned((int) ($rel['value'] ?? 0) + $delta, 100);
+            }
         }
     }
 
