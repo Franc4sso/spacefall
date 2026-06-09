@@ -32,6 +32,7 @@ final class FillContentEventSeeder extends Seeder
             $this->commsEvents(),
             $this->propulsionEvents(),
             $this->dilemmaEvents(),
+            $this->crisisEvents(),
         );
     }
 
@@ -141,6 +142,53 @@ final class FillContentEventSeeder extends Seeder
                 'choices' => [
                     array_merge($this->one('Usale adesso', [['resource' => 'morale', 'delta' => 8], ['consume_item' => 'medkit']], 'Sollievo, ora. Il kit è vuoto.'), ['tags' => ['generous']]),
                     array_merge($this->one('Tienile per il peggio', [['character' => 'all', 'stress' => 8], ['modify_standing' => ['who' => 'Bex', 'delta' => -10]]], 'Razionale. Bex stringe i denti.'), ['tags' => ['il_freddo']]),
+                ],
+            ]),
+        ];
+    }
+
+    // ---- System/resource crises (broad gates; enlarge the common pool) -----
+    private function crisisEvents(): array
+    {
+        return [
+            $this->ev([
+                'key' => 'fc_condensation', 'title' => 'Condensa nei circuiti', 'speaker' => null,
+                'body' => "L'umidità minaccia un quadro elettrico. Asciugarlo col calore costa ossigeno; isolarlo a freddo costa una presa di corrente.",
+                'requires' => ['resource' => 'power', 'op' => '<', 'value' => 75],
+                'base_weight' => 12, 'cooldown_days' => 5,
+                'choices' => [
+                    $this->one('Asciuga col calore', [['resource' => 'oxygen', 'delta' => -8], ['resource' => 'power', 'delta' => 6]], 'Circuiti salvi. Aria più pesante.'),
+                    $this->one('Isola a freddo', [['resource' => 'power', 'delta' => -10], ['character' => 'all', 'stress' => 4]], 'Una sezione spenta. Si lavora al buio.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'fc_filter_clog', 'title' => 'Filtri intasati', 'speaker' => 'Anna',
+                'body' => "I filtri dell'aria perdono colpi. Pulirli a fondo ferma tutto per ore; un lavoro veloce regge poco e logora chi lo fa.",
+                'requires' => ['resource' => 'oxygen', 'op' => '<', 'value' => 70],
+                'base_weight' => 12, 'cooldown_days' => 5,
+                'choices' => [
+                    $this->one('Pulizia a fondo', [['resource' => 'oxygen', 'delta' => 10], ['resource' => 'power', 'delta' => -8]], 'Aria pulita. Mezza giornata persa.'),
+                    $this->one('Rattoppo veloce', [['resource' => 'oxygen', 'delta' => 4], ['character' => 'Anna', 'stress' => 8], ['set_flag' => 'fc_patched_filters', 'value' => true]], 'Regge. Per ora. Anna lo sa.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'fc_coolant_leak', 'title' => 'Perdita di refrigerante', 'speaker' => null,
+                'body' => "Il refrigerante cala. Rabboccarlo dalle riserve vita prosciuga l'acqua; lasciar correre fa surriscaldare la rete.",
+                'requires' => ['day' => ['op' => '>=', 'value' => 4]],
+                'base_weight' => 11, 'cooldown_days' => 6,
+                'choices' => [
+                    $this->one('Rabbocca dalle riserve', [['resource' => 'food', 'delta' => -10], ['resource' => 'power', 'delta' => 6]], 'La rete respira. Le scorte calano.'),
+                    $this->one('Lascia surriscaldare', [['damage_system' => 'power_grid', 'amount' => 14]], 'Regge il magazzino. Frigge la rete.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'fc_night_cold', 'title' => 'Notte sotto zero', 'speaker' => 'Cole',
+                'body' => "Il riscaldamento non basta per tutta la stazione. Scaldi le cabine (morale) o la serra/magazzino (scorte): una delle due gela.",
+                'requires' => ['resource' => 'power', 'op' => '<', 'value' => 65],
+                'base_weight' => 11, 'cooldown_days' => 6,
+                'choices' => [
+                    $this->one('Scalda le cabine', [['resource' => 'morale', 'delta' => 6], ['resource' => 'food', 'delta' => -10]], 'Si dorme al caldo. Qualcosa, in magazzino, si guasta.'),
+                    $this->one('Scalda il magazzino', [['resource' => 'food', 'delta' => 4], ['character' => 'all', 'stress' => 6]], 'Le scorte tengono. La notte è lunga e fredda.'),
                 ],
             ]),
         ];
