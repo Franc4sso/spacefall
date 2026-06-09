@@ -281,6 +281,18 @@ final class EffectApplier
         $state->relationships[] = ['a' => $a, 'b' => $b, 'value' => $this->clampSigned($delta, 100)];
     }
 
+    /** Band name for a relationship value. Mirrors ConditionEvaluator::relationshipBand. */
+    private function relationshipBand(int $value): string
+    {
+        return match (true) {
+            $value < -40 => 'hatred',
+            $value < -10 => 'tension',
+            $value > 40 => 'devotion',
+            $value > 10 => 'bond',
+            default => 'neutral',
+        };
+    }
+
     private function samePair(array $rel, string $a, string $b): bool
     {
         return (($rel['a'] ?? null) === $a && ($rel['b'] ?? null) === $b)
