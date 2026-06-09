@@ -68,6 +68,7 @@ class ContentEventSeeder extends Seeder
             $this->systemEvents(),
             $this->characterEvents(),
             $this->relationshipEvents(),
+            $this->pairEvents(),
             $this->itemEvents(),
             $this->memoryEvents(),
             $this->fillerEvents(),
@@ -411,6 +412,72 @@ class ContentEventSeeder extends Seeder
                 'choices' => [
                     $this->one('Medio io', [['relationship' => ['a' => 'Anna', 'b' => 'Cole', 'delta' => 12]]], 'Un passo indietro per entrambi.'),
                     $this->one('Non è affar mio', [['relationship' => ['a' => 'Anna', 'b' => 'Cole', 'delta' => -8]], ['character' => 'all', 'stress' => 4]], 'Peggiora.'),
+                ],
+            ]),
+        ];
+    }
+
+    // ---- Dedicated crew-pair events (relationships in content, Tier 2 #4) ----
+    private function pairEvents(): array
+    {
+        return [
+            $this->ev([
+                'key' => 'pair_anna_cole_blame', 'title' => 'Di chi è la colpa', 'speaker' => null,
+                'body' => "Anna accusa Cole di aver forzato una manovra che ha stressato lo scafo. Cole dice che senza quella manovra sareste già morti. Ti guardano entrambi.",
+                'base_weight' => 9, 'cooldown_days' => 7,
+                'choices' => [
+                    $this->one('Dai ragione ad Anna', [['relationship' => ['a' => 'Anna', 'b' => 'Cole', 'delta' => -12]], ['modify_standing' => ['who' => 'Anna', 'delta' => 8]]], 'Cole stringe la mascella e tace.'),
+                    $this->one('Dai ragione a Cole', [['relationship' => ['a' => 'Anna', 'b' => 'Cole', 'delta' => -12]], ['modify_standing' => ['who' => 'Cole', 'delta' => 8]]], 'Anna esce senza una parola.'),
+                    $this->one('Fermali: nessuna colpa, solo lavoro', [['relationship' => ['a' => 'Anna', 'b' => 'Cole', 'delta' => 8]], ['resource' => 'morale', 'delta' => -3]], 'Borbottano, ma tornano al lavoro fianco a fianco.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'pair_anna_cole_cover', 'title' => 'Una copertura', 'speaker' => 'Cole',
+                'body' => "Cole ti prende da parte: Anna ha commesso un errore che non ha confessato. Lui se n'è accorto e l'ha già sistemato. 'Non serve dirlo a nessuno, vero?'",
+                'requires' => ['relationship' => ['a' => 'Anna', 'b' => 'Cole', 'state' => 'bond']],
+                'base_weight' => 8, 'cooldown_days' => 10,
+                'choices' => [
+                    $this->one('Lascia che la copra', [['relationship' => ['a' => 'Anna', 'b' => 'Cole', 'delta' => 10]]], 'Restano uniti. Hanno un segreto, ora.'),
+                    $this->one('Esigi trasparenza', [['relationship' => ['a' => 'Anna', 'b' => 'Cole', 'delta' => -6]], ['modify_trust' => 6]], 'Onestà imposta. Più fredda tra loro.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'pair_anna_bex_triage', 'title' => 'Testa o cuore', 'speaker' => null,
+                'body' => "Bex vuole spendere energia preziosa per tenere caldo un membro malato. Anna dice che è uno spreco che condanna tutti. Discutono a voce alta.",
+                'base_weight' => 9, 'cooldown_days' => 7,
+                'choices' => [
+                    $this->one('Con Anna: razionalità', [['relationship' => ['a' => 'Anna', 'b' => 'Bex', 'delta' => -12]], ['resource' => 'power', 'delta' => 6]], 'Bex ti guarda come se non ti riconoscesse.'),
+                    $this->one('Con Bex: umanità', [['relationship' => ['a' => 'Anna', 'b' => 'Bex', 'delta' => -12]], ['resource' => 'power', 'delta' => -8], ['resource' => 'morale', 'delta' => 6]], 'Anna scuote la testa e se ne va.'),
+                    $this->one('Trova un compromesso', [['relationship' => ['a' => 'Anna', 'b' => 'Bex', 'delta' => 8]], ['resource' => 'power', 'delta' => -3]], 'Mezza soluzione. Ma restano alleate.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'pair_anna_bex_repair', 'title' => 'Quattro mani', 'speaker' => 'Bex',
+                'body' => "Bex si offre di aiutare Anna in una riparazione lunga e noiosa, solo per non lasciarla sola. Anna esita: non è brava a farsi aiutare.",
+                'base_weight' => 8, 'cooldown_days' => 9,
+                'choices' => [
+                    $this->one('Incoraggia Anna ad accettare', [['relationship' => ['a' => 'Anna', 'b' => 'Bex', 'delta' => 12]]], 'Lavorano in silenzio, vicine. Qualcosa si scioglie.'),
+                    $this->one('Lascia che Anna faccia da sola', [['relationship' => ['a' => 'Anna', 'b' => 'Bex', 'delta' => -4]], ['character' => 'Anna', 'stress' => 6]], 'Anna finisce da sola, esausta.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'pair_bex_cole_reckless', 'title' => 'Troppo o troppo poco', 'speaker' => null,
+                'body' => "Bex accusa Cole di prendersi rischi che mettono tutti in pericolo. Cole risponde che la prudenza di Bex vi farà morire lenti. La tensione è palpabile.",
+                'requires' => ['relationship' => ['a' => 'Bex', 'b' => 'Cole', 'state' => 'tension']],
+                'base_weight' => 9, 'cooldown_days' => 7,
+                'choices' => [
+                    $this->one('Frena Cole', [['relationship' => ['a' => 'Bex', 'b' => 'Cole', 'delta' => -8]], ['modify_standing' => ['who' => 'Bex', 'delta' => 6]]], 'Cole obbedisce, rancoroso.'),
+                    $this->one('Sostieni Cole', [['relationship' => ['a' => 'Bex', 'b' => 'Cole', 'delta' => -8]], ['modify_standing' => ['who' => 'Cole', 'delta' => 6]]], 'Bex stringe le labbra.'),
+                    $this->one('Costringili a parlarsi', [['relationship' => ['a' => 'Bex', 'b' => 'Cole', 'delta' => 12]], ['resource' => 'morale', 'delta' => -4]], 'Una conversazione dura. Ma alla fine, una tregua.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'pair_bex_cole_fear', 'title' => 'La paura condivisa', 'speaker' => 'Bex',
+                'body' => "Cole ha avuto un attacco di panico al buio. Bex lo ha trovato e non lo ha deriso — è rimasta con lui finché non è passato. Te lo racconta, chiedendo di non dirlo.",
+                'base_weight' => 8, 'cooldown_days' => 9,
+                'choices' => [
+                    $this->one('Rispetta il loro momento', [['relationship' => ['a' => 'Bex', 'b' => 'Cole', 'delta' => 12]]], 'Un patto silenzioso tra loro due.'),
+                    $this->one('Usa la cosa per tenerli in riga', [['relationship' => ['a' => 'Bex', 'b' => 'Cole', 'delta' => -10]], ['modify_trust' => -8]], 'Funziona. Ma ti guardano diversamente, ora.'),
                 ],
             ]),
         ];
