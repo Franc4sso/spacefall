@@ -35,7 +35,35 @@ final class FillContentEventSeeder extends Seeder
             $this->crisisEvents(),
             $this->atmosphereEvents(),
             $this->rationEvents(),
+            $this->hullEvents(),
         );
+    }
+
+    // ---- Hull (structure vs resource vs delayed risk) ----------------------
+    private function hullEvents(): array
+    {
+        return [
+            $this->ev([
+                'key' => 'fc_microfractures', 'title' => 'Microfratture', 'speaker' => 'Anna',
+                'body' => "Una rete di crepe sottili si allarga lenta. Sigillarle ora costa materiale ed energia; rimandare lascia che diventino un problema vero.",
+                'requires' => ['resource' => 'hull', 'op' => '<', 'value' => 75],
+                'base_weight' => 11, 'cooldown_days' => 6,
+                'choices' => [
+                    $this->one('Sigilla adesso', [['resource' => 'power', 'delta' => -10], ['resource' => 'hull', 'delta' => 12]], 'Tenute. Costose, ma tenute.'),
+                    $this->one('Rimanda', [['set_flag' => 'fc_cracks_ignored', 'value' => true], ['spawn_event' => ['key' => 'fc_microfractures', 'in_days' => 4]]], 'Per ora reggono. Torneranno a chiedere il conto.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'fc_airlock_seal', 'title' => 'La guarnizione del portello', 'speaker' => null,
+                'body' => "La guarnizione di una camera stagna è andata. Sacrificare un pezzo di tuta EVA la ripara; sigillare il portello chiude per sempre un settore.",
+                'requires' => ['resource' => 'hull', 'op' => '<', 'value' => 65],
+                'base_weight' => 10, 'cooldown_days' => 9,
+                'choices' => [
+                    $this->one('Cannibalizza una tuta', [['resource' => 'hull', 'delta' => 10], ['consume_item' => 'spacesuit']], 'Riparata. Una tuta in meno, per sempre.'),
+                    $this->one('Sigilla e abbandona il settore', [['resource' => 'hull', 'delta' => -6], ['resource' => 'morale', 'delta' => -8], ['character' => 'all', 'stress' => 5]], 'Una porta chiusa che non riaprirete. La stazione si stringe.'),
+                ],
+            ]),
+        ];
     }
 
     // ---- Rationing (food vs crew vs fairness) ------------------------------
