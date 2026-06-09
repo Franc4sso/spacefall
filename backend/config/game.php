@@ -312,6 +312,7 @@ return [
                 ['has_item' => 'comms'],
                 ['day' => ['op' => '>=', 'value' => 24]],
                 ['resource' => 'morale', 'op' => '>=', 'value' => 45],
+                ['flag' => 'sos_sent', 'is' => true],
             ]],
         ],
         [
@@ -322,6 +323,7 @@ return [
                 ['has_item' => 'seedbank'],
                 ['day' => ['op' => '>=', 'value' => 25]],
                 ['resource' => 'food', 'op' => '>=', 'value' => 68],
+                ['flag' => 'tended_crops', 'is' => true],
             ]],
         ],
         [

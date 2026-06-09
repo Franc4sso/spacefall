@@ -537,7 +537,7 @@ class ContentEventSeeder extends Seeder
                 'body' => 'La banca semi può diventare un orto. Con pazienza.',
                 'requires' => ['has_item' => 'seedbank'],
                 'choices' => [
-                    $this->one('Pianto subito', [['resource' => 'food', 'delta' => 16], ['resource' => 'power', 'delta' => -5]], 'Verde fragile sotto le luci.', 'dovrebbe reggere'),
+                    $this->one('Pianto subito', [['resource' => 'food', 'delta' => 16], ['resource' => 'power', 'delta' => -5], ['set_flag' => 'tended_crops', 'value' => true]], 'Verde fragile sotto le luci.', 'dovrebbe reggere'),
                     $this->one('Non è il momento', [], 'I semi aspettano.'),
                 ],
             ]),

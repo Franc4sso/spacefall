@@ -70,6 +70,8 @@ it('reaches the rescue win with comms and time', function () {
     expect(endingFor([
         'items' => ['comms'],
         'day' => 25,
+        // win_rescue is now gated on the SOS having actually been sent.
+        'flags' => ['sos_sent' => true],
         'resources' => ['morale' => 50],
     ])['key'])->toBe('win_rescue');
 });
@@ -78,6 +80,8 @@ it('reaches the colony win with the seedbank and stored food', function () {
     expect(endingFor([
         'items' => ['seedbank'],
         'day' => 26,
+        // win_colony is now gated on the crops actually having been tended.
+        'flags' => ['tended_crops' => true],
         'resources' => ['food' => 80],
     ])['key'])->toBe('win_colony');
 });
