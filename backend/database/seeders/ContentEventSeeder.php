@@ -1595,6 +1595,18 @@ class ContentEventSeeder extends Seeder
     {
         return [
             $this->ev([
+                'key' => 'death_notice',
+                'title' => 'In memoria',
+                'speaker' => null,
+                'body' => "Un nome in meno all'appello. La stazione sembra più grande, e più vuota. Ti fermi un momento. Poi si va avanti — non c'è altro da fare.",
+                'requires' => ['flag' => '__never', 'is' => true],
+                'base_weight' => 0, 'cooldown_days' => 0,
+                'choices' => [
+                    $this->one('Un momento di silenzio', [['resource' => 'morale', 'delta' => -3]], 'Poi torni al lavoro.'),
+                ],
+            ]),
+
+            $this->ev([
                 'key' => 'silent_window', 'title' => 'Una finestra nello spazio',
                 'body' => "Anna è ferma davanti al pannello di osservazione da venti minuti. Non si gira quando entri. Le stelle non rispondono, ma almeno non mentono.",
                 'is_filler' => true, 'base_weight' => 3, 'cooldown_days' => 8,

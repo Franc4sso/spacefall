@@ -116,11 +116,17 @@ final class EventEngine
         $speaker = $this->resolveSpeaker($event, $state);
         $outcome = $this->pickOutcome($choice['outcomes'] ?? [], $speaker, $rng);
 
+        $deathsBefore = count($state->deathLog);
+
         $this->applier->apply($outcome['effects'] ?? [], $state, $rng, [
             'event_key' => $event->key,
             'day' => $state->day,
             'cause' => 'event',
         ]);
+
+        if (count($state->deathLog) > $deathsBefore) {
+            $state->scheduledEvents[] = ['key' => 'death_notice', 'fire_on_day' => $state->day];
+        }
 
         // Crew reactions (spoken memory). Explicit on the outcome, else derived.
         $reactions = $this->reactions->derive($choice, $outcome, $state);
@@ -198,6 +204,14 @@ final class EventEngine
 
         // A choice's effects may push the run into an ending (death or win).
         $ending = $this->endings->check($run);
+
+        if ($ending !== null) {
+            $run->scheduled_events = array_values(array_filter(
+                $run->scheduled_events ?? [],
+                fn ($s) => ($s['key'] ?? null) !== 'death_notice',
+            ));
+            $run->save();
+        }
 
         return [
             'log'       => $outcome['log'] ?? '',

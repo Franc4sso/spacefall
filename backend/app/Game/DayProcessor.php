@@ -102,6 +102,10 @@ final class DayProcessor
                 $log[] = ['name' => $name, 'day' => $run->day, 'cause' => 'starvation', 'context' => 'hunger'];
             }
             $run->death_log = $log;
+
+            $run->scheduled_events = array_merge($run->scheduled_events ?? [], [
+                ['key' => 'death_notice', 'fire_on_day' => $run->day],
+            ]);
         }
 
         // 5. Advance day.

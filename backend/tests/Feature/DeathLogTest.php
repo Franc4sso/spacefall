@@ -75,3 +75,26 @@ it('records a starvation death with cause starvation', function () {
     expect($starved)->not->toBeNull();
     expect($starved['name'])->toBe($chars[0]['name']);
 });
+
+it('schedules a death_notice when a death occurs mid-run', function () {
+    $run = app(RunFactory::class)->create(7, ['welder']);
+    $run->resources = ['oxygen' => 80, 'food' => 4, 'power' => 80, 'morale' => 80, 'hull' => 80];
+    $chars = $run->characters;
+    foreach ($chars as $i => $c) { $chars[$i]['hunger'] = 80; }
+    $run->characters = $chars;
+    $run->current_event_key = 'food_sacrifice';
+    $run->save();
+
+    $engine = app(\App\Game\Engine\EventEngine::class);
+    $engine->currentCard($run->fresh());
+    $engine->resolveChoice($run->fresh(), 0); // the kill choice
+
+    $after = $run->fresh();
+    if ($after->status === 'active') {
+        $keys = collect($after->scheduled_events ?? [])->pluck('key');
+        expect($keys)->toContain('death_notice');
+    } else {
+        $keys = collect($after->scheduled_events ?? [])->pluck('key');
+        expect($keys)->not->toContain('death_notice');
+    }
+});
