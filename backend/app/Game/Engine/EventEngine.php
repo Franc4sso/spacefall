@@ -28,6 +28,7 @@ final class EventEngine
         private readonly TrustEngine $trust,
         private readonly ReactionDeriver $reactions,
         private readonly ExpeditionResolver $expeditions,
+        private readonly EffectSummarizer $summarizer,
     ) {
     }
 
@@ -179,6 +180,7 @@ final class EventEngine
             'choice_label'     => $choice['label'] ?? '',
             'tags'             => $choice['tags'] ?? [],
             'reaction_summary' => $this->reactions->summary($reactions),
+            'effects_summary'  => $this->summarizer->summarize($outcome['effects'] ?? []),
         ];
         $state->choiceLog = array_slice(
             array_merge($state->choiceLog, [$entry]),
