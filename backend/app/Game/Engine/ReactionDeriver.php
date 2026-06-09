@@ -57,6 +57,32 @@ final class ReactionDeriver
             $out[] = ['who' => 'Anna', 'tone' => 'anger', 'line' => 'Quei sistemi mi servivano.'];
         }
 
+        // Relationship shifts surface as a spoken beat so the player SEES the
+        // dynamic move: a worsening pair reads as friction, an improving one as
+        // warmth. Tone is structural (derived from delta sign), not authored copy.
+        foreach ($effects as $e) {
+            if (! is_array($e) || ! array_key_exists('relationship', $e)) {
+                continue;
+            }
+            $spec = $e['relationship'];
+            $a = $spec['a'] ?? null;
+            $b = $spec['b'] ?? null;
+            $delta = (int) ($spec['delta'] ?? 0);
+            if ($a === null || $b === null || $delta === 0) {
+                continue;
+            }
+            $speaker = $this->isAlive($a, $state) ? $a : ($this->isAlive($b, $state) ? $b : null);
+            $other = $speaker === $a ? $b : $a;
+            if ($speaker === null) {
+                continue;
+            }
+            if ($delta < 0) {
+                $out[] = ['who' => $speaker, 'tone' => 'complicated', 'line' => "Qualcosa tra me e {$other} si è incrinato."];
+            } else {
+                $out[] = ['who' => $speaker, 'tone' => 'approve', 'line' => "Io e {$other} ci siamo capiti."];
+            }
+        }
+
         return $out;
     }
 
