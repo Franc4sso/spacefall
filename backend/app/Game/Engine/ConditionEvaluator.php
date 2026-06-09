@@ -174,13 +174,35 @@ final class ConditionEvaluator
      */
     private function evaluateRelationship(array $spec, RunState $state): bool
     {
-        $state_name = $spec['state'] ?? 'neutral';
+        $wanted = $spec['state'] ?? 'neutral';
+
+        // Named pair: check ONLY that pair (symmetric match). A pair with no
+        // stored value yet counts as neutral (value 0).
+        if (isset($spec['a'], $spec['b'])) {
+            $value = 0;
+            foreach ($state->relationships as $rel) {
+                if ($this->samePair($rel, $spec['a'], $spec['b'])) {
+                    $value = $rel['value'] ?? 0;
+                    break;
+                }
+            }
+            return $this->relationshipBand($value) === $wanted;
+        }
+
+        // Any-pair: true if SOME pair is in the wanted band (unchanged behaviour).
         foreach ($state->relationships as $rel) {
-            if ($this->relationshipBand($rel['value'] ?? 0) === $state_name) {
+            if ($this->relationshipBand($rel['value'] ?? 0) === $wanted) {
                 return true;
             }
         }
         return false;
+    }
+
+    /** Symmetric pair match: {a,b} equals {b,a}. Mirrors EffectApplier::samePair. */
+    private function samePair(array $rel, string $a, string $b): bool
+    {
+        return (($rel['a'] ?? null) === $a && ($rel['b'] ?? null) === $b)
+            || (($rel['a'] ?? null) === $b && ($rel['b'] ?? null) === $a);
     }
 
     private function relationshipBand(int $value): string
