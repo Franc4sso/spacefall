@@ -50,7 +50,7 @@ final class FillContentEventSeeder extends Seeder
                 'base_weight' => 11, 'cooldown_days' => 6,
                 'choices' => [
                     $this->one('Sigilla adesso', [['resource' => 'power', 'delta' => -10], ['resource' => 'hull', 'delta' => 12]], 'Tenute. Costose, ma tenute.'),
-                    $this->one('Rimanda', [['set_flag' => 'fc_cracks_ignored', 'value' => true], ['spawn_event' => ['key' => 'fc_microfractures', 'in_days' => 4]]], 'Per ora reggono. Torneranno a chiedere il conto.'),
+                    $this->one('Rimanda', [['resource' => 'hull', 'delta' => -8], ['set_flag' => 'fc_cracks_ignored', 'value' => true], ['spawn_event' => ['key' => 'fc_microfractures', 'in_days' => 4]]], 'Per ora reggi, ma le crepe si allargano mentre aspetti.'),
                 ],
             ]),
             $this->ev([
@@ -134,7 +134,7 @@ final class FillContentEventSeeder extends Seeder
                 'requires' => ['has_item' => 'comms'],
                 'base_weight' => 11, 'cooldown_days' => 6,
                 'choices' => [
-                    $this->one('Spingo gli amplificatori', [['resource' => 'power', 'delta' => -10], ['resource' => 'morale', 'delta' => 5]], 'Una parola, forse un nome. L\'equipaggio si aggrappa alla speranza.'),
+                    $this->one('Spingo gli amplificatori', [['resource' => 'power', 'delta' => -10], ['resource' => 'morale', 'delta' => 5], ['damage_system' => 'power_grid', 'amount' => 6]], 'Una parola, forse un nome. L\'equipaggio si aggrappa alla speranza.'),
                     $this->one('Spengo, non possiamo permettercelo', [['resource' => 'morale', 'delta' => -6], ['set_flag' => 'fc_ignored_signal', 'value' => true]], 'Il silenzio torna. Qualcosa che non saprai mai.'),
                 ],
             ]),
@@ -229,7 +229,7 @@ final class FillContentEventSeeder extends Seeder
                 'base_weight' => 9, 'cooldown_days' => 12,
                 'choices' => [
                     array_merge($this->one('Usale adesso', [['resource' => 'morale', 'delta' => 8], ['consume_item' => 'medkit']], 'Sollievo, ora. Il kit è vuoto.'), ['tags' => ['generous']]),
-                    array_merge($this->one('Tienile per il peggio', [['character' => 'all', 'stress' => 8], ['modify_standing' => ['who' => 'Bex', 'delta' => -10]]], 'Razionale. Bex stringe i denti.'), ['tags' => ['il_freddo']]),
+                    array_merge($this->one('Tienile per il peggio', [['character' => 'all', 'stress' => 8], ['modify_standing' => ['who' => 'Bex', 'delta' => -10]], ['set_flag' => 'fc_medkit_saved', 'value' => true]], 'Razionale. Bex stringe i denti. Le dosi restano, per il giorno peggiore.'), ['tags' => ['il_freddo']]),
                 ],
             ]),
         ];
@@ -266,7 +266,7 @@ final class FillContentEventSeeder extends Seeder
                 'base_weight' => 11, 'cooldown_days' => 6,
                 'choices' => [
                     $this->one('Rabbocca dalle riserve', [['resource' => 'food', 'delta' => -10], ['resource' => 'power', 'delta' => 6]], 'La rete respira. Le scorte calano.'),
-                    $this->one('Lascia surriscaldare', [['damage_system' => 'power_grid', 'amount' => 14]], 'Regge il magazzino. Frigge la rete.'),
+                    $this->one('Lascia surriscaldare', [['damage_system' => 'power_grid', 'amount' => 14], ['character' => 'all', 'stress' => 5]], 'Regge il magazzino. Frigge la rete.'),
                 ],
             ]),
             $this->ev([
