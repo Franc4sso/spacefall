@@ -33,7 +33,39 @@ final class FillContentEventSeeder extends Seeder
             $this->propulsionEvents(),
             $this->dilemmaEvents(),
             $this->crisisEvents(),
+            $this->atmosphereEvents(),
         );
+    }
+
+    // ---- Atmosphere (single-choice narrative beats; texture, not decisions) -
+    private function atmosphereEvents(): array
+    {
+        return [
+            $this->ev([
+                'key' => 'fc_atmo_drawing', 'title' => 'Un disegno', 'speaker' => null,
+                'body' => "Su una paratia, graffito da chi c'era prima: una casa, un sole, una figura piccola. Nessuno l'aveva mai notato.",
+                'base_weight' => 4, 'cooldown_days' => 10,
+                'choices' => [
+                    $this->one('Resti a guardarlo', [['resource' => 'morale', 'delta' => -2]], 'Poi torni al lavoro. Più lento.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'fc_atmo_radio_voice', 'title' => 'Una voce nella statica', 'speaker' => null,
+                'body' => "Per un istante, nella statica, una voce che dice il tuo nome. Poi più niente. Forse non era niente.",
+                'base_weight' => 4, 'cooldown_days' => 12,
+                'choices' => [
+                    $this->one('Spegni la radio', [['character' => 'random', 'stress' => 3]], 'Il silenzio adesso pesa.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'fc_atmo_clock', 'title' => 'L\'orologio fermo', 'speaker' => 'Bex',
+                'body' => "L'orologio di bordo si è fermato a un'ora qualsiasi. Bex dice che è meglio così: i giorni qui non andrebbero contati.",
+                'base_weight' => 3, 'cooldown_days' => 14,
+                'choices' => [
+                    $this->one('Annuisci', [['resource' => 'morale', 'delta' => 2]], 'Un piccolo accordo silenzioso sul non sapere.'),
+                ],
+            ]),
+        ];
     }
 
     // ---- Comms (broad-gated: signal/contact dilemmas) ----------------------
