@@ -91,6 +91,7 @@ final class RunState
         $run->characters = $this->characters;
         $run->relationships = $this->relationships;
         $run->systems = $this->systems;
+        $run->items = $this->items;
         $run->choice_log = $this->choiceLog;
         $run->phase_floor = $this->phaseFloor;
     }
