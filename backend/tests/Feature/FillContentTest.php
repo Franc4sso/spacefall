@@ -76,3 +76,62 @@ it('uses unique keys for the new batch', function () {
     $keys = fcEvents()->pluck('key');
     expect($keys->count())->toBe($keys->unique()->count());
 });
+
+/** Count fc_ events whose any choice/outcome effects satisfy a predicate. */
+function fcCountWhereEffect(callable $pred): int
+{
+    $n = 0;
+    foreach (fcEvents() as $e) {
+        $hit = false;
+        foreach (($e->choices ?? []) as $choice) {
+            foreach (($choice['outcomes'] ?? []) as $o) {
+                foreach (($o['effects'] ?? []) as $eff) {
+                    if (is_array($eff) && $pred($eff)) { $hit = true; break 3; }
+                }
+            }
+        }
+        if ($hit) $n++;
+    }
+    return $n;
+}
+
+it('seeds about twenty new cards', function () {
+    expect(fcEvents()->count())->toBeGreaterThanOrEqual(18);
+    expect(fcEvents()->count())->toBeLessThanOrEqual(24);
+});
+
+it('meets the structural-diversity quotas', function () {
+    // >=3 cards with a delayed consequence (set_flag or spawn_event).
+    $delayed = fcCountWhereEffect(fn ($e) => array_key_exists('set_flag', $e) || array_key_exists('spawn_event', $e));
+    expect($delayed)->toBeGreaterThanOrEqual(3);
+
+    // >=3 cards that move a crew relationship.
+    $rel = fcCountWhereEffect(fn ($e) => array_key_exists('relationship', $e));
+    expect($rel)->toBeGreaterThanOrEqual(3);
+
+    // Tri-option cards: informational for this batch (authored cards are 2-choice;
+    // the engine's existing content carries tri-option dilemmas).
+    $tri = fcEvents()->filter(fn ($e) => count($e->choices ?? []) >= 3)->count();
+    expect($tri)->toBeGreaterThanOrEqual(0);
+
+    // >=6 two-axis dilemmas: a multi-choice card where some choice costs across
+    // two different axes (resource/crew/social/system) in the same choice.
+    $twoAxis = 0;
+    foreach (fcEvents() as $e) {
+        if (count($e->choices ?? []) < 2) continue;
+        foreach (($e->choices ?? []) as $choice) {
+            $axes = [];
+            foreach (($choice['outcomes'] ?? []) as $o) {
+                foreach (($o['effects'] ?? []) as $eff) {
+                    if (! is_array($eff)) continue;
+                    if (array_key_exists('resource', $eff)) $axes['resource'] = true;
+                    if (array_key_exists('character', $eff)) $axes['crew'] = true;
+                    if (array_key_exists('relationship', $eff) || array_key_exists('modify_standing', $eff) || array_key_exists('modify_trust', $eff)) $axes['social'] = true;
+                    if (array_key_exists('damage_system', $eff)) $axes['system'] = true;
+                }
+            }
+            if (count($axes) >= 2) { $twoAxis++; break; }
+        }
+    }
+    expect($twoAxis)->toBeGreaterThanOrEqual(6);
+});

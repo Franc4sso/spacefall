@@ -218,8 +218,8 @@ final class FillContentEventSeeder extends Seeder
                 'requires' => ['day' => ['op' => '>=', 'value' => 5]],
                 'base_weight' => 9, 'cooldown_days' => 14,
                 'choices' => [
-                    array_merge($this->one('Dillo a tutti', [['modify_trust' => 10], ['character' => 'Cole', 'stress' => 15], ['modify_standing' => ['who' => 'Cole', 'delta' => -15]]], 'La verità pulisce l\'aria. Cole annega.'), ['tags' => ['honest']]),
-                    array_merge($this->one('Tieni il segreto', [['modify_trust' => -8], ['set_flag' => 'fc_kept_secret', 'value' => true]], 'Resta tra voi due. Un peso in più da portare.'), ['tags' => ['lone_decision']]),
+                    array_merge($this->one('Dillo a tutti', [['modify_trust' => 10], ['character' => 'Cole', 'stress' => 15], ['modify_standing' => ['who' => 'Cole', 'delta' => -15]], ['relationship' => ['a' => 'Bex', 'b' => 'Cole', 'delta' => -10]]], 'La verità pulisce l\'aria. Cole annega.'), ['tags' => ['honest']]),
+                    array_merge($this->one('Tieni il segreto', [['modify_trust' => -8], ['set_flag' => 'fc_kept_secret', 'value' => true], ['relationship' => ['a' => 'Bex', 'b' => 'Cole', 'delta' => 4]]], 'Resta tra voi due. Un peso in più da portare.'), ['tags' => ['lone_decision']]),
                 ],
             ]),
             $this->ev([
