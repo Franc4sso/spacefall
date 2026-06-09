@@ -45,6 +45,7 @@ final class RunState
         public string $phaseFloor = 'isolation',
         public string $phase = 'isolation',
         public int $phaseIndex = 0,
+        public array $deathLog = [],
     ) {
     }
 
@@ -75,6 +76,7 @@ final class RunState
             phaseFloor: $floor,
             phase: $phase,
             phaseIndex: $resolver->indexOf($phase),
+            deathLog: $run->death_log ?? [],
         );
     }
 
@@ -94,5 +96,6 @@ final class RunState
         $run->items = $this->items;
         $run->choice_log = $this->choiceLog;
         $run->phase_floor = $this->phaseFloor;
+        $run->death_log = $this->deathLog;
     }
 }
