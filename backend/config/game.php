@@ -390,6 +390,30 @@ return [
     ],
 
     /*
+     | Epilogue fragments. The EpilogueComposer reads these to build the
+     | sectioned end-of-run report. Witness flags map to a one-line consequence;
+     | death causes map to a phrasing.
+     */
+    'epilogue' => [
+        'cause_phrases' => [
+            'event' => 'caduto',
+            'expedition' => 'perso in spedizione',
+            'starvation' => 'morto di fame',
+            'morale' => 'spezzato',
+        ],
+        'witness_flags' => [
+            'cannibalism' => 'Avete mangiato uno dei vostri. Nessuno ne parla.',
+            'ate_alone' => 'Hai mangiato voltando le spalle agli altri.',
+            'made_the_sacrifice' => 'Sei rimasto indietro perché gli altri vivessero.',
+            'sos_sent' => 'Hai gridato nel buio. Qualcuno, forse, ha sentito.',
+            'mutiny_occurred' => "L'equipaggio ti ha tolto il comando.",
+            'log_falsified' => 'Hai riscritto la verità nei registri.',
+            'vented_the_technician' => 'Hai chiuso un uomo nella camera stagna.',
+            'lost_on_expedition' => 'Hai sigillato il portello su chi non era ancora rientrato.',
+        ],
+    ],
+
+    /*
      | Meta unlocks — bought with research_points, persisted on the profile.
      | Per design §2.1 these add CONTENT, not stat boosts: an unlock makes a
      | locked item pickable (new decisions/routes, a bigger pool), never a
