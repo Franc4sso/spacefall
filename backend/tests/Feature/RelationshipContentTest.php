@@ -65,3 +65,28 @@ it('keeps every event valid against the DSL schema', function () {
         expect(true)->toBeTrue();
     });
 });
+
+it('seeds crises gated on a specific named pair', function () {
+    $this->seed(EventSeeder::class);
+    $this->seed(ContentEventSeeder::class);
+
+    // Events whose requires reference a named-pair relationship (a + b present),
+    // scanned structurally at any depth of the requires tree.
+    $hasNamedPair = function ($node) use (&$hasNamedPair): bool {
+        if (! is_array($node)) {
+            return false;
+        }
+        if (isset($node['relationship']['a'], $node['relationship']['b'])) {
+            return true;
+        }
+        foreach ($node as $child) {
+            if (is_array($child) && $hasNamedPair($child)) {
+                return true;
+            }
+        }
+        return false;
+    };
+
+    $perPairGated = \App\Models\Event::all()->filter(fn ($e) => $hasNamedPair($e->requires));
+    expect($perPairGated->count())->toBeGreaterThanOrEqual(4);
+});

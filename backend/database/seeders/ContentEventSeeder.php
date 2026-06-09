@@ -480,6 +480,33 @@ class ContentEventSeeder extends Seeder
                     $this->one('Usa la cosa per tenerli in riga', [['relationship' => ['a' => 'Bex', 'b' => 'Cole', 'delta' => -10]], ['modify_trust' => -8]], 'Funziona. Ma ti guardano diversamente, ora.'),
                 ],
             ]),
+            // Per-pair gated CRISIS: a hull repair that plays as friction when the
+            // two clash, cooperation when they're close.
+            $this->ev([
+                'key' => 'crisis_repair_clash', 'title' => 'Riparazione a denti stretti', 'speaker' => null,
+                'body' => "Una riparazione urgente richiede Anna e Cole insieme nello stesso condotto angusto. Con l'astio che si portano dietro, ogni gesto è una provocazione.",
+                'requires' => ['all' => [
+                    ['resource' => 'hull', 'op' => '<', 'value' => 55],
+                    ['relationship' => ['a' => 'Anna', 'b' => 'Cole', 'state' => 'hatred']],
+                ]],
+                'base_weight' => 11, 'cooldown_days' => 6,
+                'choices' => [
+                    $this->one('Imponi che collaborino', [['resource' => 'hull', 'delta' => 10], ['character' => 'all', 'stress' => 8], ['relationship' => ['a' => 'Anna', 'b' => 'Cole', 'delta' => -4]]], 'Riparato. A malapena. Si odiano un po\' di più.'),
+                    $this->one('Mandane uno solo, più lento', [['resource' => 'hull', 'delta' => 4], ['character' => 'Anna', 'stress' => 6]], 'Più lento, ma senza spargimento di sangue.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'crisis_repair_sync', 'title' => 'Riparazione in sincronia', 'speaker' => 'Anna',
+                'body' => "La stessa riparazione difficile, ma stavolta Anna e Cole si muovono come un solo organismo: si passano gli attrezzi senza guardarsi. Affiatati.",
+                'requires' => ['all' => [
+                    ['resource' => 'hull', 'op' => '<', 'value' => 55],
+                    ['relationship' => ['a' => 'Anna', 'b' => 'Cole', 'state' => 'bond']],
+                ]],
+                'base_weight' => 11, 'cooldown_days' => 6,
+                'choices' => [
+                    $this->one('Lasciali fare', [['resource' => 'hull', 'delta' => 16], ['resource' => 'morale', 'delta' => 4]], 'Finito in metà tempo. È bello vederli così.'),
+                ],
+            ]),
         ];
     }
 
