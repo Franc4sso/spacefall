@@ -31,6 +31,7 @@ final class FillContentEventSeeder extends Seeder
         return array_merge(
             $this->commsEvents(),
             $this->propulsionEvents(),
+            $this->dilemmaEvents(),
         );
     }
 
@@ -103,6 +104,43 @@ final class FillContentEventSeeder extends Seeder
                 'choices' => [
                     $this->one('Rotta breve, tra i detriti', [['resource' => 'hull', 'delta' => -14], ['resource' => 'food', 'delta' => 6]], 'Passate. Lo scafo porta i segni.'),
                     $this->one('Rotta lunga e sicura', [['resource' => 'food', 'delta' => -16], ['character' => 'all', 'stress' => 6]], 'Più giorni, più fame. Ma interi.'),
+                ],
+            ]),
+        ];
+    }
+
+    // ---- Moral dilemmas (no right answer; cost on a human axis) ------------
+    private function dilemmaEvents(): array
+    {
+        return [
+            $this->ev([
+                'key' => 'fc_who_sleeps_warm', 'title' => 'Chi dorme al caldo', 'speaker' => null,
+                'body' => "Una sola cuccetta resta vicino al condotto caldo. Darla a chi lavora di più tiene in piedi le riparazioni; darla a chi sta peggio tiene in piedi il morale.",
+                'requires' => ['resource' => 'morale', 'op' => '<', 'value' => 60],
+                'base_weight' => 10, 'cooldown_days' => 8,
+                'choices' => [
+                    $this->one('A chi lavora di più (Anna)', [['resource' => 'morale', 'delta' => -8], ['modify_standing' => ['who' => 'Anna', 'delta' => 8]], ['relationship' => ['a' => 'Anna', 'b' => 'Bex', 'delta' => -8]]], 'Pragmatico. Bex non ti guarda.'),
+                    $this->one('A chi sta peggio', [['resource' => 'morale', 'delta' => 8], ['damage_system' => 'power_grid', 'amount' => 10]], 'Umano. Le riparazioni rallentano.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'fc_confession', 'title' => 'Una confessione', 'speaker' => 'Cole',
+                'body' => "Cole ti confida in privato un errore che ha messo tutti in pericolo. Dirlo all'equipaggio è onesto ma lo distrugge; tacere ti rende complice.",
+                'requires' => ['day' => ['op' => '>=', 'value' => 5]],
+                'base_weight' => 9, 'cooldown_days' => 14,
+                'choices' => [
+                    array_merge($this->one('Dillo a tutti', [['modify_trust' => 10], ['character' => 'Cole', 'stress' => 15], ['modify_standing' => ['who' => 'Cole', 'delta' => -15]]], 'La verità pulisce l\'aria. Cole annega.'), ['tags' => ['honest']]),
+                    array_merge($this->one('Tieni il segreto', [['modify_trust' => -8], ['set_flag' => 'fc_kept_secret', 'value' => true]], 'Resta tra voi due. Un peso in più da portare.'), ['tags' => ['lone_decision']]),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'fc_ration_the_sick', 'title' => 'Le medicine che restano', 'speaker' => 'Bex',
+                'body' => "Restano poche dosi. Bex chiede di usarle ora per chi soffre; tenerle per un'emergenza peggiore è prudente ma crudele adesso.",
+                'requires' => ['has_role' => 'doctor'],
+                'base_weight' => 9, 'cooldown_days' => 12,
+                'choices' => [
+                    array_merge($this->one('Usale adesso', [['resource' => 'morale', 'delta' => 8], ['consume_item' => 'medkit']], 'Sollievo, ora. Il kit è vuoto.'), ['tags' => ['generous']]),
+                    array_merge($this->one('Tienile per il peggio', [['character' => 'all', 'stress' => 8], ['modify_standing' => ['who' => 'Bex', 'delta' => -10]]], 'Razionale. Bex stringe i denti.'), ['tags' => ['il_freddo']]),
                 ],
             ]),
         ];
