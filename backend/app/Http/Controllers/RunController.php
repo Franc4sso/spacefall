@@ -235,12 +235,16 @@ class RunController extends Controller
         if ($ending === null) {
             return null;
         }
+        $state = \App\Game\Engine\RunState::fromRun($run);
+        $epilogue = app(\App\Game\Engine\EpilogueComposer::class)->compose($state, $ending);
+
         return [
             'key' => $ending['key'],
             'type' => $ending['type'],
             'name' => $ending['name'],
             'text' => $ending['text'],
             'epithet' => $run->profile?->flags['epithet'] ?? null,
+            'epilogue' => $epilogue,
         ];
     }
 
