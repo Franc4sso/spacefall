@@ -106,8 +106,8 @@ return [
      */
     'phase_decay' => [
         'isolation' => 1.0,
-        'deterioration' => 1.05,
-        'reckoning' => 1.2,
+        'deterioration' => 1.25,
+        'reckoning' => 1.48,
     ],
 
     /*
@@ -299,7 +299,7 @@ return [
             'when' => ['all' => [
                 ['has_item' => 'comms'],
                 ['day' => ['op' => '>=', 'value' => 24]],
-                ['resource' => 'morale', 'op' => '>=', 'value' => 38],
+                ['resource' => 'morale', 'op' => '>=', 'value' => 45],
             ]],
         ],
         [
@@ -309,7 +309,7 @@ return [
             'when' => ['all' => [
                 ['has_item' => 'seedbank'],
                 ['day' => ['op' => '>=', 'value' => 25]],
-                ['resource' => 'food', 'op' => '>=', 'value' => 60],
+                ['resource' => 'food', 'op' => '>=', 'value' => 68],
             ]],
         ],
         [

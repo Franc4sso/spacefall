@@ -7,6 +7,8 @@ use App\Game\Sim\Policy;
 use App\Game\Sim\RandomPolicy;
 use App\Game\Sim\Simulator;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Headless balance harness. Plays N seeded runs under a policy and prints an
@@ -23,12 +25,17 @@ class SimRun extends Command
         {--count=1000 : number of runs}
         {--policy=greedy_survival : random|greedy_survival}
         {--items= : comma-separated item keys (else a fixed survival kit)}
-        {--seed=0 : base seed (each run uses base+i)}';
+        {--seed=0 : base seed (each run uses base+i)}
+        {--memory : run against a fresh in-memory SQLite DB (much faster; leaves the file DB untouched)}';
 
     protected $description = 'Simulate many runs and report the balance distribution.';
 
     public function handle(Simulator $sim): int
     {
+        if ($this->option('memory')) {
+            $this->useInMemoryDatabase();
+        }
+
         $count = (int) $this->option('count');
         $policy = $this->resolvePolicy($this->option('policy'));
         $items = $this->resolveItems($this->option('items'));
@@ -82,6 +89,25 @@ class SimRun extends Command
         }
 
         return self::SUCCESS;
+    }
+
+    /**
+     * Point the default connection at a fresh in-memory SQLite database and
+     * build the schema + seed content into it. The on-disk file DB is left
+     * untouched. This avoids ~30k fsync'd round-trips per run (the sim reloads
+     * the run several times per simulated day), making large sims ~10-50x faster.
+     */
+    private function useInMemoryDatabase(): void
+    {
+        $this->info('Using in-memory SQLite (file DB untouched).');
+
+        config(['database.connections.sqlite.database' => ':memory:']);
+        DB::purge('sqlite');
+        DB::setDefaultConnection('sqlite');
+        DB::reconnect('sqlite');
+
+        Artisan::call('migrate', ['--force' => true, '--database' => 'sqlite']);
+        Artisan::call('db:seed', ['--force' => true, '--database' => 'sqlite']);
     }
 
     private function resolvePolicy(string $name): Policy
