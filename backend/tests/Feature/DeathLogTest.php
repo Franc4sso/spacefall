@@ -40,3 +40,38 @@ it('records an event kill into the death log with context', function () {
     expect($state->deathLog)->toHaveCount(1);
     expect($state->deathLog[0])->toMatchArray(['name' => 'Anna', 'day' => 12, 'cause' => 'event', 'context' => 'hull_breach']);
 });
+
+it('attributes a death to the event the player resolved', function () {
+    $run = app(RunFactory::class)->create(7, ['welder']);
+    $run->resources = ['oxygen' => 80, 'food' => 4, 'power' => 80, 'morale' => 80, 'hull' => 80];
+    $chars = $run->characters;
+    foreach ($chars as $i => $c) { $chars[$i]['hunger'] = 80; }
+    $run->characters = $chars;
+    $run->current_event_key = 'food_sacrifice';
+    $run->save();
+
+    $engine = app(\App\Game\Engine\EventEngine::class);
+    $engine->currentCard($run->fresh());
+    $engine->resolveChoice($run->fresh(), 0); // choice 0 kills the hungriest
+
+    $after = $run->fresh();
+    expect($after->death_log)->not->toBeEmpty();
+    expect($after->death_log[0]['context'])->toBe('food_sacrifice');
+    expect($after->death_log[0]['cause'])->toBe('event');
+});
+
+it('records a starvation death with cause starvation', function () {
+    $run = app(RunFactory::class)->create(3, ['welder']);
+    $chars = $run->characters;
+    $chars[0]['hunger'] = 99; // daily_rise pushes to >= starve_at (100)
+    $run->characters = $chars;
+    $run->day = 5;
+    $run->save();
+
+    app(\App\Game\DayProcessor::class)->advance($run->fresh());
+
+    $after = $run->fresh();
+    $starved = collect($after->death_log)->firstWhere('cause', 'starvation');
+    expect($starved)->not->toBeNull();
+    expect($starved['name'])->toBe($chars[0]['name']);
+});

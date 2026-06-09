@@ -67,7 +67,7 @@ final class DayProcessor
         //     the meal decision when the crew crosses into a hunger band (so it
         //     reliably surfaces instead of drowning in the event pool), and
         //     kills at the starvation point. A slow, visible spiral.
-        [$characters, $scheduled, $hungerDeath] = $this->applyHunger($characters, $scheduled, $run->day);
+        [$characters, $scheduled, $hungerDeath, $starvedNames] = $this->applyHunger($characters, $scheduled, $run->day);
 
         // 4. Stress-band self-initiated behaviour.
         [$characters, $scheduled] = $this->processStress($characters, $scheduled, $run->day);
@@ -94,6 +94,14 @@ final class DayProcessor
             $flags = $run->flags ?? [];
             $flags['died_of_hunger'] = true;
             $run->flags = $flags;
+        }
+
+        if (! empty($starvedNames)) {
+            $log = $run->death_log ?? [];
+            foreach ($starvedNames as $name) {
+                $log[] = ['name' => $name, 'day' => $run->day, 'cause' => 'starvation', 'context' => 'hunger'];
+            }
+            $run->death_log = $log;
         }
 
         // 5. Advance day.
@@ -139,7 +147,7 @@ final class DayProcessor
      *
      * @param  list<array<string,mixed>>  $characters
      * @param  list<array{key:string,fire_on_day:int}>  $scheduled
-     * @return array{0: list<array<string,mixed>>, 1: list<array{key:string,fire_on_day:int}>, 2: bool}
+     * @return array{0: list<array<string,mixed>>, 1: list<array{key:string,fire_on_day:int}>, 2: bool, 3: list<string>}
      */
     private function applyHunger(array $characters, array $scheduled, int $day): array
     {
@@ -149,6 +157,7 @@ final class DayProcessor
         $bands = $cfg['stress_bands'] ?? [];
         $spawnBands = $cfg['spawn_bands'] ?? [];
         $someoneStarved = false;
+        $starvedNames = [];
 
         foreach ($characters as $i => $c) {
             // Skip the dead and anyone away on an expedition (they don't eat at
@@ -162,6 +171,7 @@ final class DayProcessor
             if ($hunger >= $starveAt) {
                 $characters[$i]['alive'] = false;
                 $someoneStarved = true;
+                $starvedNames[] = $characters[$i]['name'] ?? '?';
                 continue;
             }
 
@@ -194,7 +204,7 @@ final class DayProcessor
             }
         }
 
-        return [$characters, $scheduled, $someoneStarved];
+        return [$characters, $scheduled, $someoneStarved, $starvedNames];
     }
 
     /**

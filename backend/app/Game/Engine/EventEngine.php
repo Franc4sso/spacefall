@@ -116,7 +116,11 @@ final class EventEngine
         $speaker = $this->resolveSpeaker($event, $state);
         $outcome = $this->pickOutcome($choice['outcomes'] ?? [], $speaker, $rng);
 
-        $this->applier->apply($outcome['effects'] ?? [], $state, $rng);
+        $this->applier->apply($outcome['effects'] ?? [], $state, $rng, [
+            'event_key' => $event->key,
+            'day' => $state->day,
+            'cause' => 'event',
+        ]);
 
         // Crew reactions (spoken memory). Explicit on the outcome, else derived.
         $reactions = $this->reactions->derive($choice, $outcome, $state);
