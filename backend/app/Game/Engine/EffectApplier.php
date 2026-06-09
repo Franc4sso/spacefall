@@ -26,15 +26,16 @@ final class EffectApplier
 
     /**
      * @param  list<array<string,mixed>>  $effects
+     * @param  array<string,mixed>  $context  optional {event_key, day, cause} for death attribution
      */
-    public function apply(array $effects, RunState $state, SeededRng $rng): void
+    public function apply(array $effects, RunState $state, SeededRng $rng, array $context = []): void
     {
         foreach ($effects as $effect) {
-            $this->applyOne($effect, $state, $rng);
+            $this->applyOne($effect, $state, $rng, $context);
         }
     }
 
-    private function applyOne(array $effect, RunState $state, SeededRng $rng): void
+    private function applyOne(array $effect, RunState $state, SeededRng $rng, array $context = []): void
     {
         if (array_key_exists('resource', $effect)) {
             $code = $effect['resource'];
@@ -93,7 +94,7 @@ final class EffectApplier
         }
 
         if (array_key_exists('kill', $effect)) {
-            $this->applyKill($effect['kill'], $state, $rng);
+            $this->applyKill($effect['kill'], $state, $rng, $context);
             return;
         }
 
@@ -190,7 +191,7 @@ final class EffectApplier
         return $out;
     }
 
-    private function applyKill(string $selector, RunState $state, SeededRng $rng): void
+    private function applyKill(string $selector, RunState $state, SeededRng $rng, array $context = []): void
     {
         $index = $this->resolveTarget($selector, $state, $rng);
         if ($index === null) {
@@ -201,6 +202,12 @@ final class EffectApplier
         $state->characters[$index]['alive'] = false;
 
         if ($deadName !== null) {
+            $state->deathLog[] = [
+                'name' => $deadName,
+                'day' => $state->day,
+                'cause' => $context['cause'] ?? 'event',
+                'context' => $context['event_key'] ?? '',
+            ];
             $this->applyDeathDrift($deadName, $state);
         }
     }
