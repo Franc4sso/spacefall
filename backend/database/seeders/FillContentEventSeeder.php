@@ -34,7 +34,35 @@ final class FillContentEventSeeder extends Seeder
             $this->dilemmaEvents(),
             $this->crisisEvents(),
             $this->atmosphereEvents(),
+            $this->rationEvents(),
         );
+    }
+
+    // ---- Rationing (food vs crew vs fairness) ------------------------------
+    private function rationEvents(): array
+    {
+        return [
+            $this->ev([
+                'key' => 'fc_spoilage', 'title' => 'Qualcosa è andato a male', 'speaker' => null,
+                'body' => "Una cassa di scorte puzza. Buttarla è perdita secca; rischiare di mangiarla risparmia cibo ma può far star male qualcuno.",
+                'requires' => ['resource' => 'food', 'op' => '<', 'value' => 55],
+                'base_weight' => 11, 'cooldown_days' => 7,
+                'choices' => [
+                    $this->one('Buttala', [['resource' => 'food', 'delta' => -12]], 'Meno scorte, ma nessuno si ammala.'),
+                    $this->one('Rischiate di mangiarla', [['resource' => 'food', 'delta' => 4], ['character' => 'random', 'stress' => 6], ['character' => 'random', 'hunger' => -8]], 'Si mangia. Qualcuno passerà una brutta notte.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'fc_uneven_portions', 'title' => 'Porzioni diseguali', 'speaker' => null,
+                'body' => "Non basta per dare a tutti uguale. Razioni piene a chi lavora e meno agli altri tiene viva la stazione ma crea rancore; parti uguali sono giuste ma fiacche.",
+                'requires' => ['crew_hunger' => ['op' => '>=', 'value' => 30]],
+                'base_weight' => 10, 'cooldown_days' => 6,
+                'choices' => [
+                    $this->one('Razioni in base al lavoro', [['character' => 'random', 'hunger' => -15], ['relationship' => ['a' => 'Anna', 'b' => 'Cole', 'delta' => -8]], ['resource' => 'morale', 'delta' => -4]], 'Efficiente. Il rancore striscia tra i banchi.'),
+                    $this->one('Parti uguali per tutti', [['character' => 'all', 'hunger' => -6], ['character' => 'all', 'stress' => 5]], 'Giusto. Nessuno è sazio, nessuno tradito.'),
+                ],
+            ]),
+        ];
     }
 
     // ---- Atmosphere (single-choice narrative beats; texture, not decisions) -
