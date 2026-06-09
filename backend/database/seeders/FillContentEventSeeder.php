@@ -30,6 +30,7 @@ final class FillContentEventSeeder extends Seeder
     {
         return array_merge(
             $this->commsEvents(),
+            $this->propulsionEvents(),
         );
     }
 
@@ -65,6 +66,43 @@ final class FillContentEventSeeder extends Seeder
                 'choices' => [
                     $this->one('Anna lo decifra', [['character' => 'Anna', 'stress' => 10], ['damage_system' => 'power_grid', 'amount' => 8]], 'Coordinate. Forse utili. La rete intanto è rimasta indietro.'),
                     $this->one('Lascialo andare', [['resource' => 'morale', 'delta' => -5], ['set_flag' => 'fc_ignored_signal', 'value' => true]], 'Continua a ripetersi. Smetti di sentirlo.'),
+                ],
+            ]),
+        ];
+    }
+
+    // ---- Propulsion (broad-gated: thrust vs structure vs time) -------------
+    private function propulsionEvents(): array
+    {
+        return [
+            $this->ev([
+                'key' => 'fc_engine_overheat', 'title' => 'Il motore scotta', 'speaker' => 'Cole',
+                'body' => "Un propulsore va in temperatura. Cole può spingerlo ancora per guadagnare margine, o spegnerlo e perderlo.",
+                'requires' => ['resource' => 'power', 'op' => '<', 'value' => 70],
+                'base_weight' => 11, 'cooldown_days' => 6,
+                'choices' => [
+                    $this->one('Spingi ancora', [['resource' => 'power', 'delta' => 8], ['damage_system' => 'hull_integrity', 'amount' => 12]], 'Guadagni spinta. Lo scafo geme.'),
+                    $this->one('Spegni e raffredda', [['resource' => 'power', 'delta' => -10], ['character' => 'Cole', 'stress' => 6]], 'Salvi il propulsore. Resti più lento, più esposto.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'fc_thruster_drift', 'title' => 'Deriva', 'speaker' => null,
+                'body' => "Un thruster sbilanciato vi fa derivare. Correggere a mano costa ossigeno (tute, EVA); lasciar correre danneggia lo scafo a ogni rotazione.",
+                'requires' => ['resource' => 'hull', 'op' => '<', 'value' => 70],
+                'base_weight' => 10, 'cooldown_days' => 7,
+                'choices' => [
+                    $this->one('Correzione manuale, EVA', [['resource' => 'oxygen', 'delta' => -12], ['resource' => 'hull', 'delta' => 8]], 'Rientrate gelati ma allineati.'),
+                    $this->one('Lascia derivare', [['damage_system' => 'hull_integrity', 'amount' => 10], ['character' => 'all', 'stress' => 5]], 'Ogni giro è un colpo. Tutti lo sentono.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'fc_course_choice', 'title' => 'Due rotte', 'speaker' => 'Anna',
+                'body' => "Anna traccia due rotte: una breve che passa vicino a un campo di detriti, una lunga e sicura che brucia scorte. Nessuna è gratis.",
+                'requires' => ['day' => ['op' => '>=', 'value' => 6]],
+                'base_weight' => 9, 'cooldown_days' => 12,
+                'choices' => [
+                    $this->one('Rotta breve, tra i detriti', [['resource' => 'hull', 'delta' => -14], ['resource' => 'food', 'delta' => 6]], 'Passate. Lo scafo porta i segni.'),
+                    $this->one('Rotta lunga e sicura', [['resource' => 'food', 'delta' => -16], ['character' => 'all', 'stress' => 6]], 'Più giorni, più fame. Ma interi.'),
                 ],
             ]),
         ];
