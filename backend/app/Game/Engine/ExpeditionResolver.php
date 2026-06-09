@@ -45,7 +45,63 @@ final class ExpeditionResolver
             + (int) (($stress + $hunger) / 10)
             + max(0, $days - 2) * 2
             - ($gear * 4)
-            + $traitShift;
+            + $traitShift
+            + $this->relationshipRisk($who, $state);
+    }
+
+    /**
+     * Risk nudge from the expeditioner's relationships with crew who stay behind.
+     * Hatred with a stayer frays the ship (risk up); a bond steadies it (risk
+     * down). Summed over staying members; neutral pairs contribute nothing, so an
+     * all-neutral run scores exactly as before.
+     */
+    private function relationshipRisk(string $who, RunState $state): int
+    {
+        $mag = (int) config('game.relationships.expedition_risk', 0);
+        if ($mag === 0) {
+            return 0;
+        }
+
+        $risk = 0;
+        foreach ($state->relationships as $rel) {
+            $other = $this->otherInPair($rel, $who);
+            if ($other === null) {
+                continue;
+            }
+            $band = $this->relationshipBand((int) ($rel['value'] ?? 0));
+            $risk += match ($band) {
+                'hatred' => $mag * 2,
+                'tension' => $mag,
+                'bond' => -$mag,
+                'devotion' => -$mag * 2,
+                default => 0,
+            };
+        }
+        return $risk;
+    }
+
+    /** If $who is in the pair, return the other member's name; else null. */
+    private function otherInPair(array $rel, string $who): ?string
+    {
+        if (($rel['a'] ?? null) === $who) {
+            return $rel['b'] ?? null;
+        }
+        if (($rel['b'] ?? null) === $who) {
+            return $rel['a'] ?? null;
+        }
+        return null;
+    }
+
+    /** Band name for a relationship value. Mirrors ConditionEvaluator::relationshipBand. */
+    private function relationshipBand(int $value): string
+    {
+        return match (true) {
+            $value < -40 => 'hatred',
+            $value < -10 => 'tension',
+            $value > 40 => 'devotion',
+            $value > 10 => 'bond',
+            default => 'neutral',
+        };
     }
 
     /** Draw an outcome tier weighted by the risk score. */
