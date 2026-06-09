@@ -8,7 +8,13 @@
 I finali oggi scattano su soglie di stato (giorno/risorsa) e mostrano una frase statica,
 scollegata dalle scelte del giocatore ("ho vinto, PER COSA?"). E le morti passano quasi
 inosservate (solo `alive=false` + una reaction generica). Il giocatore non capisce come il
-finale e le morti si leghino alla sua storia. Cura in quattro pezzi.
+finale e le morti si leghino alla sua storia.
+
+**Due parti.** PARTE A — epiloghi/morti visibili/finali legati alle scelte (il racconto della
+run). PARTE B — far sì che le scelte si SENTANO reali e impattanti e che la catena
+causa→morte/salvezza sia derivabile (fix bug oggetti, mostrare i delta, registrare i delta per
+scelta). L'audit ha confermato che le scelte HANNO già effetti reali nel motore; la Parte B
+chiude i buchi che le fanno *sentire* leggere.
 
 ## Materiale già esistente (da esplorazione)
 
@@ -119,6 +125,57 @@ Le `when` dei win esistenti guadagnano un requisito d'AZIONE registrata, non sol
 > superstiti) e che i finali scattano per le azioni giuste; che *commuova* lo dici tu al
 > playtest. Ma il collegamento causa→racconto, che era il problema, è ora strutturale e
 > verificabile.
+
+## Parte B — Le scelte devono SENTIRSI reali e impattanti
+
+L'audit conferma che le scelte HANNO già effetti reali e persistenti (mutano risorse/
+equipaggio/sistemi/flag, possono chiudere la run, pool di effetti diversi per scelta diversa).
+Ma tre buchi le fanno *sentire* leggere e impediscono di sapere il "perché" — vanno chiusi.
+
+### B1. Bug: oggetti non persistiti (fix necessario)
+
+`RunState::fromRun` carica `items`, ma `RunState::applyTo` NON riscrive `$this->items` su
+`$run->items`. Quindi `grant_item`/`consume_item` applicati a metà run mutano lo stato in
+memoria e vengono **persi al save** (es. lo scanner concesso al ritorno spedizione non resta).
+Una scelta che dà/toglie un oggetto oggi non ha effetto reale. Fix: aggiungere
+`$run->items = $this->items;` in `applyTo`. Più un test che resolveChoice con `grant_item`
+persista l'oggetto sul run ricaricato.
+
+### B2. Mostrare i delta degli effetti (la causa #1 del "non sento le scelte")
+
+L'API ritorna già `resolution.effects` ma il frontend (`useRun.ts`) tiene solo il `log` testo:
+il giocatore vede prosa, non "−12 ossigeno, +8 morale". Le barre si muovono in silenzio.
+- **Backend:** assicurare che la risposta di resolveChoice esponga gli effetti applicati in
+  forma leggibile dal client (delta per risorsa + eventi notevoli: morte, oggetto, sistema).
+  Se già presenti in `resolution.effects`, normalizzarli in una forma stabile per la UI.
+- **Frontend:** dopo una scelta, mostrare i delta (es. "−12 ossigeno", "+8 morale", "Anna:
+  +stress") come feedback transitorio sulla card-risultato; e registrarli nel **Diario** accanto
+  alla scelta. Stile coerente col gioco (secco). Tocca `useRun.ts`, la schermata risultato,
+  `Diario.tsx`.
+
+### B3. Registrare i delta per scelta (il "perché" di morte/salvezza)
+
+Oggi il `choice_log` salva `{day, event_key, choice_index, choice_label, tags,
+reaction_summary}` ma NON i delta-risorsa della scelta. Quindi sai *cosa* ti ha ucciso
+(ending_key → risorsa) ma non *quale scelta* l'ha prosciugata.
+- Aggiungere ai voci del choice_log un campo `effects_summary` (delta-risorsa netti +
+  marcatori: kill/grant_item/damage_system) della scelta risolta.
+- L'**epilogo** (Parte A #3) usa questo per la sezione caduti/scelte-cardine: "Giorno 16: hai
+  sfiatato l'ossigeno. Giorno 18: l'aria è finita." — collega l'azione alla conseguenza fatale.
+- Il `death_log` (Parte A #1) e l'`effects_summary` insieme danno la catena causa→morte.
+
+### Testing Parte B
+- **B1:** feature — resolveChoice con un outcome `grant_item` → `Run::find()->items` contiene
+  l'oggetto dopo il save; `consume_item` lo rimuove. (Oggi fallirebbe.)
+- **B2:** backend — la risposta di resolveChoice contiene gli effetti in forma normalizzata.
+  Frontend — test (vitest) che il Diario/risultato mostra i delta dati un payload con effetti.
+- **B3:** unit/feature — dopo una scelta con effetti risorsa, l'ultima voce del choice_log ha
+  `effects_summary` coi delta corretti; l'epilogo li richiama nella timeline.
+
+> Nota scope: la Parte B tocca anche il FRONTEND (prima volta sostanziale). Va trattata come
+> blocco a sé nel piano. Senza un frontend test runner adeguato, i test B2-frontend possono
+> essere minimi (asserzione su funzione di formattazione) — l'importante è che i delta
+> raggiungano la UI.
 
 ## Fuori scope
 
