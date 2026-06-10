@@ -427,6 +427,10 @@ return [
             'arc_garden_bloomed' => 'Hai fatto fiorire un orto dove tutto moriva.',
             'arc_rescue_answered' => 'Il tuo segnale ha trovato orecchie. Qualcuno è venuto.',
             'arc_truth_found' => 'Hai scoperto cosa è successo a chi c\'era prima. Avresti preferito di no.',
+            'cole_found_exit' => 'Cole ha cercato una via di fuga. L\'hai seguito.',
+            'cole_left'       => 'Cole se n\'è andato nel buio. Non saprai mai se ce l\'ha fatta.',
+            'cole_heroics'    => 'Quando contava, Cole ha preso i comandi e non ha tremato.',
+            'sensors_warned'  => 'Hai affrontato cosa è successo a chi c\'era prima di voi.',
         ],
     ],
 

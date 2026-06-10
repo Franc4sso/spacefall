@@ -59,3 +59,12 @@ it('omits empty sections (no deaths => no Caduti)', function () {
     $sections = $c->compose(endedState(['deathLog' => []]), ['key' => 'lone_survivor', 'name' => 'x', 'text' => 'y']);
     expect(collect($sections)->firstWhere('title', 'Caduti'))->toBeNull();
 });
+
+it('include una riga epilogo per cole_heroics', function () {
+    $c = new EpilogueComposer();
+    $state = endedState(['flags' => ['cole_heroics' => true]]);
+    $sections = $c->compose($state, ['key' => 'lone_survivor', 'name' => 'x', 'text' => 'y']);
+    $choices = collect($sections)->firstWhere('title', 'Le tue scelte');
+    expect($choices)->not->toBeNull();
+    expect(implode(' ', $choices['lines']))->toContain('comandi');
+});
