@@ -87,6 +87,7 @@ class ContentEventSeeder extends Seeder
             $this->expeditionEvents(),
             $this->expeditionReturnEvents(),
             $this->phaseEvents(),
+            $this->objectArcEvents(),
         );
     }
 
@@ -157,6 +158,54 @@ class ContentEventSeeder extends Seeder
                 'choices' => [
                     $this->one('Affronto chi ho deluso', [['resource' => 'morale', 'delta' => -8], ['modify_trust' => 12]], 'Parole dure. Ma alla fine, qualcosa si ricuce.'),
                     $this->one('Tengo la testa bassa', [['resource' => 'morale', 'delta' => 4], ['modify_trust' => -10]], 'Eviti i loro occhi. È più facile, e peggio.'),
+                ],
+            ]),
+        ];
+    }
+
+    // ---- Object narrative arcs (Tier 2 #3): 3-stage chains on grid items ----
+    private function objectArcEvents(): array
+    {
+        return array_merge(
+            $this->seedbankArc(),
+        );
+    }
+
+    /** seedbank — "L'orto": vita/speranza. plant -> tend -> bloom/wither. */
+    private function seedbankArc(): array
+    {
+        return [
+            $this->ev([
+                'key' => 'arc_seedbank_1', 'title' => 'Un fazzoletto di terra', 'speaker' => 'Bex',
+                'body' => "La banca semi potrebbe diventare un orto vero. Bex ti guarda: un impianto serio costa acqua ed energia adesso, ma un giorno potrebbe sfamarvi. O si tiene tutto in riserva.",
+                'requires' => ['all' => [['has_item' => 'seedbank'], ['phase_index' => ['op' => '<=', 'value' => 1]]]],
+                'base_weight' => 10, 'cooldown_days' => 999,
+                'choices' => [
+                    $this->one('Impianto serio, adesso', [['resource' => 'power', 'delta' => -10], ['resource' => 'food', 'delta' => -6], ['set_flag' => 'arc_seedbank_stage1', 'value' => true], ['spawn_event' => ['key' => 'arc_seedbank_2', 'in_days' => 4]]], 'Bex sorride per la prima volta da giorni. Mani nella terra.'),
+                    $this->one('Solo qualche vaso, per ora', [['resource' => 'morale', 'delta' => -4], ['set_flag' => 'arc_seedbank_stage1', 'value' => true], ['set_flag' => 'arc_seedbank_minimal', 'value' => true], ['spawn_event' => ['key' => 'arc_seedbank_2', 'in_days' => 4]]], 'Verde fragile, simbolico. Meglio di niente, forse.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'arc_seedbank_2', 'title' => 'L\'orto ha sete', 'speaker' => 'Bex',
+                'body' => "I germogli reggono, ma chiedono cure: acqua, calore, tempo che potresti spendere altrove. Trascurarli adesso significa perderli.",
+                'requires' => ['flag' => 'arc_seedbank_stage1', 'is' => true],
+                'base_weight' => 10, 'cooldown_days' => 999,
+                'choices' => [
+                    $this->one('Mi prendo cura dell\'orto', [['resource' => 'oxygen', 'delta' => -6], ['resource' => 'power', 'delta' => -6], ['set_flag' => 'arc_seedbank_stage2', 'value' => true], ['set_flag' => 'arc_seedbank_tended', 'value' => true], ['spawn_event' => ['key' => 'arc_seedbank_3', 'in_days' => 4]]], 'Foglie più larghe ogni giorno. Costa, ma vive.'),
+                    $this->one('Ho di meglio da fare', [['character' => 'Bex', 'stress' => 8], ['set_flag' => 'arc_seedbank_stage2', 'value' => true], ['spawn_event' => ['key' => 'arc_seedbank_3', 'in_days' => 4]]], 'L\'orto aspetta. Bex no, non te lo perdona.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'arc_seedbank_3', 'title' => 'Il raccolto', 'speaker' => null,
+                'body' => "Quello che hai seminato dà i suoi frutti — o quello che resta dell'orto.",
+                'requires' => ['flag' => 'arc_seedbank_stage2', 'is' => true],
+                'base_weight' => 10, 'cooldown_days' => 999,
+                'choices' => [
+                    array_merge(
+                        $this->one('Raccogli', [['resource' => 'food', 'delta' => 34], ['resource' => 'morale', 'delta' => 10], ['set_flag' => 'arc_garden_bloomed', 'value' => true]], 'L\'orto ha tenuto fede alla promessa. Per una volta, abbondanza.'),
+                        ['requires' => ['flag' => 'arc_seedbank_tended', 'is' => true]]
+                    ),
+                    $this->one('Raccogli quel che resta', [['resource' => 'food', 'delta' => 8], ['resource' => 'morale', 'delta' => -6]], 'Foglie secche, qualche frutto amaro. Non l\'hai curato abbastanza.', null, ['not' => ['flag' => 'arc_seedbank_tended', 'is' => true]]),
                 ],
             ]),
         ];
