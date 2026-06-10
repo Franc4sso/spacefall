@@ -68,3 +68,20 @@ it('include una riga epilogo per cole_heroics', function () {
     expect($choices)->not->toBeNull();
     expect(implode(' ', $choices['lines']))->toContain('comandi');
 });
+
+it('builds a "Come avete vinto" section from the escape chain beats', function () {
+    $c = new EpilogueComposer();
+    $state = endedState([
+        'flags' => ['escape_repaired' => true, 'escape_fueled' => true, 'escape_launched' => true, 'escape_captain_stayed' => true],
+    ]);
+    $state->choiceLog = [
+        ['day' => 14, 'event_key' => 'escape_2_repair', 'choice_label' => 'Ci lavoro sul serio'],
+        ['day' => 19, 'event_key' => 'escape_3_fuel', 'choice_label' => 'Prosciugo le riserve. Partiamo.'],
+    ];
+    $sections = $c->compose($state, ['key' => 'win_escape', 'name' => 'Fuga', 'text' => 'La tuta tiene...']);
+    $vic = collect($sections)->firstWhere('title', 'Come avete vinto');
+    expect($vic)->not->toBeNull();
+    $joined = implode(' ', $vic['lines']);
+    expect($joined)->toContain('modulo');
+    expect($joined)->toContain('14');
+});

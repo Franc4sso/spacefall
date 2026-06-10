@@ -69,6 +69,10 @@ it('ogni flag scritto da una scelta è letto da una carta, un finale o l\'epilog
         $read[$flag] = true;
     }
 
+    foreach (array_keys(config('game.epilogue.escape_outcome_lines', [])) as $flag) {
+        $read[$flag] = true;
+    }
+
     $orphans = array_values(array_filter(
         array_keys($written),
         fn ($f) => ! isset($read[$f]) && ! in_array($f, FLAG_REACHABILITY_WHITELIST, true),

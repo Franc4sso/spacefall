@@ -450,6 +450,18 @@ return [
             'cole_left'       => 'Cole se n\'è andato nel buio. Non saprai mai se ce l\'ha fatta.',
             'cole_heroics'    => 'Quando contava, Cole ha preso i comandi e non ha tremato.',
         ],
+        'victory_beats' => [
+            'escape_repaired' => 'Hai rimesso in sesto il modulo di fuga, giorno {day}.',
+            'escape_fueled'   => 'Hai prosciugato le riserve per il carburante, giorno {day}.',
+        ],
+        'victory_beats_event' => [
+            'escape_repaired' => 'escape_2_repair',
+            'escape_fueled'   => 'escape_3_fuel',
+        ],
+        'escape_outcome_lines' => [
+            'escape_captain_stayed' => 'Sei rimasto indietro perché loro vivessero.',
+            'escape_captain_chose'  => 'Hai scelto tu chi saliva. Gli altri sono rimasti.',
+        ],
     ],
 
     'death_notice_phrases' => [

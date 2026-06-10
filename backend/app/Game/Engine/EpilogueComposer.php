@@ -20,6 +20,34 @@ final class EpilogueComposer
 
         $sections[] = ['title' => 'Esito', 'lines' => [(string) ($ending['text'] ?? '')]];
 
+        // "Come avete vinto" — ricostruisce le tappe-chiave di una win con catena.
+        $beats = config('game.epilogue.victory_beats', []);
+        $beatEvents = config('game.epilogue.victory_beats_event', []);
+        $victoryLines = [];
+        foreach ($beats as $flag => $template) {
+            if (($state->flags[$flag] ?? false) !== true) {
+                continue;
+            }
+            $day = null;
+            $eventKey = $beatEvents[$flag] ?? null;
+            foreach ($state->choiceLog as $entry) {
+                if (($entry['event_key'] ?? null) === $eventKey) {
+                    $day = $entry['day'] ?? null;
+                }
+            }
+            $victoryLines[] = $day !== null
+                ? str_replace('{day}', (string) $day, $template)
+                : str_replace(', giorno {day}', '', $template);
+        }
+        foreach (config('game.epilogue.escape_outcome_lines', []) as $flag => $line) {
+            if (($state->flags[$flag] ?? false) === true) {
+                $victoryLines[] = $line;
+            }
+        }
+        if ($victoryLines !== []) {
+            $sections[] = ['title' => 'Come avete vinto', 'lines' => $victoryLines];
+        }
+
         $causes = config('game.epilogue.cause_phrases', []);
         $fallen = [];
         foreach ($state->deathLog as $d) {
