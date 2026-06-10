@@ -154,6 +154,8 @@ return [
         // the queue) so the meal decision reliably surfaces at the inflection.
         'spawn_bands' => [
             ['at_or_above' => 30, 'spawn' => 'food_ration'],
+            ['at_or_above' => 65, 'spawn' => 'hunger_warning'],
+            ['at_or_above' => 88, 'spawn' => 'hunger_warning'],
         ],
     ],
 

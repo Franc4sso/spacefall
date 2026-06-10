@@ -1748,6 +1748,16 @@ class ContentEventSeeder extends Seeder
             ]),
 
             $this->ev([
+                'key' => 'hunger_warning', 'title' => 'Pelle e ossa', 'speaker' => null,
+                'body' => "Qualcuno nell'equipaggio è ridotto a pelle e ossa. Senza cibo, presto, non si rialzerà. Lo vedi negli occhi di tutti: il tempo stringe.",
+                'requires' => ['flag' => '__never', 'is' => true],
+                'base_weight' => 0, 'cooldown_days' => 0,
+                'choices' => [
+                    $this->one('Lo so. Faccio quel che posso.', [['resource' => 'morale', 'delta' => -2]], 'Le parole non riempiono lo stomaco.'),
+                ],
+            ]),
+
+            $this->ev([
                 'key' => 'silent_window', 'title' => 'Una finestra nello spazio',
                 'body' => "Anna è ferma davanti al pannello di osservazione da venti minuti. Non si gira quando entri. Le stelle non rispondono, ma almeno non mentono.",
                 'is_filler' => true, 'base_weight' => 3, 'cooldown_days' => 8,

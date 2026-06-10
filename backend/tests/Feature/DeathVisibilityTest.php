@@ -44,3 +44,26 @@ it('announces each death separately (marks announced, advances to the next)', fu
     expect(collect($log)->firstWhere('name', 'Anna')['announced'] ?? false)->toBeTrue();
     expect(collect($log)->firstWhere('name', 'Cole')['announced'] ?? false)->toBeFalse();
 });
+
+it('seeds a speaker-null hunger_warning surfaced by high hunger bands', function () {
+    $warn = \App\Models\Event::where('key', 'hunger_warning')->first();
+    expect($warn)->not->toBeNull();
+    expect($warn->speaker)->toBeNull();
+    $bands = collect(config('game.hunger.spawn_bands'))->pluck('spawn');
+    expect($bands)->toContain('hunger_warning');
+});
+
+it('schedules a hunger warning when a crew member crosses a high hunger band', function () {
+    $run = app(\App\Game\RunFactory::class)->create(3, ['welder']);
+    $chars = $run->characters;
+    $chars[0]['hunger'] = 60;       // +daily_rise crosses the 65 band
+    $chars[0]['hunger_band'] = 1;   // already past the food_ration band
+    $run->characters = $chars;
+    $run->day = 8;
+    $run->save();
+
+    app(\App\Game\DayProcessor::class)->advance($run->fresh());
+
+    $keys = collect($run->fresh()->scheduled_events ?? [])->pluck('key');
+    expect($keys)->toContain('hunger_warning');
+});
