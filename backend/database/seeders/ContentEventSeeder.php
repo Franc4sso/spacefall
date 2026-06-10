@@ -183,7 +183,7 @@ class ContentEventSeeder extends Seeder
                 'requires' => ['all' => [['has_item' => 'seedbank'], ['phase_index' => ['op' => '<=', 'value' => 1]]]],
                 'base_weight' => 10, 'cooldown_days' => 999,
                 'choices' => [
-                    $this->one('Impianto serio, adesso', [['resource' => 'power', 'delta' => -10], ['resource' => 'food', 'delta' => -6], ['set_flag' => 'arc_seedbank_stage1', 'value' => true], ['spawn_event' => ['key' => 'arc_seedbank_2', 'in_days' => 4]]], 'Bex sorride per la prima volta da giorni. Mani nella terra.'),
+                    $this->one('Impianto serio, adesso', [['resource' => 'power', 'delta' => -3], ['resource' => 'food', 'delta' => -2], ['set_flag' => 'arc_seedbank_stage1', 'value' => true], ['spawn_event' => ['key' => 'arc_seedbank_2', 'in_days' => 4]]], 'Bex sorride per la prima volta da giorni. Mani nella terra.'),
                     $this->one('Solo qualche vaso, per ora', [['resource' => 'morale', 'delta' => -4], ['set_flag' => 'arc_seedbank_stage1', 'value' => true], ['set_flag' => 'arc_seedbank_minimal', 'value' => true], ['spawn_event' => ['key' => 'arc_seedbank_2', 'in_days' => 4]]], 'Verde fragile, simbolico. Meglio di niente, forse.'),
                 ],
             ]),
@@ -193,7 +193,7 @@ class ContentEventSeeder extends Seeder
                 'requires' => ['flag' => 'arc_seedbank_stage1', 'is' => true],
                 'base_weight' => 10, 'cooldown_days' => 999,
                 'choices' => [
-                    $this->one('Mi prendo cura dell\'orto', [['resource' => 'oxygen', 'delta' => -6], ['resource' => 'power', 'delta' => -6], ['set_flag' => 'arc_seedbank_stage2', 'value' => true], ['set_flag' => 'arc_seedbank_tended', 'value' => true], ['spawn_event' => ['key' => 'arc_seedbank_3', 'in_days' => 4]]], 'Foglie più larghe ogni giorno. Costa, ma vive.'),
+                    $this->one('Mi prendo cura dell\'orto', [['resource' => 'oxygen', 'delta' => -2], ['resource' => 'power', 'delta' => -2], ['set_flag' => 'arc_seedbank_stage2', 'value' => true], ['set_flag' => 'arc_seedbank_tended', 'value' => true], ['spawn_event' => ['key' => 'arc_seedbank_3', 'in_days' => 4]]], 'Foglie più larghe ogni giorno. Costa, ma vive.'),
                     $this->one('Ho di meglio da fare', [['character' => 'Bex', 'stress' => 8], ['set_flag' => 'arc_seedbank_stage2', 'value' => true], ['spawn_event' => ['key' => 'arc_seedbank_3', 'in_days' => 4]]], 'L\'orto aspetta. Bex no, non te lo perdona.'),
                 ],
             ]),
@@ -223,7 +223,7 @@ class ContentEventSeeder extends Seeder
                 'requires' => ['all' => [['has_item' => 'comms'], ['phase_index' => ['op' => '<=', 'value' => 1]]]],
                 'base_weight' => 10, 'cooldown_days' => 999,
                 'choices' => [
-                    $this->one('Aggancio il segnale', [['resource' => 'power', 'delta' => -8], ['set_flag' => 'arc_comms_stage1', 'value' => true], ['spawn_event' => ['key' => 'arc_comms_2', 'in_days' => 4]]], 'Lo tieni. Debole, ma c\'è.'),
+                    $this->one('Aggancio il segnale', [['resource' => 'power', 'delta' => -3], ['set_flag' => 'arc_comms_stage1', 'value' => true], ['spawn_event' => ['key' => 'arc_comms_2', 'in_days' => 4]]], 'Lo tieni. Debole, ma c\'è.'),
                     $this->one('Non posso sprecare energia', [['resource' => 'morale', 'delta' => -5], ['set_flag' => 'arc_comms_stage1', 'value' => true], ['set_flag' => 'arc_comms_dropped', 'value' => true], ['spawn_event' => ['key' => 'arc_comms_2', 'in_days' => 4]]], 'Lo lasci andare. Il dubbio resta.'),
                 ],
             ]),
@@ -233,7 +233,7 @@ class ContentEventSeeder extends Seeder
                 'requires' => ['flag' => 'arc_comms_stage1', 'is' => true],
                 'base_weight' => 10, 'cooldown_days' => 999,
                 'choices' => [
-                    $this->one('EVA per orientare l\'antenna', [['resource' => 'oxygen', 'delta' => -12], ['character' => 'Cole', 'stress' => 8], ['set_flag' => 'arc_comms_stage2', 'value' => true], ['set_flag' => 'arc_comms_chased', 'value' => true], ['spawn_event' => ['key' => 'arc_comms_3', 'in_days' => 4]]], 'Cole esce nel vuoto. Rientra gelato, ma l\'antenna è puntata.'),
+                    $this->one('EVA per orientare l\'antenna', [['resource' => 'oxygen', 'delta' => -4], ['character' => 'Cole', 'stress' => 3], ['set_flag' => 'arc_comms_stage2', 'value' => true], ['set_flag' => 'arc_comms_chased', 'value' => true], ['spawn_event' => ['key' => 'arc_comms_3', 'in_days' => 4]]], 'Cole esce nel vuoto. Rientra gelato, ma l\'antenna è puntata.'),
                     $this->one('Aspettiamo da dentro', [['resource' => 'morale', 'delta' => -6], ['set_flag' => 'arc_comms_stage2', 'value' => true], ['spawn_event' => ['key' => 'arc_comms_3', 'in_days' => 4]]], 'Stai a sentire un segnale che non migliora.'),
                 ],
             ]),
@@ -263,7 +263,7 @@ class ContentEventSeeder extends Seeder
                 'requires' => ['all' => [['has_item' => 'scanner'], ['phase_index' => ['op' => '<=', 'value' => 1]]]],
                 'base_weight' => 10, 'cooldown_days' => 999,
                 'choices' => [
-                    $this->one('Indaghiamo', [['resource' => 'power', 'delta' => -6], ['character' => 'Anna', 'stress' => 6], ['set_flag' => 'arc_scanner_stage1', 'value' => true], ['spawn_event' => ['key' => 'arc_scanner_2', 'in_days' => 4]]], 'Anna comincia a mappare. Qualcosa, lì dietro, aspetta.'),
+                    $this->one('Indaghiamo', [['resource' => 'power', 'delta' => -2], ['character' => 'Anna', 'stress' => 3], ['set_flag' => 'arc_scanner_stage1', 'value' => true], ['spawn_event' => ['key' => 'arc_scanner_2', 'in_days' => 4]]], 'Anna comincia a mappare. Qualcosa, lì dietro, aspetta.'),
                     $this->one('Alcune porte è meglio non aprirle', [['resource' => 'morale', 'delta' => -4], ['set_flag' => 'arc_scanner_stage1', 'value' => true], ['set_flag' => 'arc_scanner_avoided', 'value' => true], ['spawn_event' => ['key' => 'arc_scanner_2', 'in_days' => 4]]], 'La lasci sigillata. Ma ci pensi, di notte.'),
                 ],
             ]),
@@ -273,7 +273,7 @@ class ContentEventSeeder extends Seeder
                 'requires' => ['flag' => 'arc_scanner_stage1', 'is' => true],
                 'base_weight' => 10, 'cooldown_days' => 999,
                 'choices' => [
-                    $this->one('Ricostruisco tutto', [['resource' => 'oxygen', 'delta' => -8], ['damage_system' => 'life_support', 'amount' => 8], ['set_flag' => 'arc_scanner_stage2', 'value' => true], ['set_flag' => 'arc_scanner_dug', 'value' => true], ['spawn_event' => ['key' => 'arc_scanner_3', 'in_days' => 4]]], 'Apri condotti che andavano lasciati chiusi. Ma adesso sai di più.'),
+                    $this->one('Ricostruisco tutto', [['resource' => 'oxygen', 'delta' => -3], ['damage_system' => 'life_support', 'amount' => 3], ['set_flag' => 'arc_scanner_stage2', 'value' => true], ['set_flag' => 'arc_scanner_dug', 'value' => true], ['spawn_event' => ['key' => 'arc_scanner_3', 'in_days' => 4]]], 'Apri condotti che andavano lasciati chiusi. Ma adesso sai di più.'),
                     $this->one('Mi fermo a quel che basta', [['resource' => 'morale', 'delta' => -5], ['set_flag' => 'arc_scanner_stage2', 'value' => true], ['spawn_event' => ['key' => 'arc_scanner_3', 'in_days' => 4]]], 'Metà verità. Forse è più sicuro così.'),
                 ],
             ]),
