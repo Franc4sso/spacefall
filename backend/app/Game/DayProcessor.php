@@ -116,6 +116,19 @@ final class DayProcessor
         // threshold — e.g. oxygen hit zero, or you survived to a rescue day.
         $this->endings->check($run);
 
+        // If the day ended the run, drop any death_notice we just scheduled —
+        // the epilogue covers a run-ending death (mirrors EventEngine's strip).
+        if ($run->status !== 'active') {
+            $stripped = array_values(array_filter(
+                $run->scheduled_events ?? [],
+                fn ($s) => ($s['key'] ?? null) !== 'death_notice',
+            ));
+            if ($stripped !== ($run->scheduled_events ?? [])) {
+                $run->scheduled_events = $stripped;
+                $run->save();
+            }
+        }
+
         return $run;
     }
 
