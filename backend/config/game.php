@@ -428,6 +428,13 @@ return [
         ],
     ],
 
+    'death_notice_phrases' => [
+        'starvation' => 'La fame ha avuto la meglio.',
+        'event' => 'Una scelta è costata cara.',
+        'expedition' => 'La spedizione non è tornata.',
+        'morale' => 'Si è spento dentro, prima che fuori.',
+    ],
+
     /*
      | Meta unlocks — bought with research_points, persisted on the profile.
      | Per design §2.1 these add CONTENT, not stat boosts: an unlock makes a

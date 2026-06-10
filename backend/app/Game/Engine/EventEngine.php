@@ -83,6 +83,17 @@ final class EventEngine
             $run->save();
         }
 
+        if ($event !== null && $event->key === 'death_notice') {
+            $log = $run->death_log ?? [];
+            foreach ($log as $entry) {
+                if (! ($entry['announced'] ?? false)) {
+                    $phrase = config('game.death_notice_phrases.' . ($entry['cause'] ?? 'event'), 'Se n\'è andato.');
+                    $event->body = "{$entry['name']}. Giorno {$entry['day']}. {$phrase}";
+                    break;
+                }
+            }
+        }
+
         return [
             'event' => $event,
             'choices' => $this->visibleChoices($event, $state),
@@ -186,6 +197,21 @@ final class EventEngine
             array_merge($state->choiceLog, [$entry]),
             -30
         );
+
+        if ($event->key === 'death_notice') {
+            $marked = false;
+            foreach ($state->deathLog as $i => $entry) {
+                if (! ($entry['announced'] ?? false)) {
+                    $state->deathLog[$i]['announced'] = true;
+                    $marked = true;
+                    break;
+                }
+            }
+            $remaining = collect($state->deathLog)->contains(fn ($e) => ! ($e['announced'] ?? false));
+            if ($marked && $remaining) {
+                $state->scheduledEvents[] = ['key' => 'death_notice', 'fire_on_day' => $state->day];
+            }
+        }
 
         // Persist run state, then flush profile-scoped state (cross-run memory
         // + earned research points) back onto the profile.
