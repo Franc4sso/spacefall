@@ -206,6 +206,30 @@ class ContentEventSeeder extends Seeder
                     $this->one('Solo il minimo, per ora', [['resource' => 'power', 'delta' => -3]], 'Un cerotto. Il modulo resta a metà.'),
                 ],
             ]),
+            $this->ev([
+                'key' => 'escape_3_fuel',
+                'title' => 'Carburante',
+                'body' => "Il modulo è pronto ma a secco. C'è abbastanza propellente solo se prosciugate una riserva della stazione. È un punto di non ritorno: dopo, vivere qui sarà più dura.",
+                'requires' => ['flag' => 'escape_repaired', 'is' => true],
+                'base_weight' => 10,
+                'cooldown_days' => 999,
+                'choices' => [
+                    $this->one('Prosciugo le riserve. Partiamo.', [['resource' => 'power', 'delta' => -10], ['resource' => 'oxygen', 'delta' => -6], ['set_flag' => 'escape_fueled', 'value' => true], ['spawn_event' => ['key' => 'escape_4_who_leaves', 'in_days' => 2]]], 'Il serbatoio si riempie. La stazione, dietro, si svuota.'),
+                    $this->one('Non ancora. Troppo rischioso.', [['resource' => 'morale', 'delta' => -3]], 'Il modulo resta a terra. Per ora.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'escape_4_who_leaves',
+                'title' => 'Due posti',
+                'body' => "Il modulo ha due posti. Siete di più. Qualcuno deve restare a tenere accese le luci — e a morire con la stazione. La scelta è tua.",
+                'requires' => ['flag' => 'escape_fueled', 'is' => true],
+                'base_weight' => 12,
+                'cooldown_days' => 999,
+                'choices' => [
+                    $this->one('Salgono i più giovani. Io resto.', [['set_flag' => 'escape_launched', 'value' => true], ['set_flag' => 'escape_captain_stayed', 'value' => true], ['resource' => 'morale', 'delta' => -8]], 'Chiudi il portello dall\'esterno. Il modulo parte senza di te.'),
+                    $this->one('Decido io chi merita di vivere.', [['set_flag' => 'escape_launched', 'value' => true], ['set_flag' => 'escape_captain_chose', 'value' => true], ['resource' => 'morale', 'delta' => -4]], 'Due salgono. Gli altri ti guardano dal vetro che si allontana.'),
+                ],
+            ]),
         ];
     }
 
