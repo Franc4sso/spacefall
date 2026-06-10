@@ -56,10 +56,13 @@ it('reaches the two-sided recklessness death when morale maxes out', function ()
     expect($e['type'])->toBe('lose');
 });
 
-it('reaches the escape win with the suit, time, and power', function () {
+it('reaches the escape win when the escape chain is launched', function () {
+    // win_escape is now gated on the escape chain (escape_launched flag, set only
+    // by stage 4 of the escape arc) plus surviving to day 15 — no longer suit+power.
     $e = endingFor([
         'items' => ['spacesuit'],
-        'day' => 13,
+        'flags' => ['escape_launched' => true],
+        'day' => 15,
         'resources' => ['power' => 80, 'oxygen' => 80, 'food' => 80, 'morale' => 50, 'hull' => 80],
     ]);
     expect($e['key'])->toBe('win_escape');
@@ -156,4 +159,23 @@ it('does not reach prezzo_della_fame without both hunger flags', function () {
         'resources' => ['oxygen' => 30, 'food' => 30, 'power' => 30, 'morale' => 30, 'hull' => 30],
     ]);
     expect($e['key'])->not->toBe('prezzo_della_fame');
+});
+
+it('win_escape does NOT fire from spacesuit alone without the chain', function () {
+    $e = endingFor([
+        'items' => ['spacesuit'],
+        'day' => 14,
+        'resources' => ['power' => 50, 'oxygen' => 30, 'food' => 30, 'morale' => 30, 'hull' => 30],
+    ]);
+    expect($e['key'] ?? null)->not->toBe('win_escape');
+});
+
+it('win_escape fires when the escape chain is launched', function () {
+    $e = endingFor([
+        'items' => ['spacesuit'],
+        'flags' => ['escape_launched' => true],
+        'day' => 16,
+        'resources' => ['power' => 50, 'oxygen' => 30, 'food' => 30, 'morale' => 30, 'hull' => 30],
+    ]);
+    expect($e['key'])->toBe('win_escape');
 });

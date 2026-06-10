@@ -331,9 +331,8 @@ return [
             'name' => 'Fuga',
             'text' => 'La tuta tiene, la navetta parte. La stazione si spegne dietro di te.',
             'when' => ['all' => [
-                ['has_item' => 'spacesuit'],
-                ['day' => ['op' => '>=', 'value' => 12]],
-                ['resource' => 'power', 'op' => '>=', 'value' => 40],
+                ['flag' => 'escape_launched', 'is' => true],
+                ['day' => ['op' => '>=', 'value' => 15]],
             ]],
         ],
         [
