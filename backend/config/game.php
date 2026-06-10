@@ -412,6 +412,9 @@ return [
             'log_falsified' => 'Hai riscritto la verità nei registri.',
             'vented_the_technician' => 'Hai chiuso un uomo nella camera stagna.',
             'lost_on_expedition' => 'Hai sigillato il portello su chi non era ancora rientrato.',
+            'arc_garden_bloomed' => 'Hai fatto fiorire un orto dove tutto moriva.',
+            'arc_rescue_answered' => 'Il tuo segnale ha trovato orecchie. Qualcuno è venuto.',
+            'arc_truth_found' => 'Hai scoperto cosa è successo a chi c\'era prima. Avresti preferito di no.',
         ],
     ],
 

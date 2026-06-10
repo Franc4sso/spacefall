@@ -96,3 +96,22 @@ it('seeds the scanner arc chained, ending in arc_truth_found', function () {
 it('has nine arc events total (three arcs of three)', function () {
     expect(arcEvents()->count())->toBe(9);
 });
+
+it('surfaces a completed arc in the epilogue', function () {
+    $composer = app(\App\Game\Engine\EpilogueComposer::class);
+    $state = new \App\Game\Engine\RunState(
+        day: 26,
+        resources: ['oxygen' => 30, 'food' => 30, 'power' => 30, 'morale' => 30, 'hull' => 30],
+        flags: ['arc_garden_bloomed' => true],
+        characters: [['name' => 'Anna', 'role' => 'engineer', 'traits' => [], 'alive' => true, 'stress' => 10, 'hunger' => 0, 'away_until' => 0]],
+    );
+    $sections = $composer->compose($state, ['key' => 'lone_survivor', 'name' => 'x', 'text' => 'y']);
+    $choices = collect($sections)->firstWhere('title', 'Le tue scelte');
+    expect($choices)->not->toBeNull();
+    expect(implode(' ', $choices['lines']))->toContain('fiorire');
+});
+
+it('registers the three arc completion flags in the epilogue config', function () {
+    $flags = config('game.epilogue.witness_flags');
+    expect($flags)->toHaveKeys(['arc_garden_bloomed', 'arc_rescue_answered', 'arc_truth_found']);
+});
