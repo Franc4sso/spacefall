@@ -382,6 +382,7 @@ class EventSeeder extends Seeder
                                 ['resource' => 'morale', 'delta' => -14],
                                 ['character' => 'highest_stress', 'stress' => 15],
                                 ['set_flag' => 'ate_alone', 'value' => true],
+                                ['spawn_event' => ['key' => 'echo_ate_alone', 'in_days' => 3]],
                             ], 'log' => 'Mangi voltando le spalle. Il rancore resta.'],
                         ],
                     ],

@@ -1831,6 +1831,20 @@ class ContentEventSeeder extends Seeder
     {
         return [
             $this->ev([
+                'key' => 'echo_ate_alone',
+                'title' => 'Hanno visto',
+                'speaker' => 'Anna',
+                'body' => "Tre giorni fa hai mangiato voltando le spalle agli altri. Non l'hanno dimenticato. «Pensavo fossimo una squadra», dice Anna, senza alzare la voce. È peggio così.",
+                'requires' => ['all' => [['flag' => 'ate_alone', 'is' => true], ['alive' => 'Anna']]],
+                'base_weight' => 9,
+                'cooldown_days' => 999,
+                'choices' => [
+                    $this->one('Dovevo reggere. Per tutti voi.', [['resource' => 'morale', 'delta' => -4], ['modify_standing' => ['who' => 'Anna', 'delta' => -8]]], 'Anna annuisce piano. Non ci crede.'),
+                    $this->one('Avete ragione. Non succederà più.', [['resource' => 'morale', 'delta' => 4], ['modify_standing' => ['who' => 'Anna', 'delta' => 6]]], 'Una crepa ricucita a fatica.'),
+                ],
+            ]),
+
+            $this->ev([
                 'key' => 'moral_last_dose', 'title' => "L'ultima dose",
                 'body' => "Ci sono due feriti. Una dose di antidolorifico. Bex ti guarda. Non è una decisione medica — è una decisione umana.",
                 'requires' => ['has_role' => 'doctor'],

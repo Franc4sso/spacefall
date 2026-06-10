@@ -21,3 +21,9 @@ it('esiste una carta-eco gated su research_complete', function () {
     expect($echo)->not->toBeNull();
     expect($echo->requires)->toBe(['flag' => 'research_complete', 'is' => true]);
 });
+
+it('esiste una carta-eco gated su ate_alone che richiama lo strappo', function () {
+    $echo = Event::where('key', 'echo_ate_alone')->first();
+    expect($echo)->not->toBeNull();
+    expect($echo->requires)->toBe(['all' => [['flag' => 'ate_alone', 'is' => true], ['alive' => 'Anna']]]);
+});
