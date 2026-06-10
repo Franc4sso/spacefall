@@ -305,6 +305,20 @@ return [
             'when' => ['living_crew' => ['op' => '==', 'value' => 0]],
         ],
 
+        // Finale: il prezzo della fame — sopravvissuto, ma a un costo morale che
+        // l'epilogo racconta. Priorità sui win generici, scatta solo col percorso estremo.
+        [
+            'key' => 'prezzo_della_fame', 'type' => 'win',
+            'name' => 'IL PREZZO DELLA FAME',
+            'text' => 'Siete vivi. Ma per restarlo avete oltrepassato un confine da cui non si torna. La stazione vi ha salvati; non vi ha resi innocenti.',
+            'when' => ['all' => [
+                ['flag' => 'cannibalism', 'is' => true],
+                ['flag' => 'ate_alone', 'is' => true],
+                ['day' => ['op' => '>=', 'value' => 25]],
+                ['living_crew' => ['op' => '>=', 'value' => 1]],
+            ]],
+        ],
+
         // --- Wins (checked after deaths; harder requirements first) ---
         [
             'key' => 'win_escape', 'type' => 'win',

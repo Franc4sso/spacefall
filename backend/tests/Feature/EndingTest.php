@@ -134,7 +134,26 @@ it('every configured ending is reachable by some forced state', function () {
         $reached[$ending['key']] = true;
     }
     // The individual tests above already drive the core endings; assert the count matches
-    // so a newly-added ending without a test is noticed. Updated to 16 after
-    // the crew_lost lose-ending (tested in CrewLostEndingTest).
-    expect(count($reached))->toBe(16);
+    // so a newly-added ending without a test is noticed. Updated to 17 after
+    // the prezzo_della_fame win-ending.
+    expect(count($reached))->toBe(17);
+});
+
+it('reaches prezzo_della_fame with cannibalism + ate_alone while alive past day 25', function () {
+    $e = endingFor([
+        'flags' => ['cannibalism' => true, 'ate_alone' => true],
+        'day' => 26,
+        'resources' => ['oxygen' => 30, 'food' => 30, 'power' => 30, 'morale' => 30, 'hull' => 30],
+    ]);
+    expect($e['key'])->toBe('prezzo_della_fame');
+    expect($e['type'])->toBe('win');
+});
+
+it('does not reach prezzo_della_fame without both hunger flags', function () {
+    $e = endingFor([
+        'flags' => ['ate_alone' => true],
+        'day' => 26,
+        'resources' => ['oxygen' => 30, 'food' => 30, 'power' => 30, 'morale' => 30, 'hull' => 30],
+    ]);
+    expect($e['key'])->not->toBe('prezzo_della_fame');
 });
