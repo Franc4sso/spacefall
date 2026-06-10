@@ -184,7 +184,7 @@ class ContentEventSeeder extends Seeder
                 'base_weight' => 10, 'cooldown_days' => 999,
                 'choices' => [
                     $this->one('Impianto serio, adesso', [['resource' => 'power', 'delta' => -3], ['resource' => 'food', 'delta' => -2], ['set_flag' => 'arc_seedbank_stage1', 'value' => true], ['spawn_event' => ['key' => 'arc_seedbank_2', 'in_days' => 4]]], 'Bex sorride per la prima volta da giorni. Mani nella terra.'),
-                    $this->one('Solo qualche vaso, per ora', [['resource' => 'morale', 'delta' => -4], ['set_flag' => 'arc_seedbank_stage1', 'value' => true], ['set_flag' => 'arc_seedbank_minimal', 'value' => true], ['spawn_event' => ['key' => 'arc_seedbank_2', 'in_days' => 4]]], 'Verde fragile, simbolico. Meglio di niente, forse.'),
+                    $this->one('Solo qualche vaso, per ora', [['resource' => 'morale', 'delta' => -4], ['set_flag' => 'arc_seedbank_stage1', 'value' => true], ['spawn_event' => ['key' => 'arc_seedbank_2', 'in_days' => 4]]], 'Verde fragile, simbolico. Meglio di niente, forse.'),
                 ],
             ]),
             $this->ev([
@@ -204,7 +204,7 @@ class ContentEventSeeder extends Seeder
                 'base_weight' => 10, 'cooldown_days' => 999,
                 'choices' => [
                     array_merge(
-                        $this->one('Raccogli', [['resource' => 'food', 'delta' => 34], ['resource' => 'morale', 'delta' => 10], ['set_flag' => 'arc_garden_bloomed', 'value' => true]], 'L\'orto ha tenuto fede alla promessa. Per una volta, abbondanza.'),
+                        $this->one('Raccogli', [['resource' => 'food', 'delta' => 34], ['resource' => 'morale', 'delta' => 10], ['set_flag' => 'arc_garden_bloomed', 'value' => true], ['set_flag' => 'tended_crops', 'value' => true]], 'L\'orto ha tenuto fede alla promessa. Per una volta, abbondanza.'),
                         ['requires' => ['flag' => 'arc_seedbank_tended', 'is' => true]]
                     ),
                     $this->one('Raccogli quel che resta', [['resource' => 'food', 'delta' => 8], ['resource' => 'morale', 'delta' => -6]], 'Foglie secche, qualche frutto amaro. Non l\'hai curato abbastanza.', null, ['not' => ['flag' => 'arc_seedbank_tended', 'is' => true]]),
@@ -224,7 +224,7 @@ class ContentEventSeeder extends Seeder
                 'base_weight' => 10, 'cooldown_days' => 999,
                 'choices' => [
                     $this->one('Aggancio il segnale', [['resource' => 'power', 'delta' => -3], ['set_flag' => 'arc_comms_stage1', 'value' => true], ['spawn_event' => ['key' => 'arc_comms_2', 'in_days' => 4]]], 'Lo tieni. Debole, ma c\'è.'),
-                    $this->one('Non posso sprecare energia', [['resource' => 'morale', 'delta' => -5], ['set_flag' => 'arc_comms_stage1', 'value' => true], ['set_flag' => 'arc_comms_dropped', 'value' => true], ['spawn_event' => ['key' => 'arc_comms_2', 'in_days' => 4]]], 'Lo lasci andare. Il dubbio resta.'),
+                    $this->one('Non posso sprecare energia', [['resource' => 'morale', 'delta' => -5], ['set_flag' => 'arc_comms_stage1', 'value' => true], ['spawn_event' => ['key' => 'arc_comms_2', 'in_days' => 4]]], 'Lo lasci andare. Il dubbio resta.'),
                 ],
             ]),
             $this->ev([
@@ -264,7 +264,7 @@ class ContentEventSeeder extends Seeder
                 'base_weight' => 10, 'cooldown_days' => 999,
                 'choices' => [
                     $this->one('Indaghiamo', [['resource' => 'power', 'delta' => -2], ['character' => 'Anna', 'stress' => 3], ['set_flag' => 'arc_scanner_stage1', 'value' => true], ['spawn_event' => ['key' => 'arc_scanner_2', 'in_days' => 4]]], 'Anna comincia a mappare. Qualcosa, lì dietro, aspetta.'),
-                    $this->one('Alcune porte è meglio non aprirle', [['resource' => 'morale', 'delta' => -4], ['set_flag' => 'arc_scanner_stage1', 'value' => true], ['set_flag' => 'arc_scanner_avoided', 'value' => true], ['spawn_event' => ['key' => 'arc_scanner_2', 'in_days' => 4]]], 'La lasci sigillata. Ma ci pensi, di notte.'),
+                    $this->one('Alcune porte è meglio non aprirle', [['resource' => 'morale', 'delta' => -4], ['set_flag' => 'arc_scanner_stage1', 'value' => true], ['spawn_event' => ['key' => 'arc_scanner_2', 'in_days' => 4]]], 'La lasci sigillata. Ma ci pensi, di notte.'),
                 ],
             ]),
             $this->ev([
