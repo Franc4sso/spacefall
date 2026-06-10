@@ -13,6 +13,9 @@ beforeEach(function () {
 const FLAG_REACHABILITY_WHITELIST = [
     'expedition_active', '__scheduled_only', '__never',
     'crew_trust', 'died_of_hunger', 'epithet',
+    // sensors_warned co-occorre SEMPRE con arc_truth_found (stesso outcome);
+    // arc_truth_found copre già l'epilogo, evitando una riga duplicata.
+    'sensors_warned',
 ];
 
 /** Raccoglie ricorsivamente i flag letti da un albero di condizioni. */
