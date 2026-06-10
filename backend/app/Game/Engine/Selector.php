@@ -41,7 +41,7 @@ final class Selector
             ->all();
 
         if ($dueKeys !== []) {
-            $due = $events->filter(fn (Event $e) => in_array($e->key, $dueKeys, true));
+            $due = $events->filter(fn (Event $e) => in_array($e->key, $dueKeys, true) && $this->speakerAlive($e, $state));
             if ($due->isNotEmpty()) {
                 return $this->weightedPick($due, $state, $rng);
             }
@@ -83,7 +83,26 @@ final class Selector
 
     private function isEligible(Event $event, RunState $state): bool
     {
-        return $this->evaluator->evaluate($event->requires, $state);
+        return $this->speakerAlive($event, $state)
+            && $this->evaluator->evaluate($event->requires, $state);
+    }
+
+    /**
+     * An event with a named speaker may only fire while that speaker is alive.
+     * Narrator events (speaker null) are never gated by this rule.
+     */
+    private function speakerAlive(Event $event, RunState $state): bool
+    {
+        $speaker = $event->speaker ?? null;
+        if ($speaker === null || $speaker === '') {
+            return true;
+        }
+        foreach ($state->characters as $c) {
+            if (($c['name'] ?? null) === $speaker) {
+                return (bool) ($c['alive'] ?? true);
+            }
+        }
+        return true; // speaker named but not in roster — defensive let-through
     }
 
     private function onCooldown(Event $event, RunState $state): bool
