@@ -36,7 +36,10 @@ it('awards rescue once the SOS has been sent', function () {
 
 it('still gives lone_survivor as a fallback when alive past day 25 with no win-action', function () {
     $run = app(RunFactory::class)->create(1, ['welder']); // no comms/seedbank
-    $run->day = 26;
+    // lone_survivor now gates on day > 28 (raised from > 25 to remove the easy
+    // late-game out); day 29 keeps this test's intent — fallback for the last
+    // one standing — while respecting the new threshold.
+    $run->day = 29;
     $run->resources = ['oxygen' => 50, 'food' => 50, 'power' => 50, 'morale' => 50, 'hull' => 50];
     $run->flags = [];
     // Kill the doctor so crew_intact (needs engineer AND doctor) can't fire —

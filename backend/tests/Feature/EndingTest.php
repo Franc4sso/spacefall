@@ -14,7 +14,7 @@ beforeEach(function () {
 function endingFor(array $overrides): ?array
 {
     $run = app(RunFactory::class)->create(1, $overrides['items'] ?? []);
-    foreach (['resources', 'flags', 'day'] as $field) {
+    foreach (['resources', 'flags', 'day', 'characters'] as $field) {
         if (isset($overrides[$field])) {
             if ($field === 'resources') {
                 $run->resources = array_merge($run->resources, $overrides['resources']);
@@ -91,7 +91,9 @@ it('reaches the colony win with the seedbank and stored food', function () {
 
 it('reaches the research win with the flag set', function () {
     expect(endingFor([
-        'day' => 23,
+        // win_research now gates on day >= 25 (raised from 22); 25 keeps the
+        // intent — the research flag drives the win — at the new threshold.
+        'day' => 25,
         'flags' => ['research_complete' => true],
         'resources' => ['power' => 50],
     ])['key'])->toBe('win_research');
@@ -178,4 +180,18 @@ it('win_escape fires when the escape chain is launched', function () {
         'resources' => ['power' => 50, 'oxygen' => 30, 'food' => 30, 'morale' => 30, 'hull' => 30],
     ]);
     expect($e['key'])->toBe('win_escape');
+});
+
+it('lone_survivor requires surviving past day 28 (not an easy late-game out)', function () {
+    // Isolate the catch-all: a single survivor (engineer & doctor dead) means
+    // crew_intact / cold_victory can't fire, so only lone_survivor is in play.
+    // It must NOT trigger at day 27 — the threshold is now day > 28.
+    $e = endingFor([
+        'day' => 27,
+        'characters' => [
+            ['name' => 'Cole', 'role' => 'pilot', 'traits' => [], 'stress' => 0, 'hunger' => 0, 'away_until' => 0, 'alive' => true],
+        ],
+        'resources' => ['oxygen' => 30, 'food' => 30, 'power' => 30, 'morale' => 30, 'hull' => 30],
+    ]);
+    expect($e['key'] ?? null)->not->toBe('lone_survivor');
 });

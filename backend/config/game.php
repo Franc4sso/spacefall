@@ -363,7 +363,7 @@ return [
             'text' => 'I dati che hai salvato valgono più di una vita sola. Li hai trasmessi.',
             'when' => ['all' => [
                 ['flag' => 'research_complete', 'is' => true],
-                ['day' => ['op' => '>=', 'value' => 22]],
+                ['day' => ['op' => '>=', 'value' => 25]],
                 ['resource' => 'power', 'op' => '>=', 'value' => 30],
             ]],
         ],
@@ -417,7 +417,7 @@ return [
             'text' => 'Hai salvato la stazione. Non hai salvato nessuno.',
             'when' => ['all' => [
                 ['resource' => 'oxygen', 'op' => '>', 'value' => 0],
-                ['day' => ['op' => '>', 'value' => 25]],
+                ['day' => ['op' => '>', 'value' => 28]],
             ]],
         ],
     ],
