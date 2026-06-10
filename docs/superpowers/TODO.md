@@ -38,7 +38,7 @@
 ## 🧵 Fili lasciati in sospeso (debito / rifiniture dal lavoro fatto)
 
 - **Contenuto oggetti dormiente.** I 6 oggetti bloccati (toolkit, manual, reactor_cell, sensors, flare, logbank) hanno eventi che oggi non si attivano mai (non sono nella griglia). Vanno o **risvegliati** dal sistema di meta-sblocco (Tier 3 #6), o i loro eventi riassegnati a oggetti in griglia, o rimossi. Decisione da prendere.
-- **Flag-testimone senza lettori.** `cannibalism`, `lost_on_expedition`, `died_of_hunger`, `bex_saw_death` vengono impostati ma nessun finale/evento li legge ancora. Sono ganci pronti per gli **epiloghi** (Tier 3 #5) o finali dedicati (es. un finale "il prezzo della fame").
+- ~~**Flag-testimone senza lettori.**~~ ✅ CHIUSO (branch feat/narrative-consequences, 2026-06-10). Un test-guardiano (`FlagReachabilityTest`) garantisce che ogni flag scritto sia letto da carta/finale/epilogo. Aggiunte 4 carte-eco in-run (knows_the_past, research_complete, ate_alone, illness_caught) e il finale dedicato `prezzo_della_fame` (cannibalism+ate_alone). Spec/piano: `specs/2026-06-10-narrative-consequences-design.md`.
 - **Testo dei ritorni spedizione generico.** Gli `exp_return_*` dicono "chi avevi mandato" invece del nome. Personalizzarli (speaker = expeditioner) darebbe più voce. Piccolo.
 - **Cadenza della Fame = leva di tuning.** Il pasto compare ~ogni 4-5 giorni per il giocatore bravo; va validato col tuo playtest e tarato a gusto (soglia `spawn_bands`, `daily_rise`). Solo numeri in `config/game.php`.
 - **Difficoltà spedizioni = leva di tuning.** Le probabilità (`ExpeditionResolver`) e le durate/pericolosità delle mete sono punti di partenza; da tarare col playtest.
