@@ -82,6 +82,17 @@ export function CrewPanel({ characters, epithet, reactions = [] }: Props) {
                       background: stressColor, transition: "width 500ms ease",
                     }} />
                   </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6, marginBottom: 3 }}>
+                    <span style={{ fontSize: 10, color: "var(--color-text-dim)" }}>fame</span>
+                    <span style={{ fontSize: 10, fontFamily: "var(--font-mono)", color: hunger >= 70 ? "var(--color-red)" : hunger >= 40 ? "var(--color-orange)" : "var(--color-cyan-dim)" }}>{hunger}</span>
+                  </div>
+                  <div className="bar-track" style={{ height: 4 }}>
+                    <div style={{
+                      height: "100%", borderRadius: 4, width: `${Math.min(100, hunger)}%`,
+                      background: hunger >= 70 ? "var(--color-red)" : hunger >= 40 ? "var(--color-orange)" : "var(--color-cyan)",
+                      transition: "width 500ms ease",
+                    }} />
+                  </div>
                   {hungerWord && (
                     <div className={`hunger-tag ${hungerClass}`}>● {hungerWord}</div>
                   )}
