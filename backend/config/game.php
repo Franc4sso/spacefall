@@ -293,6 +293,16 @@ return [
             'when' => ['flag' => 'mutiny_occurred', 'is' => true],
         ],
 
+        // Finale: equipaggio perduto — l'ultimo membro è morto. Sconfitta: hai
+        // tenuto in vita la stazione, non le persone. Nessuna soglia-giorno:
+        // scatta nel momento in cui muore l'ultimo.
+        [
+            'key' => 'crew_lost', 'type' => 'lose',
+            'name' => 'SOLO',
+            'text' => 'Sei rimasto solo. La stazione respira ancora. Tu, dentro, un po\' meno.',
+            'when' => ['living_crew' => ['op' => '==', 'value' => 0]],
+        ],
+
         // --- Wins (checked after deaths; harder requirements first) ---
         [
             'key' => 'win_escape', 'type' => 'win',

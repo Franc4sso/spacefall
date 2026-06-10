@@ -30,7 +30,13 @@ it('consumes a pinned silent card on /advance and never locks', function () {
     $this->seed(ContentEventSeeder::class);
 
     // Pin a silent card (no choices) — the frontend auto-advances these.
-    $run = Run::factory()->create(['day' => 1]);
+    // A real run always carries a roster; give this one a living member so the
+    // crew_lost ending (living_crew == 0) doesn't fire on the factory's empty
+    // default roster — this test is about silent-card flow, not crew death.
+    $run = Run::factory()->create([
+        'day' => 1,
+        'characters' => [['name' => 'Anna', 'role' => 'engineer', 'alive' => true]],
+    ]);
     $run->current_event_key = 'silent_window';
     $run->save();
 
