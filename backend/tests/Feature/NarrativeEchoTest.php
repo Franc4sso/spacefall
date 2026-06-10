@@ -27,3 +27,9 @@ it('esiste una carta-eco gated su ate_alone che richiama lo strappo', function (
     expect($echo)->not->toBeNull();
     expect($echo->requires)->toBe(['all' => [['flag' => 'ate_alone', 'is' => true], ['alive' => 'Anna']]]);
 });
+
+it('esiste una carta-eco gated su illness_caught', function () {
+    $echo = Event::where('key', 'echo_illness_caught')->first();
+    expect($echo)->not->toBeNull();
+    expect($echo->requires['all'][0])->toBe(['flag' => 'illness_caught', 'is' => true]);
+});

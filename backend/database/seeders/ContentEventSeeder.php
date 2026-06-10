@@ -997,7 +997,7 @@ class ContentEventSeeder extends Seeder
                         'label' => 'Fidati di lei. Intervieni ora.',
                         'hint' => 'dovrebbe reggere',
                         'tags' => ['cautious'],
-                        'outcomes' => [['weight' => 1, 'effects' => [['character' => 'all', 'stress' => -5], ['set_flag' => 'illness_caught', 'value' => true], ['modify_standing' => ['who' => 'Bex', 'delta' => 10]], $done], 'log' => 'Bex agisce in silenzio. Un disastro che non vedrai mai succedere.']],
+                        'outcomes' => [['weight' => 1, 'effects' => [['character' => 'all', 'stress' => -5], ['set_flag' => 'illness_caught', 'value' => true], ['modify_standing' => ['who' => 'Bex', 'delta' => 10]], ['spawn_event' => ['key' => 'echo_illness_caught', 'in_days' => 4]], $done], 'log' => 'Bex agisce in silenzio. Un disastro che non vedrai mai succedere.']],
                     ],
                     [
                         'label' => 'Non abbiamo risorse da sprecare su un sospetto',
@@ -1163,6 +1163,20 @@ class ContentEventSeeder extends Seeder
     private function crosstalkEvents(): array
     {
         return [
+            // Eco: giorni dopo l'atto silenzioso di Bex, la febbre è già in ritirata.
+            $this->ev([
+                'key' => 'echo_illness_caught',
+                'title' => 'Quello che Bex ha evitato',
+                'speaker' => 'Bex',
+                'body' => "Una febbre gira nei corridoi, lieve, già in ritirata. Sarebbe stata molto peggio se Bex non avesse agito in silenzio, giorni fa. Non se ne vanta. Ma tu lo sai.",
+                'requires' => ['all' => [['flag' => 'illness_caught', 'is' => true], ['alive' => 'Bex']]],
+                'base_weight' => 7,
+                'cooldown_days' => 999,
+                'choices' => [
+                    $this->one('Grazie, Bex.', [['resource' => 'morale', 'delta' => 5], ['modify_standing' => ['who' => 'Bex', 'delta' => 8]]], 'Bex scrolla le spalle. Ma qualcosa si scioglie.'),
+                ],
+            ]),
+
             // Bex commenta Anna che ha agito da sola.
             $this->ev([
                 'key' => 'cross_bex_on_anna', 'title' => 'Bex parla di Anna',
