@@ -561,6 +561,7 @@ class ContentEventSeeder extends Seeder
             $this->ev([
                 'key' => 'pair_anna_cole_blame', 'title' => 'Di chi è la colpa', 'speaker' => null,
                 'body' => "Anna accusa Cole di aver forzato una manovra che ha stressato lo scafo. Cole dice che senza quella manovra sareste già morti. Ti guardano entrambi.",
+                'requires' => ['all' => [['alive' => 'Anna'], ['alive' => 'Cole']]],
                 'base_weight' => 9, 'cooldown_days' => 7,
                 'choices' => [
                     $this->one('Dai ragione ad Anna', [['relationship' => ['a' => 'Anna', 'b' => 'Cole', 'delta' => -12]], ['modify_standing' => ['who' => 'Anna', 'delta' => 8]]], 'Cole stringe la mascella e tace.'),
@@ -581,6 +582,7 @@ class ContentEventSeeder extends Seeder
             $this->ev([
                 'key' => 'pair_anna_bex_triage', 'title' => 'Testa o cuore', 'speaker' => null,
                 'body' => "Bex vuole spendere energia preziosa per tenere caldo un membro malato. Anna dice che è uno spreco che condanna tutti. Discutono a voce alta.",
+                'requires' => ['all' => [['alive' => 'Anna'], ['alive' => 'Bex']]],
                 'base_weight' => 9, 'cooldown_days' => 7,
                 'choices' => [
                     $this->one('Con Anna: razionalità', [['relationship' => ['a' => 'Anna', 'b' => 'Bex', 'delta' => -12]], ['resource' => 'power', 'delta' => 6]], 'Bex ti guarda come se non ti riconoscesse.'),
@@ -600,7 +602,11 @@ class ContentEventSeeder extends Seeder
             $this->ev([
                 'key' => 'pair_bex_cole_reckless', 'title' => 'Troppo o troppo poco', 'speaker' => null,
                 'body' => "Bex accusa Cole di prendersi rischi che mettono tutti in pericolo. Cole risponde che la prudenza di Bex vi farà morire lenti. La tensione è palpabile.",
-                'requires' => ['relationship' => ['a' => 'Bex', 'b' => 'Cole', 'state' => 'tension']],
+                'requires' => ['all' => [
+                    ['relationship' => ['a' => 'Bex', 'b' => 'Cole', 'state' => 'tension']],
+                    ['alive' => 'Bex'],
+                    ['alive' => 'Cole'],
+                ]],
                 'base_weight' => 9, 'cooldown_days' => 7,
                 'choices' => [
                     $this->one('Frena Cole', [['relationship' => ['a' => 'Bex', 'b' => 'Cole', 'delta' => -8]], ['modify_standing' => ['who' => 'Bex', 'delta' => 6]]], 'Cole obbedisce, rancoroso.'),
@@ -611,6 +617,7 @@ class ContentEventSeeder extends Seeder
             $this->ev([
                 'key' => 'pair_bex_cole_fear', 'title' => 'La paura condivisa', 'speaker' => 'Bex',
                 'body' => "Cole ha avuto un attacco di panico al buio. Bex lo ha trovato e non lo ha deriso — è rimasta con lui finché non è passato. Te lo racconta, chiedendo di non dirlo.",
+                'requires' => ['alive' => 'Cole'],
                 'base_weight' => 8, 'cooldown_days' => 9,
                 'choices' => [
                     $this->one('Rispetta il loro momento', [['relationship' => ['a' => 'Bex', 'b' => 'Cole', 'delta' => 12]]], 'Un patto silenzioso tra loro due.'),

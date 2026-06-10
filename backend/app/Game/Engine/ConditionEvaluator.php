@@ -77,6 +77,16 @@ final class ConditionEvaluator
             return $this->compare($count, $spec['op'] ?? '=', $spec['value'] ?? 0);
         }
 
+        if (array_key_exists('alive', $condition)) {
+            $name = $condition['alive'];
+            foreach ($state->characters as $c) {
+                if (($c['name'] ?? null) === $name) {
+                    return (bool) ($c['alive'] ?? true);
+                }
+            }
+            return false; // absent from roster = not alive
+        }
+
         if (array_key_exists('phase', $condition)) {
             return $state->phase === $condition['phase'];
         }
@@ -190,6 +200,11 @@ final class ConditionEvaluator
         // Named pair: check ONLY that pair (symmetric match). A pair with no
         // stored value yet counts as neutral (value 0).
         if (isset($spec['a'], $spec['b'])) {
+            // Both named members must be alive for a pair condition to hold —
+            // a relationship with a dead member is not a live dynamic.
+            if (! $this->isAliveByName($spec['a'], $state) || ! $this->isAliveByName($spec['b'], $state)) {
+                return false;
+            }
             $value = 0;
             foreach ($state->relationships as $rel) {
                 if ($this->samePair($rel, $spec['a'], $spec['b'])) {
@@ -204,6 +219,16 @@ final class ConditionEvaluator
         foreach ($state->relationships as $rel) {
             if ($this->relationshipBand($rel['value'] ?? 0) === $wanted) {
                 return true;
+            }
+        }
+        return false;
+    }
+
+    private function isAliveByName(string $name, RunState $state): bool
+    {
+        foreach ($state->characters as $c) {
+            if (($c['name'] ?? null) === $name) {
+                return (bool) ($c['alive'] ?? true);
             }
         }
         return false;

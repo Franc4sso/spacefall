@@ -5,9 +5,14 @@ use App\Game\Engine\RunState;
 
 function stateWithRel(array $relationships): RunState
 {
+    // A named-pair relationship condition now requires both members alive, so
+    // the roster must contain the people the pair conditions name.
+    $living = fn (string $name) => ['name' => $name, 'role' => 'x', 'traits' => [], 'alive' => true, 'stress' => 0, 'hunger' => 0, 'away_until' => 0];
+
     return new RunState(
         day: 1,
         resources: ['oxygen' => 90, 'food' => 90, 'power' => 90, 'morale' => 90, 'hull' => 90],
+        characters: [$living('Anna'), $living('Bex'), $living('Cole')],
         relationships: $relationships,
     );
 }
