@@ -88,6 +88,7 @@ class ContentEventSeeder extends Seeder
             $this->expeditionReturnEvents(),
             $this->phaseEvents(),
             $this->objectArcEvents(),
+            $this->escapeArc(),
         );
     }
 
@@ -171,6 +172,41 @@ class ContentEventSeeder extends Seeder
             $this->commsArc(),
             $this->scannerArc(),
         );
+    }
+
+    // ---- Escape arc: the way out (stages 1-2; 3-4 added separately) ----
+    private function escapeArc(): array
+    {
+        return [
+            $this->ev([
+                'key' => 'escape_1_discovery',
+                'title' => 'Il modulo di fuga',
+                'body' => "Dietro una paratia sigillata c'è un modulo di fuga. Danneggiato, ma forse recuperabile. Riportarlo in vita costerebbe risorse e tempo che forse non avete — ma è una via d'uscita vera.",
+                'requires' => ['all' => [
+                    ['has_item' => 'spacesuit'],
+                    ['day' => ['op' => '>=', 'value' => 8]],
+                    ['not' => ['flag' => 'escape_found', 'is' => true]],
+                ]],
+                'base_weight' => 9,
+                'cooldown_days' => 999,
+                'choices' => [
+                    $this->one('Ci proviamo. È la nostra via fuori.', [['resource' => 'power', 'delta' => -4], ['set_flag' => 'escape_found', 'value' => true], ['spawn_event' => ['key' => 'escape_2_repair', 'in_days' => 3]]], 'Apri la paratia. Il modulo è messo male, ma c\'è.'),
+                    $this->one('Non possiamo permettercelo ora', [['resource' => 'morale', 'delta' => -2]], 'Richiudi la paratia. Forse un altro giorno.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'escape_2_repair',
+                'title' => 'Rimettere in sesto il modulo',
+                'body' => "Il modulo ha bisogno di energia e parti che servono anche alla stazione. Ogni pezzo che ci metti è un pezzo che togli alla sopravvivenza di oggi.",
+                'requires' => ['flag' => 'escape_found', 'is' => true],
+                'base_weight' => 10,
+                'cooldown_days' => 999,
+                'choices' => [
+                    $this->one('Ci lavoro sul serio', [['resource' => 'power', 'delta' => -8], ['resource' => 'hull', 'delta' => -4], ['set_flag' => 'escape_repaired', 'value' => true], ['spawn_event' => ['key' => 'escape_3_fuel', 'in_days' => 3]]], 'Mani nel metallo. Il modulo comincia a rispondere.'),
+                    $this->one('Solo il minimo, per ora', [['resource' => 'power', 'delta' => -3]], 'Un cerotto. Il modulo resta a metà.'),
+                ],
+            ]),
+        ];
     }
 
     /** seedbank — "L'orto": vita/speranza. plant -> tend -> bloom/wither. */
