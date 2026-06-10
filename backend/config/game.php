@@ -223,6 +223,12 @@ return [
     ],
 
     /*
+     | Nomi assegnati ai sopravvissuti reclutati in-game (effetto `recruit`),
+     | così un nuovo membro ha sempre un'identità — mai "?" in carte/epilogo.
+     */
+    'recruit_names' => ['Vela', 'Renn', 'Mira', 'Sol', 'Juno', 'Tam'],
+
+    /*
      | Items. The player picks `items_pick` of these at the start of a run.
      | Items gate CHOICES (via the `has_item` condition in a choice's requires),
      | so a Drone build and a Scanner build open genuinely different routes —

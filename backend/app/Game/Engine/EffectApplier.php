@@ -83,12 +83,18 @@ final class EffectApplier
         }
 
         if (array_key_exists('recruit', $effect)) {
+            $used = array_column($state->characters, 'name');
+            $pool = config('game.recruit_names', []);
+            $available = array_values(array_filter($pool, fn ($n) => ! in_array($n, $used, true)));
+            $name = $available[0] ?? ('Sopravvissuto ' . (count($state->characters) + 1));
             $state->characters[] = [
+                'name' => $name,
                 'role' => $effect['recruit']['role'] ?? 'survivor',
                 'alive' => true,
                 'stress' => 0,
                 'hunger' => 0,
                 'traits' => [],
+                'away_until' => 0,
             ];
             return;
         }
