@@ -699,7 +699,7 @@ class ContentEventSeeder extends Seeder
                 'body' => 'L\'archivio di bordo conserva chi c\'era prima di te.',
                 'requires' => ['has_item' => 'logbank'],
                 'choices' => [
-                    $this->one('Leggo i log', [['resource' => 'morale', 'delta' => -3], ['set_flag' => 'knows_the_past', 'value' => true]], 'Sai com\'è finita, per loro.'),
+                    $this->one('Leggo i log', [['resource' => 'morale', 'delta' => -3], ['set_flag' => 'knows_the_past', 'value' => true], ['spawn_event' => ['key' => 'echo_knows_the_past', 'in_days' => 4]]], 'Sai com\'è finita, per loro.'),
                     $this->one('Meglio non sapere', [['resource' => 'morale', 'delta' => 2]], 'Chiudi l\'archivio.'),
                 ],
             ]),
@@ -755,6 +755,17 @@ class ContentEventSeeder extends Seeder
                 'choices' => [
                     $this->one('Onoro il ricordo', [['character' => 'all', 'stress' => -6], ['set_flag' => 'lost_one', 'scope' => 'profile', 'value' => true]], 'Un minuto di silenzio nel vuoto.'),
                     $this->one('Vado avanti, freddo', [['resource' => 'morale', 'delta' => -10]], 'Nessuno ti guarda allo stesso modo.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'echo_knows_the_past',
+                'title' => 'Quello che sapevi',
+                'body' => "Una valvola sibila come descritto nei log dell'equipaggio precedente — proprio il guasto che li ha uccisi. Stavolta sai cosa fare. La isoli prima che ceda.",
+                'requires' => ['flag' => 'knows_the_past', 'is' => true],
+                'base_weight' => 8,
+                'cooldown_days' => 999,
+                'choices' => [
+                    $this->one('Isolo la valvola, come da registro', [['resource' => 'hull', 'delta' => 8], ['resource' => 'morale', 'delta' => 5]], 'Il sapere dei morti vi tiene in vita. Per oggi.'),
                 ],
             ]),
         ];
