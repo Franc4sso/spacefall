@@ -168,6 +168,7 @@ class ContentEventSeeder extends Seeder
     {
         return array_merge(
             $this->seedbankArc(),
+            $this->commsArc(),
         );
     }
 
@@ -206,6 +207,46 @@ class ContentEventSeeder extends Seeder
                         ['requires' => ['flag' => 'arc_seedbank_tended', 'is' => true]]
                     ),
                     $this->one('Raccogli quel che resta', [['resource' => 'food', 'delta' => 8], ['resource' => 'morale', 'delta' => -6]], 'Foglie secche, qualche frutto amaro. Non l\'hai curato abbastanza.', null, ['not' => ['flag' => 'arc_seedbank_tended', 'is' => true]]),
+                ],
+            ]),
+        ];
+    }
+
+    /** comms — "Il segnale": salvezza. echo -> chase -> answered/silent. */
+    private function commsArc(): array
+    {
+        return [
+            $this->ev([
+                'key' => 'arc_comms_1', 'title' => 'Un\'eco nella statica', 'speaker' => null,
+                'body' => "Tra il rumore, qualcosa di ritmico. Forse un faro automatico, forse soccorsi. Agganciarlo costa energia e attenzione; ignorarlo è non sapere mai.",
+                'requires' => ['all' => [['has_item' => 'comms'], ['phase_index' => ['op' => '<=', 'value' => 1]]]],
+                'base_weight' => 10, 'cooldown_days' => 999,
+                'choices' => [
+                    $this->one('Aggancio il segnale', [['resource' => 'power', 'delta' => -8], ['set_flag' => 'arc_comms_stage1', 'value' => true], ['spawn_event' => ['key' => 'arc_comms_2', 'in_days' => 4]]], 'Lo tieni. Debole, ma c\'è.'),
+                    $this->one('Non posso sprecare energia', [['resource' => 'morale', 'delta' => -5], ['set_flag' => 'arc_comms_stage1', 'value' => true], ['set_flag' => 'arc_comms_dropped', 'value' => true], ['spawn_event' => ['key' => 'arc_comms_2', 'in_days' => 4]]], 'Lo lasci andare. Il dubbio resta.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'arc_comms_2', 'title' => 'Si avvicina', 'speaker' => 'Cole',
+                'body' => "Il segnale si rafforza — o si rifarebbe, se lo inseguissi. Cole dice che orientare l'antenna richiede una EVA rischiosa. O si resta, e si spera che basti.",
+                'requires' => ['flag' => 'arc_comms_stage1', 'is' => true],
+                'base_weight' => 10, 'cooldown_days' => 999,
+                'choices' => [
+                    $this->one('EVA per orientare l\'antenna', [['resource' => 'oxygen', 'delta' => -12], ['character' => 'Cole', 'stress' => 8], ['set_flag' => 'arc_comms_stage2', 'value' => true], ['set_flag' => 'arc_comms_chased', 'value' => true], ['spawn_event' => ['key' => 'arc_comms_3', 'in_days' => 4]]], 'Cole esce nel vuoto. Rientra gelato, ma l\'antenna è puntata.'),
+                    $this->one('Aspettiamo da dentro', [['resource' => 'morale', 'delta' => -6], ['set_flag' => 'arc_comms_stage2', 'value' => true], ['spawn_event' => ['key' => 'arc_comms_3', 'in_days' => 4]]], 'Stai a sentire un segnale che non migliora.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'arc_comms_3', 'title' => 'La risposta', 'speaker' => null,
+                'body' => "Dopo giorni di segnale inseguito, qualcosa cambia nella statica.",
+                'requires' => ['flag' => 'arc_comms_stage2', 'is' => true],
+                'base_weight' => 10, 'cooldown_days' => 999,
+                'choices' => [
+                    array_merge(
+                        $this->one('Rispondi', [['resource' => 'power', 'delta' => -6], ['resource' => 'morale', 'delta' => 12], ['set_flag' => 'sos_sent', 'value' => true], ['set_flag' => 'arc_rescue_answered', 'value' => true]], 'Una voce umana, distorta ma vera. «Vi abbiamo sentiti.»'),
+                        ['requires' => ['flag' => 'arc_comms_chased', 'is' => true]]
+                    ),
+                    $this->one('Ascolta il silenzio', [['resource' => 'morale', 'delta' => -8]], 'Il segnale si spegne, e con lui qualcosa dentro di te. Non hai fatto abbastanza per raggiungerlo.', null, ['not' => ['flag' => 'arc_comms_chased', 'is' => true]]),
                 ],
             ]),
         ];

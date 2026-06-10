@@ -73,3 +73,13 @@ it('keeps every arc event valid against the DSL schema', function () {
         expect(true)->toBeTrue();
     });
 });
+
+it('seeds the comms arc chained, ending in a rescue-answer that sets sos_sent', function () {
+    foreach (['arc_comms_1', 'arc_comms_2', 'arc_comms_3'] as $key) {
+        expect(Event::where('key', $key)->exists())->toBeTrue("missing {$key}");
+    }
+    expect(json_encode(Event::where('key', 'arc_comms_2')->first()->requires))->toContain('arc_comms_stage1');
+    expect(json_encode(Event::where('key', 'arc_comms_3')->first()->requires))->toContain('arc_comms_stage2');
+    expect(json_encode(Event::where('key', 'arc_comms_3')->first()->choices))->toContain('sos_sent');
+    expect(json_encode(Event::where('key', 'arc_comms_3')->first()->choices))->toContain('arc_rescue_answered');
+});
