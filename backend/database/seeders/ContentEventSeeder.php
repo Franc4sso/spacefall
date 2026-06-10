@@ -169,6 +169,7 @@ class ContentEventSeeder extends Seeder
         return array_merge(
             $this->seedbankArc(),
             $this->commsArc(),
+            $this->scannerArc(),
         );
     }
 
@@ -247,6 +248,46 @@ class ContentEventSeeder extends Seeder
                         ['requires' => ['flag' => 'arc_comms_chased', 'is' => true]]
                     ),
                     $this->one('Ascolta il silenzio', [['resource' => 'morale', 'delta' => -8]], 'Il segnale si spegne, e con lui qualcosa dentro di te. Non hai fatto abbastanza per raggiungerlo.', null, ['not' => ['flag' => 'arc_comms_chased', 'is' => true]]),
+                ],
+            ]),
+        ];
+    }
+
+    /** scanner — "La verità": mistero. anomaly -> investigate -> the truth. */
+    private function scannerArc(): array
+    {
+        return [
+            $this->ev([
+                'key' => 'arc_scanner_1', 'title' => 'Letture che non tornano', 'speaker' => 'Anna',
+                'body' => "Lo scanner segna una stanza che non dovrebbe esserci, dietro una paratia sigillata. Anna è incuriosita. Forzarla costa tempo e forse guai; lasciarla è non sapere.",
+                'requires' => ['all' => [['has_item' => 'scanner'], ['phase_index' => ['op' => '<=', 'value' => 1]]]],
+                'base_weight' => 10, 'cooldown_days' => 999,
+                'choices' => [
+                    $this->one('Indaghiamo', [['resource' => 'power', 'delta' => -6], ['character' => 'Anna', 'stress' => 6], ['set_flag' => 'arc_scanner_stage1', 'value' => true], ['spawn_event' => ['key' => 'arc_scanner_2', 'in_days' => 4]]], 'Anna comincia a mappare. Qualcosa, lì dietro, aspetta.'),
+                    $this->one('Alcune porte è meglio non aprirle', [['resource' => 'morale', 'delta' => -4], ['set_flag' => 'arc_scanner_stage1', 'value' => true], ['set_flag' => 'arc_scanner_avoided', 'value' => true], ['spawn_event' => ['key' => 'arc_scanner_2', 'in_days' => 4]]], 'La lasci sigillata. Ma ci pensi, di notte.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'arc_scanner_2', 'title' => 'Quello che hanno lasciato', 'speaker' => null,
+                'body' => "Frammenti: un diario corrotto, un avvertimento a metà, tracce di una decisione disperata. Ricostruire tutto richiede di esporsi a qualcosa che forse è ancora attivo.",
+                'requires' => ['flag' => 'arc_scanner_stage1', 'is' => true],
+                'base_weight' => 10, 'cooldown_days' => 999,
+                'choices' => [
+                    $this->one('Ricostruisco tutto', [['resource' => 'oxygen', 'delta' => -8], ['damage_system' => 'life_support', 'amount' => 8], ['set_flag' => 'arc_scanner_stage2', 'value' => true], ['set_flag' => 'arc_scanner_dug', 'value' => true], ['spawn_event' => ['key' => 'arc_scanner_3', 'in_days' => 4]]], 'Apri condotti che andavano lasciati chiusi. Ma adesso sai di più.'),
+                    $this->one('Mi fermo a quel che basta', [['resource' => 'morale', 'delta' => -5], ['set_flag' => 'arc_scanner_stage2', 'value' => true], ['spawn_event' => ['key' => 'arc_scanner_3', 'in_days' => 4]]], 'Metà verità. Forse è più sicuro così.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'arc_scanner_3', 'title' => 'La verità', 'speaker' => 'Anna',
+                'body' => "Tutti i pezzi, finalmente, al loro posto.",
+                'requires' => ['flag' => 'arc_scanner_stage2', 'is' => true],
+                'base_weight' => 10, 'cooldown_days' => 999,
+                'choices' => [
+                    array_merge(
+                        $this->one('Affronta cosa è successo', [['resource' => 'morale', 'delta' => -6], ['set_flag' => 'arc_truth_found', 'value' => true], ['set_flag' => 'sensors_warned', 'value' => true]], 'Sai cos\'ha ucciso l\'equipaggio prima di te. E sai come evitarlo. È un peso, e un\'arma.'),
+                        ['requires' => ['flag' => 'arc_scanner_dug', 'is' => true]]
+                    ),
+                    $this->one('Lascia perdere il resto', [['resource' => 'morale', 'delta' => -3]], 'Resterà un buco nella storia. Forse è meglio non sapere.', null, ['not' => ['flag' => 'arc_scanner_dug', 'is' => true]]),
                 ],
             ]),
         ];
