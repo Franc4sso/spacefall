@@ -66,6 +66,17 @@ final class ConditionEvaluator
             return $this->compare($state->day, $spec['op'] ?? '=', $spec['value'] ?? 0);
         }
 
+        if (array_key_exists('living_crew', $condition)) {
+            $spec = $condition['living_crew'];
+            $count = 0;
+            foreach ($state->characters as $c) {
+                if (($c['alive'] ?? true) === true) {
+                    $count++;
+                }
+            }
+            return $this->compare($count, $spec['op'] ?? '=', $spec['value'] ?? 0);
+        }
+
         if (array_key_exists('phase', $condition)) {
             return $state->phase === $condition['phase'];
         }

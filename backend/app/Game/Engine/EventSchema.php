@@ -29,7 +29,7 @@ final class EventSchema
         'all', 'any', 'not', 'resource', 'day', 'flag', 'has_item',
         'has_role', 'trait_present', 'relationship', 'system',
         'chosen', 'chosen_tag', 'not_chosen', 'standing', 'crew_hunger',
-        'phase', 'phase_index',
+        'phase', 'phase_index', 'living_crew',
     ];
 
     /** @param list<string> $resourceCodes */
