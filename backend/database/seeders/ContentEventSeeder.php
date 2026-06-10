@@ -768,6 +768,17 @@ class ContentEventSeeder extends Seeder
                     $this->one('Isolo la valvola, come da registro', [['resource' => 'hull', 'delta' => 8], ['resource' => 'morale', 'delta' => 5]], 'Il sapere dei morti vi tiene in vita. Per oggi.'),
                 ],
             ]),
+            $this->ev([
+                'key' => 'echo_research_complete',
+                'title' => 'Un\'eco nel vuoto',
+                'body' => "Giorni fa hai trasmesso i dati nel buio. Stanotte la radio gracchia: non una risposta, ma un riscontro automatico. Qualcuno, da qualche parte, ha ricevuto. La vostra storia non morirà con voi.",
+                'requires' => ['flag' => 'research_complete', 'is' => true],
+                'base_weight' => 7,
+                'cooldown_days' => 999,
+                'choices' => [
+                    $this->one('Almeno sapranno', [['resource' => 'morale', 'delta' => 8]], 'Non è salvezza. Ma è qualcosa.'),
+                ],
+            ]),
         ];
     }
 
@@ -1294,7 +1305,7 @@ class ContentEventSeeder extends Seeder
                     [
                         'label' => 'Trasmetti i dati di ricerca',
                         'hint' => null, 'tags' => ['lone_decision'],
-                        'outcomes' => [['weight' => 1, 'effects' => [['set_flag' => 'research_complete', 'value' => true], ['resource' => 'morale', 'delta' => -8], ['character' => 'all', 'stress' => 6]], 'log' => 'I dati volano via. Qualcuno, un giorno, saprà. Voi resterete soli.']],
+                        'outcomes' => [['weight' => 1, 'effects' => [['set_flag' => 'research_complete', 'value' => true], ['resource' => 'morale', 'delta' => -8], ['character' => 'all', 'stress' => 6], ['spawn_event' => ['key' => 'echo_research_complete', 'in_days' => 5]]], 'log' => 'I dati volano via. Qualcuno, un giorno, saprà. Voi resterete soli.']],
                     ],
                 ],
             ]),
