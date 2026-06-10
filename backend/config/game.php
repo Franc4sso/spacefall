@@ -144,7 +144,7 @@ return [
      | jumps the queue) so the meal decision reliably surfaces at the inflection.
      */
     'hunger' => [
-        'daily_rise' => 8,
+        'daily_rise' => 5,
         'starve_at' => 100,
         'stress_bands' => [
             ['at_or_above' => 70, 'stress' => 8],

@@ -482,7 +482,13 @@ class ContentEventSeeder extends Seeder
                 'requires' => ['day' => ['op' => '>=', 'value' => 7]],
                 'choices' => [
                     $this->one('Vado a prenderlo', [['recruit' => ['role' => 'survivor']], ['resource' => 'oxygen', 'delta' => -5], ['resource' => 'food', 'delta' => -5]], 'Una bocca in più, due mani in più.'),
-                    $this->one('Non posso rischiare', [['resource' => 'morale', 'delta' => -10], ['set_flag' => 'left_someone', 'value' => true]], 'La radio tace. Non te lo perdoni.'),
+                    // Declining must never be the death itself — turning someone
+                    // away is the safe out. A small morale hit (was -10) so a
+                    // barely-alive crew can't be tipped over the morale=0 line by
+                    // refusing, leaving the recruit's oxygen/food cost the only
+                    // gamble. Keeps c_breakdown_recruit fair when both resources
+                    // are already low (probe seed 30).
+                    $this->one('Non posso rischiare', [['resource' => 'morale', 'delta' => -4], ['set_flag' => 'left_someone', 'value' => true]], 'La radio tace. Non te lo perdoni.'),
                 ],
             ]),
             $this->ev([
@@ -1378,10 +1384,14 @@ class ContentEventSeeder extends Seeder
                 'requires' => ['crew_hunger' => ['op' => '>=', 'value' => 25]],
                 'base_weight' => 8, 'cooldown_days' => 1,
                 'choices' => [
-                    $this->one('Razione piena per tutti', [['resource' => 'food', 'delta' => -16], ['character' => 'all', 'hunger' => -28], ['resource' => 'morale', 'delta' => 5]], 'Stomaci pieni, dispensa più leggera.'),
-                    $this->one('Mezza razione', [['resource' => 'food', 'delta' => -7], ['character' => 'all', 'hunger' => -12], ['character' => 'all', 'stress' => 4]], 'Nessuno è sazio, ma il cibo dura.'),
+                    // Hints are authored here on purpose: the auto-risk read only
+                    // sees the food spent and would flag eating as "risky" and
+                    // skipping (which quietly starves the crew) as "safe" — the
+                    // exact opposite of survival. Feeding the crew IS the safe play.
+                    $this->one('Razione piena per tutti', [['resource' => 'food', 'delta' => -16], ['character' => 'all', 'hunger' => -28], ['resource' => 'morale', 'delta' => 5]], 'Stomaci pieni, dispensa più leggera.', 'dovrebbe reggere'),
+                    $this->one('Mezza razione', [['resource' => 'food', 'delta' => -7], ['character' => 'all', 'hunger' => -12], ['character' => 'all', 'stress' => 4]], 'Nessuno è sazio, ma il cibo dura.', 'incerto'),
                     array_merge(
-                        $this->one('Si salta il pasto stasera', [['character' => 'all', 'stress' => 10], ['resource' => 'morale', 'delta' => -6]], 'Pance vuote. La dispensa resta intatta — per ora.'),
+                        $this->one('Si salta il pasto stasera', [['character' => 'all', 'stress' => 10], ['resource' => 'morale', 'delta' => -6]], 'Pance vuote. La dispensa resta intatta — per ora.', 'molto pericoloso'),
                         ['tags' => ['sacrifice_crew']]
                     ),
                 ],
