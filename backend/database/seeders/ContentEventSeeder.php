@@ -207,10 +207,7 @@ class ContentEventSeeder extends Seeder
                 'base_weight' => 10, 'cooldown_days' => 5,
                 'choices' => [
                     $this->one('Razioniamo duro', [['character' => 'all', 'stress' => 8], ['resource' => 'food', 'delta' => 4]], 'Pance vuote, ma le scorte durano un altro po\'.'),
-                    array_merge(
-                        $this->one('Apriamo tutto adesso', [['resource' => 'food', 'delta' => 10], ['resource' => 'morale', 'delta' => 4], ['spawn_event' => ['key' => 'det_dwindling_stores', 'in_days' => 6]]], 'Stasera si mangia. Domani sarà un problema più grande.'),
-                        ['tags' => ['short_term']]
-                    ),
+                    $this->one('Apriamo tutto adesso', [['resource' => 'food', 'delta' => 10], ['resource' => 'morale', 'delta' => 4], ['spawn_event' => ['key' => 'det_dwindling_stores', 'in_days' => 6]]], 'Stasera si mangia. Domani sarà un problema più grande.'),
                 ],
             ]),
             $this->ev([
@@ -220,10 +217,7 @@ class ContentEventSeeder extends Seeder
                 'base_weight' => 10, 'cooldown_days' => 5,
                 'choices' => [
                     $this->one('Mi fermo a sostenerlo', [['character' => 'highest_stress', 'stress' => -14], ['resource' => 'power', 'delta' => -4]], 'Un\'ora persa, accanto a lui. Ma respira di nuovo.'),
-                    array_merge(
-                        $this->one('Si stringe i denti', [['character' => 'highest_stress', 'stress' => 12], ['spawn_event' => ['key' => 'survivor_breaks', 'in_days' => 4]]], 'Annuisce e torna al lavoro. Qualcosa, dentro, scricchiola.'),
-                        ['tags' => ['pushed_too_hard']]
-                    ),
+                    $this->one('Si stringe i denti', [['character' => 'highest_stress', 'stress' => 12], ['spawn_event' => ['key' => 'survivor_breaks', 'in_days' => 4]]], 'Annuisce e torna al lavoro. Qualcosa, dentro, scricchiola.'),
                 ],
             ]),
             $this->ev([
@@ -318,7 +312,7 @@ class ContentEventSeeder extends Seeder
                 'base_weight' => 11, 'cooldown_days' => 999,
                 'choices' => [
                     $this->one('Resistiamo ancora', [['character' => 'all', 'stress' => -6], ['resource' => 'morale', 'delta' => 4]], 'Stringi i denti per tutti. Si torna ai posti, in silenzio.'),
-                    $this->one('Ci arrendiamo alla deriva', [['resource' => 'morale', 'delta' => -12]], 'Smetti di combattere il buio. C\'è una pace, terribile, in questo.'),
+                    $this->one('Ci arrendiamo alla deriva', [['resource' => 'morale', 'delta' => -24], ['character' => 'all', 'stress' => 14], ['modify_trust' => -18]], 'Smetti di combattere il buio. C\'è una pace, terribile, in questo — e qualcosa, nell\'equipaggio, si spegne con te.'),
                     $this->one('Giochiamoci tutto', [['resource' => 'power', 'delta' => -12], ['resource' => 'hull', 'delta' => -8], ['resource' => 'morale', 'delta' => 10]], 'Tutto su una carta. Almeno si muore provandoci.'),
                 ],
             ]),
