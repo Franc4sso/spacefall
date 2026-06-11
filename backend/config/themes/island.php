@@ -24,7 +24,7 @@ return [
     'resources' => [
         'water'   => ['max' => 100, 'start' => 100, 'daily' => 3, 'two_sided' => false],
         'food'    => ['max' => 100, 'start' => 100, 'daily' => 1, 'two_sided' => false],
-        'fire'    => ['max' => 100, 'start' => 95,  'daily' => 3, 'two_sided' => false],
+        'fire'    => ['max' => 100, 'start' => 100, 'daily' => 3, 'two_sided' => false],
         'shelter' => ['max' => 100, 'start' => 100, 'daily' => 1, 'two_sided' => false],
         'morale'  => ['max' => 100, 'start' => 65,  'daily' => 2, 'two_sided' => true],
     ],
