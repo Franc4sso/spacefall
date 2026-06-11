@@ -3,6 +3,7 @@
 namespace App\Game;
 
 use App\Game\Engine\EndingService;
+use App\Game\ThemeConfig;
 use App\Models\Run;
 use App\Game\Engine\PhaseResolver;
 
@@ -31,6 +32,7 @@ final class DayProcessor
 {
     public function __construct(
         private readonly EndingService $endings,
+        private readonly ThemeConfig $theme = new ThemeConfig(),
     ) {
     }
 
@@ -48,29 +50,29 @@ final class DayProcessor
 
         $resolver = new PhaseResolver();
         $phase = $resolver->resolve($run->day, $resources, $run->phase_floor ?? 'isolation');
-        $decay = (float) config("game.phase_decay.$phase", 1.0);
+        $decay = (float) $this->theme->for($run->theme)->get("phase_decay.$phase", 1.0);
 
         // 1. Resource consumption (scaled by the current phase).
-        foreach (config('game.resources') as $code => $def) {
+        foreach ($this->theme->for($run->theme)->get('resources') as $code => $def) {
             $value = $resources[$code] ?? $def['start'];
             $drain = (int) round($def['daily'] * $decay);
             $resources[$code] = $this->clampResource($value - $drain, $def['max']);
         }
 
         // 2. System degradation + below-threshold resource penalties.
-        [$systems, $resources] = $this->degradeSystems($systems, $resources, $decay);
+        [$systems, $resources] = $this->degradeSystems($systems, $resources, $run->theme, $decay);
 
         // 3. Hardship stress from scarce resources.
-        $characters = $this->applyHardship($characters, $resources);
+        $characters = $this->applyHardship($characters, $resources, $run->theme);
 
         // 3b. Hunger: rises daily, inflicts stress above thresholds, schedules
         //     the meal decision when the crew crosses into a hunger band (so it
         //     reliably surfaces instead of drowning in the event pool), and
         //     kills at the starvation point. A slow, visible spiral.
-        [$characters, $scheduled, $hungerDeath, $starvedNames] = $this->applyHunger($characters, $scheduled, $run->day);
+        [$characters, $scheduled, $hungerDeath, $starvedNames] = $this->applyHunger($characters, $scheduled, $run->day, $run->theme);
 
         // 4. Stress-band self-initiated behaviour.
-        [$characters, $scheduled] = $this->processStress($characters, $scheduled, $run->day);
+        [$characters, $scheduled] = $this->processStress($characters, $scheduled, $run->day, $run->theme);
 
         // Phase transition: recompute on the NEW day's state. If the phase has
         // advanced past the stored floor, raise the floor and enqueue the
@@ -135,9 +137,9 @@ final class DayProcessor
     /**
      * @return array{0: array<string,array{efficiency:int}>, 1: array<string,int>}
      */
-    private function degradeSystems(array $systems, array $resources, float $decay = 1.0): array
+    private function degradeSystems(array $systems, array $resources, string $theme = 'space', float $decay = 1.0): array
     {
-        foreach (config('game.systems') as $key => $def) {
+        foreach ($this->theme->for($theme)->get('systems') as $key => $def) {
             $eff = $systems[$key]['efficiency'] ?? $def['start'];
             $eff = $this->clampResource($eff - (int) round($def['daily_decay'] * $decay), 100);
             $systems[$key] = ['efficiency' => $eff];
@@ -146,7 +148,7 @@ final class DayProcessor
             if ($eff < ($def['penalty_below'] ?? 0) && isset($def['penalty'])) {
                 $p = $def['penalty'];
                 $code = $p['resource'];
-                $max = config("game.resources.$code.max", 100);
+                $max = $this->theme->for($theme)->get("resources.$code.max", 100);
                 $resources[$code] = $this->clampResource(
                     ($resources[$code] ?? 0) + (int) $p['delta'],
                     $max,
@@ -166,9 +168,9 @@ final class DayProcessor
      * @param  list<array{key:string,fire_on_day:int}>  $scheduled
      * @return array{0: list<array<string,mixed>>, 1: list<array{key:string,fire_on_day:int}>, 2: bool, 3: list<string>}
      */
-    private function applyHunger(array $characters, array $scheduled, int $day): array
+    private function applyHunger(array $characters, array $scheduled, int $day, string $theme = 'space'): array
     {
-        $cfg = config('game.hunger');
+        $cfg = $this->theme->for($theme)->get('hunger');
         $rise = (int) ($cfg['daily_rise'] ?? 0);
         $starveAt = (int) ($cfg['starve_at'] ?? 100);
         $bands = $cfg['stress_bands'] ?? [];
@@ -229,10 +231,10 @@ final class DayProcessor
      * @param  array<string,int>  $resources
      * @return list<array<string,mixed>>
      */
-    private function applyHardship(array $characters, array $resources): array
+    private function applyHardship(array $characters, array $resources, string $theme = 'space'): array
     {
         $totalStress = 0;
-        foreach (config('game.hardship') as $rule) {
+        foreach ($this->theme->for($theme)->get('hardship') as $rule) {
             if (($resources[$rule['resource']] ?? PHP_INT_MAX) <= $rule['at_or_below']) {
                 $totalStress += (int) $rule['stress'];
             }
@@ -258,9 +260,9 @@ final class DayProcessor
      * @param  list<array{key:string,fire_on_day:int}>  $scheduled
      * @return array{0: list<array<string,mixed>>, 1: list<array{key:string,fire_on_day:int}>}
      */
-    private function processStress(array $characters, array $scheduled, int $day): array
+    private function processStress(array $characters, array $scheduled, int $day, string $theme = 'space'): array
     {
-        $bands = config('game.stress_bands');
+        $bands = $this->theme->for($theme)->get('stress_bands');
 
         foreach ($characters as $i => $c) {
             if (! ($c['alive'] ?? true)) {

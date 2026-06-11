@@ -7,13 +7,13 @@ beforeEach(function () {
     // Activate hunger for these tests (the shipped default is dormant; Task 9
     // sets the real tuned value).
     config([
-        'game.hunger.daily_rise' => 8,
-        'game.hunger.starve_at' => 100,
-        'game.hunger.stress_bands' => [
+        'themes.space.hunger.daily_rise' => 8,
+        'themes.space.hunger.starve_at' => 100,
+        'themes.space.hunger.stress_bands' => [
             ['at_or_above' => 70, 'stress' => 8],
             ['at_or_above' => 40, 'stress' => 4],
         ],
-        'game.hunger.spawn_bands' => [
+        'themes.space.hunger.spawn_bands' => [
             ['at_or_above' => 30, 'spawn' => 'food_ration'],
         ],
     ]);
