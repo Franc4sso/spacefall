@@ -535,6 +535,19 @@ class EventSeeder extends Seeder
                             ], 'log' => 'Sbaglia tutto. Forse di proposito.'],
                         ],
                     ],
+                    [
+                        'label'         => 'Lo seda e lo tratto col kit',
+                        'hint'          => 'consuma il kit medico',
+                        'requires'      => ['has_item' => 'medkit'],
+                        'requires_item' => 'medkit',
+                        'outcomes' => [
+                            ['weight' => 1, 'effects' => [
+                                ['consume_item' => 'medkit'],
+                                ['character' => 'highest_stress', 'stress' => -20],
+                                ['resource' => 'morale', 'delta' => 2],
+                            ], 'log' => 'Lo riporti in sé prima che faccia danni. Quando si sveglia è svuotato, ma intero. Il kit no.'],
+                        ],
+                    ],
                 ],
             ],
 
