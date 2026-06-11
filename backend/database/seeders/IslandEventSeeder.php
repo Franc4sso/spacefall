@@ -87,6 +87,7 @@ class IslandEventSeeder extends Seeder
             $this->rescueChain(),
             $this->itemArcs(),
             $this->pairArcs(),
+            $this->crossReactions(),
         );
     }
 
@@ -169,6 +170,72 @@ class IslandEventSeeder extends Seeder
                 'choices' => [
                     $this->one('Rispetta il loro patto silenzioso', [['relationship' => ['a' => 'Bruno', 'b' => 'Carla', 'delta' => 10]]], 'Bruno è diventato l\'ancora di Carla, e Carla la coscienza di Bruno: lei gli ricorda di non mentire alla paura, lui le ricorda di respirare. Si reggono a vicenda.'),
                     $this->one('Chiedi a Bruno di dirti cosa la spaventa', [['relationship' => ['a' => 'Bruno', 'b' => 'Carla', 'delta' => -6]], ['resource' => 'morale', 'delta' => 4]], 'Bruno scuote la testa. «No. Se lo dico io, tradisco l\'unica cosa che si fida di me.» Tiene il segreto. Carla, quando lo scopre, lo guarda come non guarda nessun altro.'),
+                ],
+            ]),
+        ];
+    }
+
+    // ---- Cross-reactions: jealousy when you keep favouring one survivor -----
+    // Mirrors space's cross_* events: when you consistently FAVOUR one survivor
+    // their standing climbs, and ANOTHER survivor remarks on it. The gate is the
+    // SAME mechanism space uses for its standing-driven cross beats (see
+    // ContentEventSeeder cross_*/standing gates at lines 1116/1207/1234/1332):
+    //   ['standing' => ['who' => <favoured>, 'op' => '>=', 'value' => N]]
+    // which ConditionEvaluator reads from state flag standing_<who> (set by the
+    // modify_standing effect scattered through pairArcs/dilemmas). Both the
+    // COMMENTER and the FAVOURED survivor must be alive. Choices ripple the
+    // dynamic via relationship/modify_standing/morale only — no flags.
+    //   cross_bruno_on_nadia : Bruno, hurt optimism, on a favoured Nadia
+    //   cross_carla_on_bruno : Carla, timid resentment, on a favoured Bruno
+    //   cross_nadia_on_carla : Nadia, blunt impatience, on a favoured Carla
+    private function crossReactions(): array
+    {
+        return [
+            // === BRUNO commenta una NADIA troppo coccolata ===================
+            $this->ev([
+                'key' => 'cross_bruno_on_nadia', 'title' => 'Bruno parla di Nadia', 'speaker' => 'Bruno',
+                'body' => "Bruno ti raggiunge dove nessuno sente, e per una volta non sorride. «Lo so che Nadia è la più sveglia di noi. Glielo dici con gli occhi ogni volta. Ma c'è altra gente, qui. Io curo, Carla pilota, e cominciamo a sentirci come attrezzi che tieni nello zaino di scorta. Non è da te. O forse sì, e non me n'ero accorto.»",
+                'requires' => ['all' => [
+                    ['alive' => 'Bruno'], ['alive' => 'Nadia'],
+                    ['standing' => ['who' => 'Nadia', 'op' => '>=', 'value' => 30]],
+                ]],
+                'base_weight' => 6, 'cooldown_days' => 999,
+                'choices' => [
+                    $this->one('Hai ragione, mi sono sbilanciato', [['modify_standing' => ['who' => 'Bruno', 'delta' => 8]], ['relationship' => ['a' => 'Bruno', 'b' => 'Nadia', 'delta' => -6]], ['resource' => 'morale', 'delta' => 3]], 'Bruno respira piano, come se gli avessi tolto un peso. «Grazie. Ne avevo bisogno.» Torna dai feriti più dritto di prima.'),
+                    $this->one('Nadia ci tiene vivi: è meritato', [['modify_standing' => ['who' => 'Nadia', 'delta' => 6]], ['relationship' => ['a' => 'Bruno', 'b' => 'Nadia', 'delta' => -8]], ['resource' => 'morale', 'delta' => -3]], '«Certo. Ci tiene vivi.» Bruno annuisce e se ne va, e per la prima volta il suo ottimismo sembra una porta che si chiude.'),
+                    $this->one('Hai ragione: ridistribuirò il peso', [['relationship' => ['a' => 'Bruno', 'b' => 'Nadia', 'delta' => 5]], ['modify_standing' => ['who' => 'Bruno', 'delta' => 4]], ['modify_standing' => ['who' => 'Nadia', 'delta' => -4]]], 'Da quel giorno chiedi anche a lui, davanti agli altri. Nadia alza un sopracciglio, ma Bruno cammina più leggero, e il gruppo respira.'),
+                ],
+            ]),
+
+            // === CARLA commenta un BRUNO troppo ascoltato ====================
+            $this->ev([
+                'key' => 'cross_carla_on_bruno', 'title' => 'Carla parla di Bruno', 'speaker' => 'Carla',
+                'body' => "Carla ti si avvicina di lato, le braccia strette al petto, la voce che le trema appena. «Non voglio fare scenate, davvero. Però… ascolti sempre Bruno. 'Andrà tutto bene, abbiate fede.' E io che dico di tenerci pronti al peggio sembro quella che porta sfortuna. Lo so che ho paura. Ma a volte ho anche ragione, e nessuno mi guarda.»",
+                'requires' => ['all' => [
+                    ['alive' => 'Carla'], ['alive' => 'Bruno'],
+                    ['standing' => ['who' => 'Bruno', 'op' => '>=', 'value' => 30]],
+                ]],
+                'base_weight' => 6, 'cooldown_days' => 999,
+                'choices' => [
+                    $this->one('Ti ascolto: dimmi cosa vedi tu', [['modify_standing' => ['who' => 'Carla', 'delta' => 8]], ['relationship' => ['a' => 'Carla', 'b' => 'Bruno', 'delta' => -4]], ['resource' => 'morale', 'delta' => 2]], 'Carla scioglie le braccia, sorpresa. Ti spiega due rischi che nessuno aveva visto. Ha ragione su entrambi.'),
+                    $this->one('Bruno ci tiene su il morale: serve', [['modify_standing' => ['who' => 'Bruno', 'delta' => 5]], ['relationship' => ['a' => 'Carla', 'b' => 'Bruno', 'delta' => -8]], ['resource' => 'morale', 'delta' => -2]], '«Già. Il morale.» Carla annuisce in fretta e si ritira nel suo angolo, dove la paura non disturba nessuno.'),
+                    $this->one('Avete ragione tutti e due, insieme', [['relationship' => ['a' => 'Carla', 'b' => 'Bruno', 'delta' => 6]], ['modify_standing' => ['who' => 'Carla', 'delta' => 4]], ['modify_standing' => ['who' => 'Bruno', 'delta' => -3]]], 'Li metti a parlare: la speranza di Bruno e la prudenza di Carla, insieme, fanno un piano migliore. Carla, per una volta, alza la testa.'),
+                ],
+            ]),
+
+            // === NADIA commenta una CARLA troppo protetta ====================
+            $this->ev([
+                'key' => 'cross_nadia_on_carla', 'title' => 'Nadia parla di Carla', 'speaker' => 'Nadia',
+                'body' => "Nadia ti blocca con la chiave inglese ancora in mano, senza giri di parole. «La tratti con i guanti. Carla congela quando serve agire e tu la copri, la rassicuri, le togli i compiti pesanti. Io intanto lavoro doppio. Va bene proteggere chi ha paura. Ma se la paura non le costa mai niente, non smetterà mai di averne. E qualcuno di noi paga per questo. Io.»",
+                'requires' => ['all' => [
+                    ['alive' => 'Nadia'], ['alive' => 'Carla'],
+                    ['standing' => ['who' => 'Carla', 'op' => '>=', 'value' => 30]],
+                ]],
+                'base_weight' => 6, 'cooldown_days' => 999,
+                'choices' => [
+                    $this->one('Hai ragione: smetterò di coprirla', [['modify_standing' => ['who' => 'Nadia', 'delta' => 8]], ['relationship' => ['a' => 'Nadia', 'b' => 'Carla', 'delta' => -6]], ['character' => 'Carla', 'stress' => 6]], 'Nadia grugnisce, soddisfatta. Da domani Carla ha i suoi turni pesanti. Trema, ma li fa. Nadia smette di lavorare doppio.'),
+                    $this->one('Carla ha bisogno di tempo: la proteggo', [['modify_standing' => ['who' => 'Carla', 'delta' => 4]], ['relationship' => ['a' => 'Nadia', 'b' => 'Carla', 'delta' => -8]], ['character' => 'Nadia', 'stress' => 6]], '«Tempo. Certo.» Nadia rimette via la chiave inglese di scatto e torna al doppio lavoro, e ogni colpo che batte è un rimprovero.'),
+                    $this->one('Avete entrambe ragione: dividiamo il carico', [['relationship' => ['a' => 'Nadia', 'b' => 'Carla', 'delta' => 6]], ['modify_standing' => ['who' => 'Nadia', 'delta' => 3]], ['modify_standing' => ['who' => 'Carla', 'delta' => 3]]], 'Affianchi Carla a Nadia sui compiti duri: una insegna, l\'altra impara. Carla suda di paura, ma regge. E Nadia, per la prima volta, non lavora sola.'),
                 ],
             ]),
         ];
