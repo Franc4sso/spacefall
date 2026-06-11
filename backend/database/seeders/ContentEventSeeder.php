@@ -189,6 +189,66 @@ class ContentEventSeeder extends Seeder
                     $this->one('Dividi la tua parte', [['resource' => 'morale', 'delta' => 2], ['character' => 'random', 'hunger' => 8]], 'Un gesto che pesa. Loro lo notano.'),
                 ],
             ]),
+            $this->ev([
+                'key' => 'det_compound_failure', 'title' => 'Tre cose insieme', 'speaker' => 'Cole',
+                'body' => "Cole urla dal ponte inferiore: 'Tre allarmi insieme! Posso correre solo da una parte — dimmi dove!'",
+                'requires' => ['phase' => 'deterioration'],
+                'base_weight' => 11, 'cooldown_days' => 5,
+                'choices' => [
+                    $this->one('Salva l\'energia', [['resource' => 'power', 'delta' => -6], ['damage_system' => 'life_support', 'amount' => 12]], 'Le luci reggono. L\'aria peggiora.'),
+                    $this->one('Salva l\'aria', [['resource' => 'oxygen', 'delta' => -6], ['damage_system' => 'power_grid', 'amount' => 12]], 'Si respira. Qualcosa, al buio, cede.'),
+                    $this->one('Salva lo scafo', [['resource' => 'hull', 'delta' => -6], ['damage_system' => 'power_grid', 'amount' => 8], ['damage_system' => 'life_support', 'amount' => 8]], 'La paratia tiene. Tutto il resto arranca.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'det_dwindling_stores', 'title' => 'Il fondo del magazzino', 'speaker' => null,
+                'body' => "Le mensole sono quasi vuote. Quello che resta, lo gestisci adesso: stringere ancora, o aprire tutto e sperare.",
+                'requires' => ['phase' => 'deterioration'],
+                'base_weight' => 10, 'cooldown_days' => 5,
+                'choices' => [
+                    $this->one('Razioniamo duro', [['character' => 'all', 'stress' => 8], ['resource' => 'food', 'delta' => 4]], 'Pance vuote, ma le scorte durano un altro po\'.'),
+                    array_merge(
+                        $this->one('Apriamo tutto adesso', [['resource' => 'food', 'delta' => 10], ['resource' => 'morale', 'delta' => 4], ['spawn_event' => ['key' => 'det_dwindling_stores', 'in_days' => 6]]], 'Stasera si mangia. Domani sarà un problema più grande.'),
+                        ['tags' => ['short_term']]
+                    ),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'det_cracks_showing', 'title' => 'Qualcuno cede', 'speaker' => null,
+                'body' => "Lo vedi negli occhi di chi è più a pezzi: mani che tremano, frasi che non finiscono. Sta per rompersi.",
+                'requires' => ['phase' => 'deterioration'],
+                'base_weight' => 10, 'cooldown_days' => 5,
+                'choices' => [
+                    $this->one('Mi fermo a sostenerlo', [['character' => 'highest_stress', 'stress' => -14], ['resource' => 'power', 'delta' => -4]], 'Un\'ora persa, accanto a lui. Ma respira di nuovo.'),
+                    array_merge(
+                        $this->one('Si stringe i denti', [['character' => 'highest_stress', 'stress' => 12], ['spawn_event' => ['key' => 'survivor_breaks', 'in_days' => 4]]], 'Annuisce e torna al lavoro. Qualcosa, dentro, scricchiola.'),
+                        ['tags' => ['pushed_too_hard']]
+                    ),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'det_rumor', 'title' => 'Una voce', 'speaker' => null,
+                'body' => "Gira un mormorio: che tu nascondi qualcosa, che le scelte non sono giuste. Non sai chi l\'ha cominciato.",
+                'requires' => ['phase' => 'deterioration'],
+                'base_weight' => 9, 'cooldown_days' => 6,
+                'choices' => [
+                    $this->one('Lo affronto apertamente', [['resource' => 'morale', 'delta' => -6], ['modify_trust' => 10]], 'Metti tutto sul tavolo. Disagio, ma aria più pulita.'),
+                    $this->one('Lo ignoro', [['modify_trust' => -8]], 'Fai finta di niente. Il mormorio si fa più fitto.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'det_make_do', 'title' => 'Arrangiarsi', 'speaker' => 'Anna',
+                'body' => "Anna soppesa un pezzo storto. 'Non è il ricambio giusto. Posso forzarlo — magari regge, magari peggiora. Provo?'",
+                'requires' => ['phase' => 'deterioration'],
+                'base_weight' => 10, 'cooldown_days' => 5,
+                'choices' => [
+                    $this->gamble('Improvvisa',
+                        [['resource' => 'hull', 'delta' => 8]], 'Tiene. Brutto a vedersi, ma tiene.',
+                        [['resource' => 'hull', 'delta' => -10], ['damage_system' => 'hull_integrity', 'amount' => 12]], 'Si spacca peggio di prima. Anna impreca piano.',
+                        6, 4, 'potrebbe peggiorare'),
+                    $this->one('Non tocchiamo niente', [['resource' => 'hull', 'delta' => -4]], 'Meglio non rischiare. Il degrado va avanti, lento.'),
+                ],
+            ]),
 
             // --- RECKONING: terminal, irreversible, high stakes ---
             $this->ev([
