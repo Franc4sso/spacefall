@@ -271,6 +271,57 @@ class ContentEventSeeder extends Seeder
                     $this->one('Tengo la testa bassa', [['resource' => 'morale', 'delta' => 4], ['modify_trust' => -10]], 'Eviti i loro occhi. È più facile, e peggio.'),
                 ],
             ]),
+            $this->ev([
+                'key' => 'rec_who_eats', 'title' => 'Chi mangia', 'speaker' => null,
+                'body' => "Non c\'è abbastanza per tutti, non stasera. Qualcuno salterà — e lo sai tu chi.",
+                'requires' => ['phase' => 'reckoning'],
+                'base_weight' => 12, 'cooldown_days' => 999,
+                'choices' => [
+                    $this->one('Privo me stesso', [['resource' => 'morale', 'delta' => 6], ['resource' => 'food', 'delta' => -4]], 'Cedi la tua parte. Ti guardano in un modo nuovo.'),
+                    $this->one('Privo i più deboli', [['character' => 'highest_stress', 'stress' => 18], ['resource' => 'morale', 'delta' => -10]], 'Decidi tu chi stringe la cinghia. Nessuno te lo perdona del tutto.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'rec_the_truth', 'title' => 'La verità', 'speaker' => null,
+                'body' => "Tutto quello che hai tenuto nascosto preme per uscire. Puoi dirlo, adesso, o portartelo dietro fino alla fine.",
+                'requires' => ['phase' => 'reckoning'],
+                'base_weight' => 11, 'cooldown_days' => 999,
+                'choices' => [
+                    $this->one('Confesso tutto', [['resource' => 'morale', 'delta' => -8], ['modify_trust' => 14]], 'Lo dici. Cala il silenzio, poi qualcosa si scioglie.'),
+                    $this->one('Me lo tengo', [['modify_trust' => -6], ['character' => 'highest_stress', 'stress' => 8]], 'Seppellisci tutto. Il peso resta tuo, e si vede.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'rec_last_repair', 'title' => 'L\'ultima riparazione', 'speaker' => 'Anna',
+                'body' => "Anna ti guarda con le mani sporche. 'Questa è l\'ultima volta che possiamo scegliere. Dopo, qualunque cosa lasciamo andare, è andata.'",
+                'requires' => ['phase' => 'reckoning'],
+                'base_weight' => 12, 'cooldown_days' => 999,
+                'choices' => [
+                    $this->one('Teniamo viva la stazione', [['resource' => 'power', 'delta' => -16], ['resource' => 'oxygen', 'delta' => -10]], 'Strappi un altro giorno al buio. A un prezzo che si sente.'),
+                    $this->one('Lasciamo morire un sistema', [['damage_system' => 'life_support', 'amount' => 40], ['resource' => 'morale', 'delta' => -6]], 'Spegni un settore per sempre. Più freddo, più stretto, ma vivi.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'rec_who_stays', 'title' => 'Chi resta', 'speaker' => null,
+                'body' => "Per farcela, qualcuno deve restare indietro. Non c\'è modo gentile di dirlo, e non c\'è tempo.",
+                'requires' => ['phase' => 'reckoning'],
+                'base_weight' => 10, 'cooldown_days' => 999,
+                'choices' => [
+                    $this->one('Resto io', [['set_flag' => 'made_the_sacrifice', 'value' => true], ['resource' => 'morale', 'delta' => 8]], 'Lo dici prima di pensarci troppo. Nessuno protesta abbastanza forte.'),
+                    $this->one('Lascio uno di loro', [['kill' => 'highest_stress'], ['set_flag' => 'left_someone', 'value' => true], ['resource' => 'morale', 'delta' => -16]], 'Scegli, e chiudi il portello. Il silenzio dopo è assoluto.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'rec_reckoning_vote', 'title' => 'La conta', 'speaker' => null,
+                'body' => "Si radunano tutti. Te lo chiedono in faccia: dove stiamo andando? Resistere, arrendersi, o giocarci tutto in una volta?",
+                'requires' => ['phase' => 'reckoning'],
+                'base_weight' => 11, 'cooldown_days' => 999,
+                'choices' => [
+                    $this->one('Resistiamo ancora', [['character' => 'all', 'stress' => -6], ['resource' => 'morale', 'delta' => 4]], 'Stringi i denti per tutti. Si torna ai posti, in silenzio.'),
+                    $this->one('Ci arrendiamo alla deriva', [['resource' => 'morale', 'delta' => -12]], 'Smetti di combattere il buio. C\'è una pace, terribile, in questo.'),
+                    $this->one('Giochiamoci tutto', [['resource' => 'power', 'delta' => -12], ['resource' => 'hull', 'delta' => -8], ['resource' => 'morale', 'delta' => 10]], 'Tutto su una carta. Almeno si muore provandoci.'),
+                ],
+            ]),
         ];
     }
 
