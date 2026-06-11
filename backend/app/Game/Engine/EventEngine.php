@@ -48,7 +48,7 @@ final class EventEngine
         $state = RunState::fromRun($run);
 
         if (! $run->current_event_key && $this->trust->shouldMutiny($state)) {
-            $mutinyEvent = Event::where('key', $this->trust->mutinyEventKey())->first();
+            $mutinyEvent = Event::where('theme', $run->theme)->where('key', $this->trust->mutinyEventKey())->first();
             if ($mutinyEvent) {
                 // Reset trust to prevent infinite loop
                 $run->flags = array_merge($run->flags ?? [], ['crew_trust' => 25]);
@@ -59,11 +59,11 @@ final class EventEngine
         }
 
         $event = $run->current_event_key
-            ? Event::where('key', $run->current_event_key)->first()
+            ? Event::where('theme', $run->theme)->where('key', $run->current_event_key)->first()
             : null;
 
         if (! $event) {
-            $pool = Event::all();
+            $pool = Event::where('theme', $run->theme)->get();
 
             // No content at all (e.g. a run created before any events are
             // seeded): degrade to "no card" rather than 500. With content
@@ -113,7 +113,7 @@ final class EventEngine
             throw new RuntimeException('No card is currently presented.');
         }
 
-        $event = Event::where('key', $run->current_event_key)->firstOrFail();
+        $event = Event::where('theme', $run->theme)->where('key', $run->current_event_key)->firstOrFail();
         $state = RunState::fromRun($run);
 
         $choice = $event->choices[$choiceIndex] ?? null;

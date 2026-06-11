@@ -46,3 +46,26 @@ it('scopes event lookup by theme', function () {
         ->toBe('I');
     expect(App\Models\Event::where('theme', 'space')->count())->toBe(1);
 });
+
+it('an island run never draws space events', function () {
+    App\Models\Event::query()->delete();
+    App\Models\Event::create([
+        'key' => 'space_only', 'theme' => 'space', 'title' => 'S', 'body' => 'b',
+        'base_weight' => 100, 'cooldown_days' => 0, 'is_filler' => false,
+        'choices' => [['label' => 'ok', 'outcomes' => []]],
+    ]);
+    App\Models\Event::create([
+        'key' => 'island_only', 'theme' => 'island', 'title' => 'I', 'body' => 'b',
+        'base_weight' => 100, 'cooldown_days' => 0, 'is_filler' => false,
+        'choices' => [['label' => 'ok', 'outcomes' => []]],
+    ]);
+
+    $run = App\Models\Run::create([
+        'seed' => 7, 'rng_cursor' => 0, 'day' => 1, 'resources' => ['morale' => 50],
+        'status' => 'active', 'flags' => [], 'characters' => [],
+        'relationships' => [], 'items' => [], 'systems' => [], 'theme' => 'island',
+    ]);
+
+    $card = app(App\Game\Engine\EventEngine::class)->currentCard($run->fresh());
+    expect($card['event']->key)->toBe('island_only');
+});

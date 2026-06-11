@@ -63,6 +63,7 @@ class Run extends Model
     ];
 
     protected $attributes = [
+        'theme' => 'space',
         'flags' => '{}',
         'recent_events' => '{}',
         'scheduled_events' => '[]',
