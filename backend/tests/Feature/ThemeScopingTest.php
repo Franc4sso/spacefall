@@ -29,3 +29,20 @@ it('RunState carries the run theme', function () {
     $state = App\Game\Engine\RunState::fromRun($run->fresh());
     expect($state->theme)->toBe('island');
 });
+
+it('scopes event lookup by theme', function () {
+    App\Models\Event::create([
+        'key' => 'shared_key', 'theme' => 'space', 'title' => 'S', 'body' => 'b',
+        'base_weight' => 10, 'cooldown_days' => 0, 'is_filler' => false,
+        'choices' => [['label' => 'ok', 'outcomes' => []]],
+    ]);
+    App\Models\Event::create([
+        'key' => 'shared_key', 'theme' => 'island', 'title' => 'I', 'body' => 'b',
+        'base_weight' => 10, 'cooldown_days' => 0, 'is_filler' => false,
+        'choices' => [['label' => 'ok', 'outcomes' => []]],
+    ]);
+
+    expect(App\Models\Event::where('theme', 'island')->where('key', 'shared_key')->first()->title)
+        ->toBe('I');
+    expect(App\Models\Event::where('theme', 'space')->count())->toBe(1);
+});

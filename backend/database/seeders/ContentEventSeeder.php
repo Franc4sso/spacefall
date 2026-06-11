@@ -26,7 +26,7 @@ class ContentEventSeeder extends Seeder
 
         foreach ($this->events() as $event) {
             $schema->validate($event);
-            Event::updateOrCreate(['key' => $event['key']], $event);
+            Event::updateOrCreate(['key' => $event['key'], 'theme' => $event['theme']], $event);
         }
     }
 
@@ -34,6 +34,7 @@ class ContentEventSeeder extends Seeder
     private function ev(array $e): array
     {
         return array_merge([
+            'theme' => 'space',
             'speaker' => null,
             'base_weight' => 12,
             'cooldown_days' => 4,

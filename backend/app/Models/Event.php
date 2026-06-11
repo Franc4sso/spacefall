@@ -23,6 +23,7 @@ class Event extends Model
 {
     protected $fillable = [
         'key',
+        'theme',
         'title',
         'body',
         'speaker',

@@ -22,8 +22,9 @@ class EventSeeder extends Seeder
         $schema = new EventSchema(array_keys(config('game.resources')));
 
         foreach ($this->events() as $event) {
+            $event['theme'] = $event['theme'] ?? 'space';
             $schema->validate($event);
-            Event::updateOrCreate(['key' => $event['key']], $event);
+            Event::updateOrCreate(['key' => $event['key'], 'theme' => $event['theme']], $event);
         }
     }
 

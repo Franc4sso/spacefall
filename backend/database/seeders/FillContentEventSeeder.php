@@ -21,7 +21,7 @@ final class FillContentEventSeeder extends Seeder
 
         foreach ($this->events() as $event) {
             $schema->validate($event);
-            Event::updateOrCreate(['key' => $event['key']], $event);
+            Event::updateOrCreate(['key' => $event['key'], 'theme' => $event['theme']], $event);
         }
     }
 
@@ -285,6 +285,7 @@ final class FillContentEventSeeder extends Seeder
     private function ev(array $e): array
     {
         return array_merge([
+            'theme' => 'space',
             'speaker' => null, 'base_weight' => 12, 'cooldown_days' => 4,
             'is_filler' => false, 'requires' => null, 'weight_modifiers' => null,
         ], $e);
