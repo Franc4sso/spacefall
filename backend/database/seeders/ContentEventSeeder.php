@@ -117,6 +117,56 @@ class ContentEventSeeder extends Seeder
                     $this->one('La rimetto a posto', [], 'Richiudi il cassetto. Alcune cose è meglio non saperle.'),
                 ],
             ]),
+            $this->ev([
+                'key' => 'iso_inventory', 'title' => 'L\'inventario', 'speaker' => null,
+                'body' => "Conti scatole, filtri, celle. Numeri piccoli, ma è la prima volta che li guardi davvero. Decidi come tenerli.",
+                'requires' => ['phase' => 'isolation'],
+                'base_weight' => 7, 'cooldown_days' => 7,
+                'choices' => [
+                    $this->one('Ottimizzo subito gli spazi', [['resource' => 'food', 'delta' => 4]], 'Un po\' d\'ordine. Qualche scatola in più di quanto pensassi.'),
+                    $this->one('Rimando, c\'è tempo', [['resource' => 'morale', 'delta' => 2]], 'Chiudi il portello. Tanto i numeri non scappano.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'iso_first_friction', 'title' => 'Il primo screzio', 'speaker' => null,
+                'body' => "Due voci alzate nel corridoio per una sciocchezza: un turno, una tazza, niente. Ma è il primo.",
+                'requires' => ['phase' => 'isolation'],
+                'base_weight' => 8, 'cooldown_days' => 6,
+                'choices' => [
+                    $this->one('Medio io', [['resource' => 'morale', 'delta' => -2]], 'Si stringono la mano, controvoglia. Per ora basta.'),
+                    $this->one('Lascio correre', [['character' => 'highest_stress', 'stress' => 6]], 'Si allontanano in silenzio. Qualcosa resta sospeso.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'iso_routine', 'title' => 'Una routine', 'speaker' => 'Cole',
+                'body' => "Cole propone turni fissi, orari, una tabella. 'Se ci diamo una regola adesso, dopo è più facile.' Oppure no.",
+                'requires' => ['phase' => 'isolation'],
+                'base_weight' => 7, 'cooldown_days' => 8,
+                'choices' => [
+                    $this->one('Imponiamo i turni', [['resource' => 'morale', 'delta' => 3], ['character' => 'highest_stress', 'stress' => 4]], 'La tabella regge. Qualcuno la odia già.'),
+                    $this->one('Restiamo liberi', [['resource' => 'morale', 'delta' => -2]], 'Niente regole. Più leggero adesso, più caos poi.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'iso_old_terminal', 'title' => 'Un terminale acceso', 'speaker' => null,
+                'body' => "Uno schermo che credevi morto lampeggia: frammenti di log della stazione, di prima. Puoi leggere, o spegnere e basta.",
+                'requires' => ['phase' => 'isolation'],
+                'base_weight' => 6, 'cooldown_days' => 9,
+                'choices' => [
+                    $this->one('Leggo tutto', [['set_flag' => 'knows_the_past', 'value' => true], ['resource' => 'morale', 'delta' => -3]], 'Sai cosa è successo a chi c\'era prima. Non aiuta a dormire.'),
+                    $this->one('Spengo', [], 'Lo schermo si fa nero. Alcune cose è meglio non saperle.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'iso_ration_habit', 'title' => 'Le prime razioni', 'speaker' => null,
+                'body' => "Stabilisci la norma: quanto si mangia, da oggi. Tutto ciò che viene dopo parte da qui.",
+                'requires' => ['phase' => 'isolation'],
+                'base_weight' => 8, 'cooldown_days' => 7,
+                'choices' => [
+                    $this->one('Generoso, per il morale', [['resource' => 'morale', 'delta' => 4], ['resource' => 'food', 'delta' => -5]], 'Si mangia bene. Finché dura.'),
+                    $this->one('Prudente, mettiamo via', [['resource' => 'food', 'delta' => 5], ['resource' => 'morale', 'delta' => -2]], 'Porzioni strette. Un cuscinetto per il buio che verrà.'),
+                ],
+            ]),
 
             // --- DETERIORATION: systems failing, tension, medium stakes ---
             $this->ev([
