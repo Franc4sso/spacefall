@@ -86,7 +86,92 @@ class IslandEventSeeder extends Seeder
             $this->fillerEvents(),
             $this->rescueChain(),
             $this->itemArcs(),
+            $this->pairArcs(),
         );
+    }
+
+    // ---- Pair arcs: relationships between the three survivors ----------------
+    // Mirrors space's pair_* events stage-for-stage. For each couple a CLASH
+    // card (gated on both alive) where they fight under stress, and a BOND card
+    // (gated on relationship state 'bond') where they've grown close. Conflicts
+    // are written FROM their established voices (survivorVoiceArcs):
+    //   Nadia  — brilliance as risk (her azzardi strain the group)
+    //   Bruno  — hope as denial (downplays real danger)
+    //   Carla  — fear, freezes in a crisis
+    // Effects use relationship/modify_standing only; no flags, so the bond gate
+    // is the relationship STATE, never a set_flag.
+    private function pairArcs(): array
+    {
+        return [
+            // === NADIA × BRUNO : il suo azzardo contro la sua prudenza ========
+            $this->ev([
+                'key' => 'pair_nadia_bruno_clash', 'title' => 'L\'azzardo e la cautela', 'speaker' => null,
+                'body' => "Nadia vuole smontare la cassetta del pronto soccorso per recuperarne il metallo e l'alcol: «Mi serve per l'alambicco, e ne vale la pena.» Bruno le si pianta davanti. «Non tutto si può aggiustare con un azzardo, Nadia. Quella roba salva delle vite. La tua acqua può aspettare.» Si fissano. Aspettano te.",
+                'requires' => ['all' => [['alive' => 'Nadia'], ['alive' => 'Bruno']]],
+                'base_weight' => 9, 'cooldown_days' => 7,
+                'choices' => [
+                    $this->one('Dai ragione a Nadia: rischiamo per l\'acqua', [['relationship' => ['a' => 'Nadia', 'b' => 'Bruno', 'delta' => -12]], ['modify_standing' => ['who' => 'Nadia', 'delta' => 8]]], 'Bruno raccoglie quel che resta della cassetta senza una parola. Nadia ha già le mani nel metallo.'),
+                    $this->one('Dai ragione a Bruno: la prudenza prima', [['relationship' => ['a' => 'Nadia', 'b' => 'Bruno', 'delta' => -12]], ['modify_standing' => ['who' => 'Bruno', 'delta' => 8]]], 'Nadia richiude la cassetta di scatto. «Allora resteremo prudenti e assetati. Bravi.»'),
+                    $this->one('Hanno ragione entrambi: trovate un compromesso', [['relationship' => ['a' => 'Nadia', 'b' => 'Bruno', 'delta' => 8]], ['resource' => 'morale', 'delta' => -3]], 'Litigano ancora un po\', poi spartiscono: metà alla medicina, metà all\'alambicco. Nessuno è contento. Ma lavorano fianco a fianco.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'pair_nadia_bruno_bond', 'title' => 'Due teste, una notte', 'speaker' => 'Bruno',
+                'body' => "Li trovi svegli al fuoco, vicini. Nadia disegna circuiti nella cenere, Bruno tiene il ritmo con domande da profano che però la fanno ridere. «Mi ha spiegato come funziona il suo alambicco finché non ho capito,» ti dice Bruno. «E io le ho insegnato a suturare. Se uno di noi crolla, l'altro sa cosa fare.» Nadia annuisce, per una volta senza spigoli.",
+                'requires' => ['relationship' => ['a' => 'Nadia', 'b' => 'Bruno', 'state' => 'bond']],
+                'base_weight' => 8, 'cooldown_days' => 10,
+                'choices' => [
+                    $this->one('Incoraggiali: insegnatevi tutto', [['relationship' => ['a' => 'Nadia', 'b' => 'Bruno', 'delta' => 10]]], 'Passano la notte a scambiarsi i loro mestieri. Domani il gruppo ha due teste che pensano in due modi.'),
+                    $this->one('Mettili alla prova: chi decide se siete in disaccordo?', [['relationship' => ['a' => 'Nadia', 'b' => 'Bruno', 'delta' => -6]], ['resource' => 'morale', 'delta' => 4]], 'La domanda li gela un istante. «Decide chi ha ragione,» dice Nadia. «Decide chi rischia di meno,» dice Bruno. Ridono, ma adesso lo sanno: un giorno dovranno scegliere.'),
+                ],
+            ]),
+
+            // === NADIA × CARLA : la competenza contro la paura ================
+            $this->ev([
+                'key' => 'pair_nadia_carla_clash', 'title' => 'Chi si muove e chi si blocca', 'speaker' => null,
+                'body' => "Una trave del riparo sta cedendo e Nadia è sotto a reggerla. «Carla, la corda, ADESSO!» Ma Carla è impietrita, le mani che tremano, lo sguardo perso. Nadia ce la fa da sola per un soffio, poi esplode: «Eri un pilota! Come fai a bloccarti così? Ogni volta tocca farlo a me!» Carla incassa, muta. Ti girano entrambe lo sguardo addosso.",
+                'requires' => ['all' => [['alive' => 'Nadia'], ['alive' => 'Carla']]],
+                'base_weight' => 9, 'cooldown_days' => 7,
+                'choices' => [
+                    $this->one('Dai ragione a Nadia: Carla deve reagire', [['relationship' => ['a' => 'Nadia', 'b' => 'Carla', 'delta' => -12]], ['modify_standing' => ['who' => 'Nadia', 'delta' => 8]]], 'Nadia annuisce, dura. Carla si allontana sola verso gli alberi, le spalle curve.'),
+                    $this->one('Dai ragione a Carla: la paura non è una colpa', [['relationship' => ['a' => 'Nadia', 'b' => 'Carla', 'delta' => -12]], ['modify_standing' => ['who' => 'Carla', 'delta' => 8]]], 'Carla ti cerca con gli occhi, grata. Nadia sbuffa e torna al lavoro: «Allora reggetela voi, la prossima trave.»'),
+                    $this->one('Hanno ragione entrambe: il panico va capito, non punito', [['relationship' => ['a' => 'Nadia', 'b' => 'Carla', 'delta' => 8]], ['resource' => 'morale', 'delta' => -3]], 'Costringi Nadia a respirare e Carla a parlare. «Quando mi blocco, dammi un compito piccolo,» dice Carla piano. Nadia ci pensa. «...Va bene. La corda è un compito piccolo.»'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'pair_nadia_carla_bond', 'title' => 'La mano ferma', 'speaker' => 'Nadia',
+                'body' => "Nadia ti mostra il faro di posizione, di nuovo acceso. «L'ho rimontato io, ma le mani che hanno tenuto fermi i contatti mentre saldavo erano le sue.» Indica Carla con il mento. «Non si è bloccata. Non una volta.» Carla quasi arrossisce. «Mi ha dato un compito alla volta. Così riesco.» Tra loro due, adesso, c'è un ritmo.",
+                'requires' => ['relationship' => ['a' => 'Nadia', 'b' => 'Carla', 'state' => 'bond']],
+                'base_weight' => 8, 'cooldown_days' => 10,
+                'choices' => [
+                    $this->one('Affidale insieme un lavoro difficile', [['relationship' => ['a' => 'Nadia', 'b' => 'Carla', 'delta' => 10]]], 'Nadia spezza ogni compito in passi piccoli, Carla li esegue uno a uno senza esitare. Funziona. Più di quanto entrambe sperassero.'),
+                    $this->one('Metti Carla in una crisi senza Nadia accanto', [['relationship' => ['a' => 'Nadia', 'b' => 'Carla', 'delta' => -6]], ['character' => 'Carla', 'stress' => 6]], 'Carla regge, a stento, sudando freddo. Nadia accorre dopo: «Perché l\'hai lasciata sola?» C\'è qualcosa di protettivo, ora, nel modo in cui difende Carla.'),
+                ],
+            ]),
+
+            // === BRUNO × CARLA : la speranza contro il terrore ================
+            $this->ev([
+                'key' => 'pair_bruno_carla_clash', 'title' => 'Quando il sorriso non basta', 'speaker' => null,
+                'body' => "Carla è seduta in disparte, le ginocchia strette al petto: è convinta che non vi salverà nessuno. Bruno le si avvicina col suo sorriso di sempre. «Su, andrà tutto bene! Domani il mare sarà calmo e—» «SMETTILA!» scatta Carla. «Non va tutto bene. Tu fai finta e basta. La mia paura non è uno scherzo da spazzare via con una battuta.» Bruno resta col sorriso a metà. Aspettano te.",
+                'requires' => ['all' => [['alive' => 'Bruno'], ['alive' => 'Carla']]],
+                'base_weight' => 9, 'cooldown_days' => 7,
+                'choices' => [
+                    $this->one('Dai ragione a Bruno: il morale ci tiene vivi', [['relationship' => ['a' => 'Bruno', 'b' => 'Carla', 'delta' => -10]], ['modify_standing' => ['who' => 'Bruno', 'delta' => 8]]], 'Bruno ritrova il sorriso. Carla si chiude ancora di più: si sente sola con la sua paura.'),
+                    $this->one('Dai ragione a Carla: la sua paura è reale', [['relationship' => ['a' => 'Bruno', 'b' => 'Carla', 'delta' => -10]], ['modify_standing' => ['who' => 'Carla', 'delta' => 8]]], 'Bruno abbassa lo sguardo. «...Hai ragione. A volte sorrido per non guardare anch\'io.» Carla lo fissa, sorpresa da quella crepa.'),
+                    $this->one('Hanno ragione entrambi: la speranza ascolta prima di consolare', [['relationship' => ['a' => 'Bruno', 'b' => 'Carla', 'delta' => 8]], ['resource' => 'morale', 'delta' => -3]], 'Bruno si siede accanto a Carla senza una battuta, e per una volta la lascia parlare. «Non ti dico che andrà bene,» dice piano. «Ti dico che ci sono.» Carla, lentamente, allenta le ginocchia.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'pair_bruno_carla_bond', 'title' => 'Una paura ascoltata', 'speaker' => 'Bruno',
+                'body' => "Bruno ti prende da parte. «Carla ha avuto un altro attacco di panico stanotte. Stavolta non ho fatto battute — sono rimasto seduto con lei finché non è passato. Mi ha detto di cosa ha davvero paura.» Guarda Carla, che dorme finalmente serena. «Non te lo dico, è suo. Ma adesso so come tirarla fuori, quando si blocca. E lei lo sa.»",
+                'requires' => ['relationship' => ['a' => 'Bruno', 'b' => 'Carla', 'state' => 'bond']],
+                'base_weight' => 8, 'cooldown_days' => 10,
+                'choices' => [
+                    $this->one('Rispetta il loro patto silenzioso', [['relationship' => ['a' => 'Bruno', 'b' => 'Carla', 'delta' => 10]]], 'Bruno è diventato l\'ancora di Carla, e Carla la coscienza di Bruno: lei gli ricorda di non mentire alla paura, lui le ricorda di respirare. Si reggono a vicenda.'),
+                    $this->one('Chiedi a Bruno di dirti cosa la spaventa', [['relationship' => ['a' => 'Bruno', 'b' => 'Carla', 'delta' => -6]], ['resource' => 'morale', 'delta' => 4]], 'Bruno scuote la testa. «No. Se lo dico io, tradisco l\'unica cosa che si fida di me.» Tiene il segreto. Carla, quando lo scopre, lo guarda come non guarda nessun altro.'),
+                ],
+            ]),
+        ];
     }
 
     // ---- Item arcs: 3-stage chains anchored to island items -----------------
