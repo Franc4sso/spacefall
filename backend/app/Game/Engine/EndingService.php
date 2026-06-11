@@ -2,6 +2,7 @@
 
 namespace App\Game\Engine;
 
+use App\Game\ThemeConfig;
 use App\Models\Run;
 
 /**
@@ -20,6 +21,7 @@ final class EndingService
 {
     public function __construct(
         private readonly ConditionEvaluator $evaluator,
+        private readonly ThemeConfig $theme = new ThemeConfig(),
     ) {
     }
 
@@ -33,12 +35,12 @@ final class EndingService
     public function check(Run $run): ?array
     {
         if ($run->status !== 'active') {
-            return $this->describe($run->ending_key);
+            return $this->describe($run->ending_key, $run->theme);
         }
 
         $state = RunState::fromRun($run);
 
-        foreach (config('game.endings') as $ending) {
+        foreach ($this->theme->for($run->theme)->get('endings') as $ending) {
             if ($this->evaluator->evaluate($ending['when'] ?? null, $state)) {
                 $run->status = 'ended';
                 $run->ending_key = $ending['key'];
@@ -54,12 +56,12 @@ final class EndingService
     }
 
     /** @return array<string,mixed>|null */
-    private function describe(?string $key): ?array
+    private function describe(?string $key, string $theme = 'space'): ?array
     {
         if ($key === null) {
             return null;
         }
-        foreach (config('game.endings') as $ending) {
+        foreach ($this->theme->for($theme)->get('endings') as $ending) {
             if ($ending['key'] === $key) {
                 return $ending;
             }
