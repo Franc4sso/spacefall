@@ -74,6 +74,12 @@ return [
         'spawn_bands'  => [],
     ],
 
+    'stress_bands' => [
+        ['min' => 0,  'spawn' => null],
+        ['min' => 60, 'spawn' => null],
+        ['min' => 85, 'spawn' => null],
+    ],
+
     'traits' => [],
 
     'roster' => [

@@ -29,9 +29,9 @@ final class Simulator
      *
      * @param  list<string>  $items
      */
-    public function play(int $seed, Policy $policy, array $items = [], int $maxDays = 80): SimResult
+    public function play(int $seed, Policy $policy, array $items = [], int $maxDays = 80, string $theme = 'space'): SimResult
     {
-        $run = $this->factory->create($seed, $items);
+        $run = $this->factory->create($seed, $items, null, $theme);
         $steps = [];
 
         for ($i = 0; $i < $maxDays; $i++) {

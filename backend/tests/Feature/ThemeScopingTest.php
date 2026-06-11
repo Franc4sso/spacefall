@@ -89,3 +89,16 @@ it('POST /api/runs rejects an unknown theme', function () {
     $this->postJson('/api/runs', ['seed' => 5, 'theme' => 'atlantis'])
         ->assertStatus(422);
 });
+
+it('Simulator plays a run in the given theme', function () {
+    App\Models\Event::query()->delete();
+    App\Models\Event::create([
+        'key' => 'island_filler', 'theme' => 'island', 'title' => 'I', 'body' => 'b',
+        'base_weight' => 100, 'cooldown_days' => 0, 'is_filler' => true,
+        'choices' => [['label' => 'ok', 'outcomes' => []]],
+    ]);
+    $sim = app(App\Game\Sim\Simulator::class);
+    $result = $sim->play(seed: 3, policy: new App\Game\Sim\RandomPolicy(), items: [], maxDays: 5, theme: 'island');
+    expect($result)->not->toBeNull();
+    expect(App\Models\Run::latest('id')->first()->theme)->toBe('island');
+});

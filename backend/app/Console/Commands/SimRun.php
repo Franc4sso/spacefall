@@ -26,6 +26,7 @@ class SimRun extends Command
         {--policy=greedy_survival : random|greedy_survival}
         {--items= : comma-separated item keys (else a fixed survival kit)}
         {--seed=0 : base seed (each run uses base+i)}
+        {--theme=space : theme to simulate (space|island)}
         {--memory : run against a fresh in-memory SQLite DB (much faster; leaves the file DB untouched)}';
 
     protected $description = 'Simulate many runs and report the balance distribution.';
@@ -40,8 +41,14 @@ class SimRun extends Command
         $policy = $this->resolvePolicy($this->option('policy'));
         $items = $this->resolveItems($this->option('items'));
         $base = (int) $this->option('seed');
+        $theme = $this->option('theme');
 
-        $this->info("Simulating {$count} runs · policy={$policy->name()} · items=[" . implode(',', $items) . ']');
+        if (! in_array($theme, ['space', 'island'], true)) {
+            $this->error("Unknown theme '{$theme}'. Valid values: space, island.");
+            return self::FAILURE;
+        }
+
+        $this->info("Simulating {$count} runs · policy={$policy->name()} · theme={$theme} · items=[" . implode(',', $items) . ']');
 
         $lengths = [];
         $wins = 0;
@@ -51,7 +58,7 @@ class SimRun extends Command
 
         $bar = $this->output->createProgressBar($count);
         for ($i = 0; $i < $count; $i++) {
-            $r = $sim->play($base + $i, $policy, $items);
+            $r = $sim->play($base + $i, $policy, $items, 80, $theme);
             $lengths[] = $r->day;
             if ($r->won()) {
                 $wins++;
