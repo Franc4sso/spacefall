@@ -102,7 +102,7 @@ it('scelta scanner visibile con scanner, assente senza', function () {
 });
 
 it('nessuna scelta-strumento gata su un oggetto fuori dalla griglia sbloccata', function () {
-    $unlocked = collect(config('game.items'))
+    $unlocked = collect(config('themes.space.items'))
         ->reject(fn ($i) => $i['locked'] ?? false)
         ->pluck('key')
         ->all();
