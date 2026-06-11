@@ -481,6 +481,18 @@ class EventSeeder extends Seeder
                                 'log' => 'Si sfoga. Per ora basta.'],
                         ],
                     ],
+                    [
+                        'label'         => 'Gli do qualcosa dal kit per calmarlo',
+                        'hint'          => 'consuma il kit medico',
+                        'requires'      => ['has_item' => 'medkit'],
+                        'requires_item' => 'medkit',
+                        'outcomes' => [
+                            ['weight' => 1, 'effects' => [
+                                ['consume_item' => 'medkit'],
+                                ['resource' => 'morale', 'delta' => 3],
+                            ], 'log' => 'Un sedativo leggero. Si scioglie, respira, torna a galla. Il kit ne esce vuoto.'],
+                        ],
+                    ],
                 ],
             ],
             [
