@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Game\DayProcessor;
 use App\Game\Engine\EventEngine;
 use App\Game\RunFactory;
+use App\Game\ThemeConfig;
 use App\Models\Run;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -15,6 +16,7 @@ class RunController extends Controller
         private readonly RunFactory $factory,
         private readonly DayProcessor $dayProcessor,
         private readonly EventEngine $engine,
+        private readonly ThemeConfig $theme,
     ) {
     }
 
@@ -31,12 +33,13 @@ class RunController extends Controller
             'items' => ['nullable', 'array'],
             'items.*' => ['string'],
             'handle' => ['nullable', 'string', 'max:120'],
+            'theme' => ['nullable', 'string', 'in:space,island'],
         ]);
 
         $profile = \App\Models\Profile::resolve($data['handle'] ?? 'anonymous');
 
         // The factory sanitises the pick (unknown/locked-unowned dropped, capped).
-        $run = $this->factory->create($data['seed'] ?? null, $data['items'] ?? [], $profile);
+        $run = $this->factory->create($data['seed'] ?? null, $data['items'] ?? [], $profile, $data['theme'] ?? 'space');
 
         return response()->json($this->present($run), 201);
     }
@@ -48,16 +51,18 @@ class RunController extends Controller
      */
     public function items(Request $request): JsonResponse
     {
+        $theme = $request->query('theme', 'space');
+        $cfg = $this->theme->for($theme);
         $profile = \App\Models\Profile::resolve($request->query('handle', 'anonymous'));
-        $available = $this->factory->availableItemKeys($profile);
+        $available = $this->factory->availableItemKeys($profile, $cfg);
 
-        $items = collect(config('game.items'))
+        $items = collect($cfg->get('items'))
             ->filter(fn ($i) => in_array($i['key'], $available, true))
             ->values()
             ->all();
 
         return response()->json([
-            'pick' => (int) config('game.items_pick'),
+            'pick' => (int) $cfg->get('items_pick'),
             'items' => $items,
         ]);
     }
@@ -143,8 +148,9 @@ class RunController extends Controller
      */
     private function present(Run $run): array
     {
+        $runCfg = $this->theme->for($run->theme);
         $meta = [];
-        foreach (config('game.resources') as $code => $def) {
+        foreach ($runCfg->get('resources') as $code => $def) {
             $meta[$code] = [
                 'max' => $def['max'],
                 'two_sided' => $def['two_sided'],
@@ -153,7 +159,7 @@ class RunController extends Controller
 
         $state = \App\Game\Engine\RunState::fromRun($run);
         $phase = $state->phase;
-        $phaseLabel = config("game.phases.labels.$phase", $phase);
+        $phaseLabel = $runCfg->get("phases.labels.$phase", $phase);
 
         $payload = [
             'id' => $run->id,
@@ -181,7 +187,7 @@ class RunController extends Controller
                 ])->all(),
             // Inventory as full item objects (key + Italian name/description)
             // so the client can render it without re-fetching the catalogue.
-            'items' => $this->itemObjects($run->items ?? []),
+            'items' => $this->itemObjects($run->items ?? [], $run),
             // Station systems (efficiency per system) for the status panel.
             'systems' => $run->systems ?? [],
             // Last 15 choices logged during the run.
@@ -231,7 +237,7 @@ class RunController extends Controller
         if ($run->ending_key === null) {
             return null;
         }
-        $ending = collect(config('game.endings'))->firstWhere('key', $run->ending_key);
+        $ending = collect($this->theme->for($run->theme)->get('endings'))->firstWhere('key', $run->ending_key);
         if ($ending === null) {
             return null;
         }
@@ -248,9 +254,9 @@ class RunController extends Controller
         ];
     }
 
-    private function itemObjects(array $keys): array
+    private function itemObjects(array $keys, Run $run): array
     {
-        $catalogue = collect(config('game.items'))->keyBy('key');
+        $catalogue = collect($this->theme->for($run->theme)->get('items'))->keyBy('key');
 
         return collect($keys)
             ->map(fn ($k) => $catalogue->get($k))

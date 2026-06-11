@@ -77,3 +77,15 @@ it('RunFactory initialises resources from the requested theme', function () {
     expect($run->resources)->toBe($expected);
     expect($run->theme)->toBe('space');
 });
+
+it('POST /api/runs starts a run in the requested theme', function () {
+    App\Models\Event::create(['key' => 'i', 'theme' => 'island', 'title' => 't', 'body' => 'b', 'base_weight' => 10, 'cooldown_days' => 0, 'is_filler' => true, 'choices' => [['label' => 'ok', 'outcomes' => []]]]);
+    $res = $this->postJson('/api/runs', ['seed' => 5, 'theme' => 'island']);
+    $res->assertCreated();
+    expect(App\Models\Run::latest('id')->first()->theme)->toBe('island');
+});
+
+it('POST /api/runs rejects an unknown theme', function () {
+    $this->postJson('/api/runs', ['seed' => 5, 'theme' => 'atlantis'])
+        ->assertStatus(422);
+});

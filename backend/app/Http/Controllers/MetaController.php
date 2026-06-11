@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Game\ThemeConfig;
 use App\Models\Profile;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -14,6 +15,9 @@ use Illuminate\Http\Request;
  */
 class MetaController extends Controller
 {
+    public function __construct(private readonly ThemeConfig $theme)
+    {
+    }
     /**
      * GET /api/meta?handle=... — the profile's points, owned unlocks, and the
      * catalogue of buyable unlocks (with affordability + owned flags).
@@ -21,8 +25,9 @@ class MetaController extends Controller
     public function show(Request $request): JsonResponse
     {
         $profile = Profile::resolve($request->query('handle', 'anonymous'));
+        $theme = $request->query('theme', 'space');
 
-        return response()->json($this->present($profile));
+        return response()->json($this->present($profile, $theme));
     }
 
     /**
@@ -36,8 +41,9 @@ class MetaController extends Controller
             'key' => ['required', 'string'],
         ]);
 
+        $theme = $request->query('theme', 'space');
         $profile = Profile::resolve($data['handle'] ?? 'anonymous');
-        $unlock = collect(config('game.unlocks'))->firstWhere('key', $data['key']);
+        $unlock = collect($this->theme->for($theme)->get('unlocks'))->firstWhere('key', $data['key']);
 
         if ($unlock === null) {
             return response()->json(['error' => 'Sblocco sconosciuto.'], 422);
@@ -53,10 +59,10 @@ class MetaController extends Controller
         $profile->unlocks = array_values(array_merge($profile->unlocks ?? [], [$unlock['key']]));
         $profile->save();
 
-        return response()->json($this->present($profile));
+        return response()->json($this->present($profile, $theme));
     }
 
-    private function present(Profile $profile): array
+    private function present(Profile $profile, string $theme = 'space'): array
     {
         $owned = $profile->unlocks ?? [];
 
@@ -64,7 +70,7 @@ class MetaController extends Controller
             'handle' => $profile->handle,
             'research_points' => $profile->research_points,
             'unlocks_owned' => $owned,
-            'unlocks' => collect(config('game.unlocks'))->map(fn ($u) => [
+            'unlocks' => collect($this->theme->for($theme)->get('unlocks'))->map(fn ($u) => [
                 'key' => $u['key'],
                 'name' => $u['name'],
                 'description' => $u['description'],
