@@ -90,6 +90,17 @@ it('POST /api/runs rejects an unknown theme', function () {
         ->assertStatus(422);
 });
 
+it('island theme defines its five resources and three systems', function () {
+    expect(array_keys(config('themes.island.resources')))
+        ->toBe(['water', 'food', 'fire', 'shelter', 'morale']);
+    expect(array_keys(config('themes.island.systems')))
+        ->toBe(['water_still', 'signal_fire', 'shelter_frame']);
+});
+
+it('island morale is two-sided like space', function () {
+    expect(config('themes.island.resources.morale.two_sided'))->toBeTrue();
+});
+
 it('Simulator plays a run in the given theme', function () {
     App\Models\Event::query()->delete();
     App\Models\Event::create([
