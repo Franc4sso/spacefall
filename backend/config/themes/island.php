@@ -372,6 +372,8 @@ return [
             'description' => 'Sblocca la zattera.', 'grants_item' => 'raft'],
         ['key' => 'unlock_still',   'cost' => 40, 'name' => 'Alambicco',
             'description' => 'Sblocca l\'alambicco per l\'acqua.', 'grants_item' => 'still'],
+        ['key' => 'unlock_logbook', 'cost' => 30, 'name' => 'Diario del relitto',
+            'description' => 'Sblocca il diario: scopri cosa è successo a chi c\'era prima.', 'grants_item' => 'logbook'],
     ],
 
     /*
