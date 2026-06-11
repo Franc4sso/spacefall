@@ -1026,6 +1026,119 @@ class IslandEventSeeder extends Seeder
                     $this->one('Riposo', [['character' => 'all', 'stress' => -2]], 'Le mani ferme per un giorno.'),
                 ],
             ]),
+            // ---- Atmosphere fillers: the island breathing -----------------
+            $this->ev([
+                'key' => 'c_filler_jungle_night', 'title' => 'La giungla di notte', 'is_filler' => true, 'base_weight' => 5, 'cooldown_days' => 3,
+                'body' => "Oltre il cerchio del fuoco la giungla è un muro nero che respira. Un verso, lungo e gorgogliante, che nessuno di voi sa nominare. Bruno smette di parlare a metà frase.",
+                'choices' => [
+                    $this->one('«È solo un animale.»', [['character' => 'all', 'stress' => -1]], 'Lo ripeti finché non ci credi un po\'. Funziona, quasi.'),
+                    $this->one('Aggiungo legna al fuoco', [['resource' => 'fire', 'delta' => 1]], 'Le ombre indietreggiano. Il buio aspetta, paziente.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'c_filler_flat_sea', 'title' => 'Il mare piatto', 'is_filler' => true, 'base_weight' => 5, 'cooldown_days' => 3,
+                'body' => "Niente onde, niente vento. Il mare è una lastra di stagno fino all'orizzonte, e nessuna sagoma a romperlo. Carla resta a fissarlo a lungo, le braccia strette intorno alle ginocchia.",
+                'choices' => [
+                    $this->one('Mi siedo accanto a lei', [['character' => 'Carla', 'stress' => -3]], 'Non dite niente. Non serve.'),
+                    $this->one('Le porto via lo sguardo dall\'acqua', [['resource' => 'morale', 'delta' => 1]], '«Vieni, c\'è da fare.» A volte è la cosa più gentile.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'c_filler_footprint', 'title' => 'L\'impronta', 'is_filler' => true, 'base_weight' => 4, 'cooldown_days' => 4,
+                'body' => "Sulla sabbia umida, una sola impronta di piede nudo. Più grande delle vostre. La misurate contro le mani senza dirlo ad alta voce. La marea l'ha già mezza cancellata. Forse non c'è mai stata.",
+                'choices' => [
+                    $this->one('Non lo dico a nessuno', [['resource' => 'morale', 'delta' => -1]], 'Te lo tieni dentro, come una pietra in tasca.'),
+                    $this->one('Tengo gli occhi aperti', [['resource' => 'shelter', 'delta' => 1]], 'Forse non siete soli. Meglio essere pronti.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'c_filler_shells', 'title' => 'Conchiglie', 'is_filler' => true, 'base_weight' => 5, 'cooldown_days' => 2,
+                'body' => "Una manciata di conchiglie levigate dal mare, di un rosa che pare impossibile su quest'isola. Le rigirate al sole. Per un momento è solo bellezza, senza secondo fine.",
+                'choices' => [
+                    $this->one('Le regalo a Carla', [['character' => 'Carla', 'stress' => -2]], 'Le infila in tasca come un tesoro di bambina.'),
+                    $this->one('Ne faccio un mucchietto sul riparo', [['resource' => 'morale', 'delta' => 2]], 'Un piccolo segno che qui vive ancora qualcuno.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'c_filler_crab_shell', 'title' => 'Un guscio di granchio', 'is_filler' => true, 'base_weight' => 4, 'cooldown_days' => 3,
+                'body' => "Un guscio di granchio vuoto, intatto, abbandonato come un'armatura troppo stretta. Bruno lo solleva. «Anche lui è cresciuto e ha dovuto lasciarsi indietro la corazza vecchia. Non è male, come idea.»",
+                'choices' => [
+                    $this->one('«Filosofo di spiaggia.»', [['resource' => 'morale', 'delta' => 1]], 'Ride. Per una volta la battuta è leggera davvero.'),
+                    $this->one('Lo rimetto dov\'era', [], 'Qualcosa, qui, va lasciato in pace.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'c_filler_fire_shadows', 'title' => 'Ombre dal fuoco', 'is_filler' => true, 'base_weight' => 5, 'cooldown_days' => 2,
+                'body' => "Il fuoco scoppietta e schizza scintille. Le vostre ombre ballano enormi sulla parete del riparo, e per un attimo sembrate dei giganti, non tre naufraghi spauriti.",
+                'choices' => [
+                    $this->one('Faccio le ombre con le mani', [['character' => 'all', 'stress' => -2]], 'Un cane, un uccello, un coniglio. Carla indovina tutto e ride.'),
+                    $this->one('Resto a guardare le fiamme', [['resource' => 'morale', 'delta' => 1]], 'Il fuoco non chiede niente. È un buon compagno.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'c_filler_distant_storm', 'title' => 'Un temporale lontano', 'is_filler' => true, 'base_weight' => 5, 'cooldown_days' => 3,
+                'body' => "All'orizzonte, sul mare, un temporale che non vi raggiungerà. Lampi muti dentro nuvole nere, lontanissimi. Da qui è quasi bello — la furia di qualcun altro.",
+                'choices' => [
+                    $this->one('Controllo le coperture, per sicurezza', [['resource' => 'shelter', 'delta' => 1]], 'Non si sa mai. Il vento gira in fretta, qui.'),
+                    $this->one('Lo guardo e basta', [['resource' => 'morale', 'delta' => 1]], 'C\'è qualcosa di consolante in una tempesta che non è la tua.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'c_filler_wreck_groan', 'title' => 'Il relitto geme', 'is_filler' => true, 'base_weight' => 4, 'cooldown_days' => 3,
+                'body' => "Nel vento la carcassa dell'aereo geme, un lamento di lamiera che si torce. Nadia ci appoggia una mano. «Si sta ancora raffreddando. Tra un po' tacerà del tutto. Come tutto, qui.»",
+                'choices' => [
+                    $this->one('«Almeno ci ha portati fin qui.»', [['character' => 'Nadia', 'stress' => -2]], 'Lei annuisce piano. «Già. Almeno quello.»'),
+                    $this->one('Recupero quel che posso dalla fusoliera', [['resource' => 'shelter', 'delta' => 1]], 'Un pannello, qualche vite. La carcassa dà ancora qualcosa.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'c_filler_tidepool_fish', 'title' => 'Pesci nella secca', 'is_filler' => true, 'base_weight' => 5, 'cooldown_days' => 2,
+                'body' => "La marea si è ritirata e ha lasciato pesci argentei a guizzare in una pozza tra gli scogli, intrappolati. Brillano disperati sotto il sole.",
+                'choices' => [
+                    $this->one('Ne prendo qualcuno', [['resource' => 'food', 'delta' => 2]], 'Cena facile. L\'isola, ogni tanto, è generosa.'),
+                    $this->one('Li ributto in mare', [['resource' => 'morale', 'delta' => 2]], 'Carla ti guarda strano. Ma stasera dormirai meglio.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'c_filler_shooting_star', 'title' => 'Una stella cadente', 'is_filler' => true, 'base_weight' => 5, 'cooldown_days' => 3,
+                'body' => "Senza le luci di nessuna città, il cielo è una cosa che non avevate mai visto: fitto, vivo, bianco di stelle. Una scia luminosa lo taglia in due e svanisce.",
+                'choices' => [
+                    $this->one('Esprimo un desiderio', [['character' => 'all', 'stress' => -2]], 'Sapete tutti e tre cosa avete chiesto. Nessuno lo dice.'),
+                    $this->one('«Domani, da lì, ci cercheranno.»', [['resource' => 'morale', 'delta' => 2]], 'Forse è vero, forse no. Ma stanotte ci credete.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'c_filler_salt_smell', 'title' => 'Odore di sale e legna bagnata', 'is_filler' => true, 'base_weight' => 5, 'cooldown_days' => 3,
+                'body' => "Dopo la pioggia, l'aria sa di sale e di legna fradicia che fuma sul fuoco. Un odore che ormai conoscete come la vostra pelle. È diventato l'odore di casa, che vi piaccia o no.",
+                'choices' => [
+                    $this->one('Respiro a fondo', [['resource' => 'morale', 'delta' => 1]], 'Strano: non è più sgradevole. È solo casa.'),
+                    $this->one('Stendo i panni a asciugare', [['resource' => 'shelter', 'delta' => 1]], 'Piccoli gesti ordinari. Tengono insieme le giornate.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'c_filler_strange_bird', 'title' => 'Un uccello mai visto', 'is_filler' => true, 'base_weight' => 4, 'cooldown_days' => 3,
+                'body' => "Sul ramo più alto si è posato un uccello dai colori assurdi — verde, scarlatto, un occhio giallo e curioso. Vi studia senza paura, come se i naufraghi foste voi la novità.",
+                'choices' => [
+                    $this->one('Resto immobile a guardarlo', [['character' => 'all', 'stress' => -2]], 'Resta un minuto intero. Poi vola via, e vi sentite onorati.'),
+                    $this->one('Provo a disegnarlo nel diario', [['resource' => 'morale', 'delta' => 2]], 'Viene male, ma è un giorno che vale la pena ricordare.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'c_filler_animal_tracks', 'title' => 'Impronte nel fango', 'is_filler' => true, 'base_weight' => 4, 'cooldown_days' => 3,
+                'body' => "Nel fango lungo il ruscello, vecchie impronte di animale — zampe, non piedi. Non sapete di che bestia, né se sia grossa. Ma vuol dire che, oltre il vostro accampamento, qui vive qualcosa.",
+                'choices' => [
+                    $this->one('Le seguo un tratto', [['resource' => 'food', 'delta' => 1]], 'Portano a una pianta da frutto che non avevate trovato. Grazie, chiunque tu sia.'),
+                    $this->one('Le evito e torno indietro', [['resource' => 'shelter', 'delta' => 1]], 'Meglio non incontrarsi. Rinforzi la recinzione del campo.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'c_filler_night_calm', 'title' => 'Una notte tranquilla', 'is_filler' => true, 'base_weight' => 5, 'cooldown_days' => 3,
+                'body' => "Nessuna emergenza. Il vento è caldo, il fuoco basso e regolare, e i grilli — o quel che sono — cantano piano. Per una notte l'isola non chiede niente a nessuno.",
+                'choices' => [
+                    $this->one('Resto di guardia, ma sereno', [['character' => 'all', 'stress' => -3]], 'Gli altri dormono profondo. È un regalo, e lo sai.'),
+                    $this->one('Dormo anch\'io, per una volta', [['resource' => 'morale', 'delta' => 2]], 'Vi svegliate riposati. Una rarità, qui.'),
+                ],
+            ]),
         ];
     }
 }
