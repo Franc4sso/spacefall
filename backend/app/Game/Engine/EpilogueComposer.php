@@ -2,6 +2,8 @@
 
 namespace App\Game\Engine;
 
+use App\Game\ThemeConfig;
+
 /**
  * Builds the sectioned end-of-run epilogue from the run's facts: the outcome,
  * who fell (death_log), the key choices that defined the run (witness flags),
@@ -10,6 +12,11 @@ namespace App\Game\Engine;
  */
 final class EpilogueComposer
 {
+    public function __construct(
+        private readonly ThemeConfig $theme = new ThemeConfig(),
+    ) {
+    }
+
     /**
      * @param  array<string,mixed>  $ending  the matched ending config (key/name/text)
      * @return list<array{title: string, lines: list<string>}>
@@ -21,8 +28,8 @@ final class EpilogueComposer
         $sections[] = ['title' => 'Esito', 'lines' => [(string) ($ending['text'] ?? '')]];
 
         // "Come avete vinto" — ricostruisce le tappe-chiave di una win con catena.
-        $beats = config('game.epilogue.victory_beats', []);
-        $beatEvents = config('game.epilogue.victory_beats_event', []);
+        $beats = $this->theme->for($state->theme)->get('epilogue.victory_beats', []);
+        $beatEvents = $this->theme->for($state->theme)->get('epilogue.victory_beats_event', []);
         $victoryLines = [];
         foreach ($beats as $flag => $template) {
             if (($state->flags[$flag] ?? false) !== true) {
@@ -39,7 +46,7 @@ final class EpilogueComposer
                 ? str_replace('{day}', (string) $day, $template)
                 : str_replace(', giorno {day}', '', $template);
         }
-        foreach (config('game.epilogue.escape_outcome_lines', []) as $flag => $line) {
+        foreach ($this->theme->for($state->theme)->get('epilogue.escape_outcome_lines', []) as $flag => $line) {
             if (($state->flags[$flag] ?? false) === true) {
                 $victoryLines[] = $line;
             }
@@ -48,7 +55,7 @@ final class EpilogueComposer
             $sections[] = ['title' => 'Come avete vinto', 'lines' => $victoryLines];
         }
 
-        $causes = config('game.epilogue.cause_phrases', []);
+        $causes = $this->theme->for($state->theme)->get('epilogue.cause_phrases', []);
         $fallen = [];
         foreach ($state->deathLog as $d) {
             $name = $d['name'] ?? '?';
@@ -60,7 +67,7 @@ final class EpilogueComposer
             $sections[] = ['title' => 'Caduti', 'lines' => $fallen];
         }
 
-        $witness = config('game.epilogue.witness_flags', []);
+        $witness = $this->theme->for($state->theme)->get('epilogue.witness_flags', []);
         $choiceLines = [];
         foreach ($witness as $flag => $line) {
             if (($state->flags[$flag] ?? false) === true) {
