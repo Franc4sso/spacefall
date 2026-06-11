@@ -6,11 +6,15 @@ use App\Models\Profile;
 use App\Models\Run;
 
 /**
- * Starts new runs. Reads resource definitions from config/game.php — no
+ * Starts new runs. Reads resource definitions from ThemeConfig — no
  * resource name is hard-coded here.
  */
 final class RunFactory
 {
+    public function __construct(private readonly ThemeConfig $theme)
+    {
+    }
+
     /**
      * @param  int|null      $seed      Explicit seed for reproducible runs
      *                                  (tests, simulation harness). When null a
@@ -23,26 +27,28 @@ final class RunFactory
      * @param  Profile|null  $profile   Owning profile; gates locked items and
      *                                  links the run for cross-run memory.
      */
-    public function create(?int $seed = null, array $itemKeys = [], ?Profile $profile = null): Run
+    public function create(?int $seed = null, array $itemKeys = [], ?Profile $profile = null, string $theme = 'space'): Run
     {
         $seed ??= random_int(PHP_INT_MIN, PHP_INT_MAX);
+        $cfg = $this->theme->for($theme);
 
         $resources = [];
-        foreach (config('game.resources') as $code => $def) {
+        foreach ($cfg->get('resources') as $code => $def) {
             $resources[$code] = $def['start'];
         }
 
         return Run::create([
             'seed' => $seed,
+            'theme' => $theme,
             'rng_cursor' => 0,
             'day' => 1,
             'resources' => $resources,
             'status' => 'active',
             'flags' => ['crew_trust' => 60],
-            'characters' => $this->roster(),
+            'characters' => $this->roster($cfg),
             'relationships' => [],
-            'items' => $this->sanitiseItems($itemKeys, $profile),
-            'systems' => $this->systems(),
+            'items' => $this->sanitiseItems($itemKeys, $profile, $cfg),
+            'systems' => $this->systems($cfg),
             'profile_id' => $profile?->id,
         ]);
     }
@@ -52,10 +58,10 @@ final class RunFactory
      *
      * @return array<string,array{efficiency:int}>
      */
-    private function systems(): array
+    private function systems(ThemeConfig $cfg): array
     {
         $systems = [];
-        foreach (config('game.systems') as $key => $def) {
+        foreach ($cfg->get('systems') as $key => $def) {
             $systems[$key] = ['efficiency' => $def['start']];
         }
         return $systems;
@@ -69,10 +75,10 @@ final class RunFactory
      * @param  list<string>  $itemKeys
      * @return list<string>
      */
-    private function sanitiseItems(array $itemKeys, ?Profile $profile): array
+    private function sanitiseItems(array $itemKeys, ?Profile $profile, ThemeConfig $cfg): array
     {
-        $pick = (int) config('game.items_pick');
-        $available = $this->availableItemKeys($profile);
+        $pick = (int) $cfg->get('items_pick');
+        $available = $this->availableItemKeys($profile, $cfg);
 
         $valid = array_values(array_unique(array_filter(
             $itemKeys,
@@ -89,19 +95,20 @@ final class RunFactory
      *
      * @return list<string>
      */
-    public function availableItemKeys(?Profile $profile): array
+    public function availableItemKeys(?Profile $profile, ?ThemeConfig $cfg = null): array
     {
+        $cfg ??= $this->theme->for('space');
         $unlocked = $profile?->unlocks ?? [];
         // Map: locked item key => unlock key that grants it.
         $grantedBy = [];
-        foreach (config('game.unlocks') as $u) {
+        foreach ($cfg->get('unlocks') as $u) {
             if (isset($u['grants_item'])) {
                 $grantedBy[$u['grants_item']] = $u['key'];
             }
         }
 
         $keys = [];
-        foreach (config('game.items') as $item) {
+        foreach ($cfg->get('items') as $item) {
             if (! ($item['locked'] ?? false)) {
                 $keys[] = $item['key'];
                 continue;
@@ -121,10 +128,10 @@ final class RunFactory
      *
      * @return list<array<string,mixed>>
      */
-    private function roster(): array
+    private function roster(ThemeConfig $cfg): array
     {
         $roster = [];
-        foreach (config('game.roster') as $member) {
+        foreach ($cfg->get('roster') as $member) {
             $roster[] = [
                 'name' => $member['name'],
                 'role' => $member['role'],

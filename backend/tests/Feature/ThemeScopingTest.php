@@ -69,3 +69,11 @@ it('an island run never draws space events', function () {
     $card = app(App\Game\Engine\EventEngine::class)->currentCard($run->fresh());
     expect($card['event']->key)->toBe('island_only');
 });
+
+it('RunFactory initialises resources from the requested theme', function () {
+    $factory = app(App\Game\RunFactory::class);
+    $run = $factory->create(seed: 1, itemKeys: [], profile: null, theme: 'space');
+    $expected = collect(config('themes.space.resources'))->map(fn ($d) => $d['start'])->all();
+    expect($run->resources)->toBe($expected);
+    expect($run->theme)->toBe('space');
+});
