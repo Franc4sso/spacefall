@@ -19,3 +19,13 @@ it('accepts an explicit theme', function () {
     ]);
     expect($run->fresh()->theme)->toBe('island');
 });
+
+it('RunState carries the run theme', function () {
+    $run = App\Models\Run::create([
+        'seed' => 1, 'rng_cursor' => 0, 'day' => 1, 'resources' => [],
+        'status' => 'active', 'flags' => [], 'characters' => [],
+        'relationships' => [], 'items' => [], 'systems' => [], 'theme' => 'island',
+    ]);
+    $state = App\Game\Engine\RunState::fromRun($run->fresh());
+    expect($state->theme)->toBe('island');
+});

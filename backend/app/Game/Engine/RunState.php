@@ -46,6 +46,7 @@ final class RunState
         public string $phase = 'isolation',
         public int $phaseIndex = 0,
         public array $deathLog = [],
+        public string $theme = 'space',
     ) {
     }
 
@@ -77,6 +78,7 @@ final class RunState
             phase: $phase,
             phaseIndex: $resolver->indexOf($phase),
             deathLog: $run->death_log ?? [],
+            theme: $run->theme ?? 'space',
         );
     }
 
