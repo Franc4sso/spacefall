@@ -671,6 +671,82 @@ class IslandEventSeeder extends Seeder
                     $this->one('Lo centelliniamo', [['resource' => 'water', 'delta' => -4]], 'Razioni d\'acqua. Si tira avanti, per ora.'),
                 ],
             ]),
+
+            // ---- Naufragio (castaway): i primi giorni, contesto, presa di coscienza
+            $this->ev([
+                'key' => 'iso_taking_stock', 'title' => 'L\'inventario', 'speaker' => 'Bruno',
+                'body' => "Bruno svuota le tasche sulla sabbia, una alla volta. 'Questo è tutto quello che abbiamo. Tanto vale guardarlo in faccia adesso.' Tre persone, una manciata di oggetti, un'isola che non sapete nominare.",
+                'requires' => ['phase' => 'castaway'],
+                'base_weight' => 9, 'cooldown_days' => 7,
+                'choices' => [
+                    $this->one('Contiamo tutto con calma', [['resource' => 'morale', 'delta' => 3], ['character' => 'all', 'stress' => -2]], 'Sapere cosa avete vi dà un punto da cui partire.'),
+                    $this->one('Non c\'è tempo, muoviamoci', [['resource' => 'food', 'delta' => 4], ['character' => 'all', 'stress' => 4]], 'Recuperate qualcosa in fretta. Ma a testa bassa, senza un piano.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'iso_who_are_you', 'title' => 'Sconosciuti', 'speaker' => 'Carla',
+                'body' => "Attorno al fuoco, Carla rompe il silenzio: 'Tre giorni fa non sapevo nemmeno i vostri nomi. E adesso le nostre vite dipendono l'una dall'altra.' Nessuno sa bene cosa rispondere.",
+                'requires' => ['phase' => 'castaway'],
+                'base_weight' => 8, 'cooldown_days' => 8,
+                'choices' => [
+                    $this->one('Ci raccontiamo chi siamo', [['resource' => 'morale', 'delta' => 5], ['character' => 'all', 'stress' => -3]], 'Storie sottovoce nel buio. Qualcosa, tra voi, comincia a tenere.'),
+                    $this->one('Meglio concentrarsi sulla sopravvivenza', [['resource' => 'shelter', 'delta' => 3], ['resource' => 'morale', 'delta' => -2]], 'Si lavora in silenzio. Estranei che dividono un fuoco.'),
+                ],
+            ]),
+
+            // ---- Logoramento (deterioration): scorte che calano, nervi che cedono
+            $this->ev([
+                'key' => 'det_ration_fight', 'title' => 'La razione di Bruno', 'speaker' => 'Bruno',
+                'body' => "Bruno fissa la sua porzione, poi la tua. 'La mia è più piccola. Non dirmi che è uguale, lo vedo.' La fame ha cominciato a contare i bocconi degli altri.",
+                'requires' => ['phase' => 'deterioration'],
+                'base_weight' => 11, 'cooldown_days' => 5,
+                'choices' => [
+                    $this->gamble('Tengo il punto: le razioni sono giuste', [['character' => 'all', 'stress' => 5]], 'Borbotta, ma lascia perdere. La regola tiene.', [['resource' => 'morale', 'delta' => -8], ['character' => 'all', 'stress' => 10]], 'La discussione degenera. Da oggi vi guardate diversi.', 6, 4, 'rischioso'),
+                    $this->one('Gli cedo metà della mia', [['resource' => 'food', 'delta' => -4], ['resource' => 'morale', 'delta' => 3]], 'Mangi meno. Ma lui ti deve qualcosa, e lo sa.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'det_empty_sea', 'title' => 'Il mare resta vuoto', 'speaker' => null,
+                'body' => "Un'altra giornata a fissare l'orizzonte. Nessuna vela, nessun aereo, nessun fumo lontano. Solo l'azzurro che si chiude su sé stesso. Comincia a pesare il sospetto che nessuno stia cercando.",
+                'requires' => ['phase' => 'deterioration'],
+                'base_weight' => 10, 'cooldown_days' => 6,
+                'choices' => [
+                    $this->one('Insisto: continuiamo a segnalare', [['resource' => 'fire', 'delta' => -6], ['resource' => 'morale', 'delta' => 2]], 'Bruci legna per la speranza. Forse non è spreco.'),
+                    $this->one('Smettiamo di aspettarli', [['resource' => 'morale', 'delta' => -6], ['character' => 'all', 'stress' => -3]], 'Niente più sguardi al mare. Fa male, ma libera le mani per altro.'),
+                ],
+            ]),
+
+            // ---- Resa dei conti (reckoning): chi parte, chi resta, le verità dure
+            $this->ev([
+                'key' => 'rec_who_leaves', 'title' => 'Non possiamo partire tutti', 'speaker' => 'Carla',
+                'body' => "La zattera regge due, forse. Carla lo dice senza giri di parole: 'Qualcuno deve restare. E dobbiamo decidere adesso, non quando l'acqua sarà alta.' Tre sguardi, e nessuno che si offra per primo.",
+                'requires' => ['phase' => 'reckoning'],
+                'base_weight' => 12, 'cooldown_days' => 999,
+                'choices' => [
+                    $this->one('Tiriamo a sorte, è l\'unico modo giusto', [['character' => 'all', 'stress' => 8], ['resource' => 'morale', 'delta' => 2]], 'Il caso decide al posto vostro. Nessuno può odiare nessuno. Solo la sorte.'),
+                    $this->one('Resto io, voi andate', [['resource' => 'morale', 'delta' => 6], ['character' => 'all', 'stress' => -4]], 'Lo dici prima di ripensarci. I loro occhi cambiano: gratitudine, e una colpa che si porteranno dietro.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'rec_hard_truth', 'title' => 'La verità di Nadia', 'speaker' => 'Nadia',
+                'body' => "Nadia ti prende da parte. 'C'è una cosa che non vi ho detto. Quella notte, sulla nave, potevo dare l'allarme prima. Ho aspettato. Ho avuto paura.' Lo dice ora, perché ora conta dirla.",
+                'requires' => ['phase' => 'reckoning'],
+                'base_weight' => 11, 'cooldown_days' => 999,
+                'choices' => [
+                    $this->one('Non è colpa tua, è andata così', [['resource' => 'morale', 'delta' => 4], ['character' => 'all', 'stress' => -5]], 'La sollevi da un peso che la stava schiacciando. Respira, per la prima volta da giorni.'),
+                    $this->one('Allora siamo qui anche per questo', [['resource' => 'morale', 'delta' => -5], ['character' => 'all', 'stress' => 6]], 'La verità resta sospesa tra voi, fredda. Ma almeno è detta.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'rec_last_repair', 'title' => 'L\'ultima riparazione', 'speaker' => 'Nadia',
+                'body' => "Nadia stende sulla sabbia tutto quello che resta: corda marcia, lamiera storta, un motore che non parte da settimane. 'Una sola possibilità di metterlo in mare. Se sbagliamo, non c'è un secondo tentativo.'",
+                'requires' => ['phase' => 'reckoning'],
+                'base_weight' => 12, 'cooldown_days' => 999,
+                'choices' => [
+                    $this->gamble('Ci proviamo, tutto o niente', [['resource' => 'shelter', 'delta' => 8], ['resource' => 'morale', 'delta' => 6]], 'La zattera regge il varo. Per la prima volta, l\'orizzonte sembra raggiungibile.', [['resource' => 'shelter', 'delta' => -14], ['character' => 'all', 'stress' => 12]], 'Cede sotto le vostre mani. Mesi di lavoro che tornano legna e ruggine.', 6, 4, 'tutto o niente'),
+                    $this->one('Aspettiamo un giorno migliore', [['resource' => 'morale', 'delta' => -4], ['character' => 'all', 'stress' => 4]], 'Rimandate. Ma ogni giorno qui le forze sono di meno, e lo sapete.'),
+                ],
+            ]),
         ];
     }
 
