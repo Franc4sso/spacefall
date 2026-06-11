@@ -49,22 +49,30 @@ scatterebbe mai. (Risvegliarli è un lavoro separato — debito noto nel TODO.)
 Il giocatore parte con **4 oggetti su 9** (`items_pick = 4`), quindi ogni scelta
 gated compare solo in alcune run: variabilità voluta.
 
-| Carta | Peso | Attrezzo | Scorciatoia (vs via base) |
-|---|---|---|---|
-| `ration_crisis` | 22 | **rations** | apri il cuscinetto d'emergenza → niente taglio razioni |
-| `power_flicker` | 20 | **welder** | risaldi il contatto → niente perdita di power |
-| `old_scorch` | 12 | **welder** | saldi la bruciatura sul posto → niente danno scafo |
-| `power_cascade` | 10 | **scanner** | leggi quale linea sta cedendo e la isoli → fermi la cascata |
-| `survivor_strained` | 10 | **medkit** | un sedativo → lo calmi senza perdita di morale |
-| `survivor_breaks` | 10 | **medkit** | tratti il crollo → eviti morte/diserzione |
-| `reactor_gamble` | 9 | **scanner** | leggi il guasto prima di rischiare → niente azzardo |
-| `ration_cut_decision` | 9 | **rations** | attingi alla riserva → eviti il taglio |
-| `the_sacrifice` | 8 | **medkit** | stabilizzi chi sta morendo → nessun sacrificio |
-| `fuel_leak_warning` | 8 | **spacesuit** | esci a sigillare la perdita → niente fuga di carburante |
+**Restrizione del modello (rilevata leggendo le carte reali, 2026-06-11):** la
+"scorciatoia più economica" ha senso solo dove la via base ha un **costo-risorsa
+reale**. Delle 10 carte frequenti candidate:
 
-Distribuzione: welder ×2, medkit ×3, rations ×2, scanner ×2, spacesuit ×1.
-Sbilanciata verso medkit (3 crisi-persona) — accettabile: il medkit è la risposta
-naturale alle crisi d'equipaggio.
+- `power_flicker` ha **già** una scelta gated (welder) → esclusa, niente da fare.
+- `old_scorch`, `reactor_gamble`, `the_sacrifice` hanno **costo-base = 0** (carte
+  positive / solo-flag): non c'è nulla da rendere "più economico". Escluse — non
+  forziamo il modello su carte che non lo reggono.
+
+Restano **6 carte** con costo-base reale. Questa è la mappatura definitiva:
+
+| Carta | Peso | File:linea | Attrezzo | Costo-base peggiore | Scorciatoia |
+|---|---|---|---|---|---|
+| `ration_crisis` | 22 | EventSeeder.php:347 | **rations** | morale −14 (mangio solo io) | apri il cuscinetto → niente fame, nessuno mangia da solo. (2ª scelta gated accanto al rifle già esistente.) |
+| `power_cascade` | 10 | EventSeeder.php:79 | **scanner** | power −12 / oxygen −10 | leggi quale linea cede e la isoli → fermi la cascata senza bruciare aria né settore |
+| `survivor_strained` | 10 | EventSeeder.php:447 | **medkit** | morale −4 | un sedativo → lo calmi senza perdita di morale |
+| `survivor_breaks` | 10 | EventSeeder.php:475 | **medkit** | morale −12 / stress | tratti il crollo → lo riporti in sé senza danni |
+| `ration_cut_decision` | 9 | ContentEventSeeder.php:1738 | **rations** | morale −15 + sfiducia + rivolta | attingi alla riserva → eviti del tutto il taglio |
+| `fuel_leak_warning` | 8 | ContentEventSeeder.php:1690 | **spacesuit** | power −12 (→ −30 se ignori) | esci a sigillare la perdita → niente fuga di carburante |
+
+Distribuzione: medkit ×2, rations ×2, scanner ×1, spacesuit ×1.
+
+> Nota: `ration_crisis` avrà **due** scelte gated (il `rifle`→caccia già presente
+> + la nuova `rations`→riserva). Sono vie distinte e coerenti; nessun conflitto.
 
 ## 4. Forma di ogni scelta
 
@@ -122,7 +130,7 @@ come fame e spedizioni).
 Pattern dei test esistenti (`EscapeChainTest`, `EndingTest`): asserzioni
 seed-time sul contenuto, non simulazione.
 
-1. **Presenza scelta gated** — per ognuna delle 10 carte: la scelta extra esiste,
+1. **Presenza scelta gated** — per ognuna delle 6 carte: la scelta extra esiste,
    ha `requires.has_item = <key atteso>` e `requires_item` coerente.
 2. **Consumo** — ogni scelta gated ha un effetto `consume_item` del proprio
    attrezzo in tutti i suoi outcome.
