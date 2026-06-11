@@ -109,3 +109,20 @@ it('posta crescente: gli iso_* non uccidono né scrivono flag-finale; almeno un 
     }
     expect($hasDefinitive)->toBeTrue('almeno un rec_* deve avere un esito definitivo (kill o flag-finale)');
 });
+
+it('in deterioration il selector include i det_* e non gli iso_*/rec_* esclusivi', function () {
+    $events = phasePoolEvents();
+    $evaluator = new \App\Game\Engine\ConditionEvaluator();
+
+    $run = app(\App\Game\RunFactory::class)->create(1, []);
+    $run->day = 12;
+    $run->phase_floor = 'deterioration';
+    $run->save();
+    $state = \App\Game\Engine\RunState::fromRun($run->fresh());
+    expect($state->phase)->toBe('deterioration');
+
+    $eligible = fn ($key) => $evaluator->evaluate($events[$key]->requires, $state);
+    expect($eligible('det_compound_failure'))->toBeTrue();
+    expect($eligible('iso_inventory'))->toBeFalse();
+    expect($eligible('rec_who_eats'))->toBeFalse();
+});
