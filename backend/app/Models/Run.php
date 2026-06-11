@@ -25,6 +25,7 @@ class Run extends Model
     use HasFactory;
     protected $fillable = [
         'seed',
+        'theme',
         'rng_cursor',
         'day',
         'resources',
