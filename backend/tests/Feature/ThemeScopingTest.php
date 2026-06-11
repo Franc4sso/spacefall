@@ -127,3 +127,10 @@ it('island has a rescue chain that can set rescue_launched', function () {
         ->where('key', 'rescue_4_launch')->first();
     expect($launchEvent)->not->toBeNull();
 });
+
+it('island seeds the stress-escalation events its config references', function () {
+    $this->seed(Database\Seeders\IslandEventSeeder::class);
+    $keys = App\Models\Event::where('theme', 'island')
+        ->whereIn('key', ['survivor_strained', 'survivor_breaks'])->pluck('key')->sort()->values()->all();
+    expect($keys)->toBe(['survivor_breaks', 'survivor_strained']);
+});

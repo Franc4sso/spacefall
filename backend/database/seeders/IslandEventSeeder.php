@@ -204,6 +204,38 @@ class IslandEventSeeder extends Seeder
                     $this->gamble('Affidati a lui', [['resource' => 'shelter', 'delta' => 25], ['resource' => 'morale', 'delta' => 12], ['set_flag' => 'cole_heroics', 'value' => true], ['modify_standing' => ['who' => 'Bruno', 'delta' => 15]], $done], 'La manovra è folle e perfetta. Bruno ride, incredulo di se stesso.', [['resource' => 'shelter', 'delta' => -5], ['character' => 'Bruno', 'stress' => 20], $done], 'Quasi. Reggete tutti, a malapena. Bruno è scosso ma vivo.', 7, 3, 'incerto'),
                 ],
             ]),
+
+            // --- Stress-driven self-initiated behaviour (scheduled-only) ----
+            // Mirror of space's survivor_strained / survivor_breaks. The island
+            // config's stress_bands schedules these when crew stress crosses
+            // 60 / 85. Island flavour: isolamento, giungla, fame, paura.
+            $this->ev([
+                'key' => 'survivor_strained',
+                'title' => 'Nervi tesi',
+                'body' => "Qualcuno scaglia una gavetta contro un tronco. Il rumore resta a lungo nella giungla. La tensione, ormai, si tocca con mano.",
+                'base_weight' => 10,
+                'cooldown_days' => 0,
+                'requires' => ['flag' => '__scheduled_only', 'is' => true],
+                'choices' => [
+                    $this->one('Faccio finta di niente', [['resource' => 'morale', 'delta' => -4]], 'La cosa cova sotto la cenere.'),
+                    $this->one('Gli parlo', [['resource' => 'morale', 'delta' => 3]], 'Si sfoga. La paura ha un nome, adesso. Per ora basta.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'survivor_breaks',
+                'title' => 'Crollo',
+                'body' => "Uno dei tuoi ha smesso di rispondere. Sta seduto al limitare degli alberi, gli occhi fissi sul mare vuoto. Non ti sente nemmeno.",
+                'base_weight' => 10,
+                'cooldown_days' => 0,
+                'requires' => ['flag' => '__scheduled_only', 'is' => true],
+                'choices' => [
+                    // Always-survivable option: calming a survivor never pushes a
+                    // resource toward zero (keeps the card fair).
+                    $this->one('Gli parlo con calma', [['character' => 'highest_stress', 'stress' => -20]], 'Pian piano si calma. Respira. Torna fra i vivi.', 'dovrebbe reggere'),
+                    $this->one('Lo lascio stare', [['resource' => 'morale', 'delta' => -8]], 'Si chiude in sé. Per ore non dice una parola.', 'rischioso'),
+                    $this->gamble('Lo costringo a lavorare', [['resource' => 'fire', 'delta' => 5]], 'Obbedisce, a denti stretti. La legna si accumula.', [['resource' => 'morale', 'delta' => -12], ['resource' => 'shelter', 'delta' => -15]], 'Sbaglia tutto. Manda all\'aria mezza giornata di lavoro. Forse di proposito.', 3, 2, 'molto pericoloso'),
+                ],
+            ]),
         ];
     }
 
