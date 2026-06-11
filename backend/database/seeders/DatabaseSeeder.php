@@ -15,6 +15,7 @@ class DatabaseSeeder extends Seeder
             EventSeeder::class,
             ContentEventSeeder::class,
             FillContentEventSeeder::class,
+            IslandEventSeeder::class,
         ]);
     }
 }

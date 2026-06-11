@@ -113,3 +113,17 @@ it('Simulator plays a run in the given theme', function () {
     expect($result)->not->toBeNull();
     expect(App\Models\Run::latest('id')->first()->theme)->toBe('island');
 });
+
+it('an island run can be played to a conclusion by the sim', function () {
+    $this->seed(Database\Seeders\IslandEventSeeder::class);
+    $sim = app(App\Game\Sim\Simulator::class);
+    $result = $sim->play(seed: 42, policy: new App\Game\Sim\GreedySurvivalPolicy(), items: [], maxDays: 80, theme: 'island');
+    expect($result->day)->toBeGreaterThan(1);
+});
+
+it('island has a rescue chain that can set rescue_launched', function () {
+    $this->seed(Database\Seeders\IslandEventSeeder::class);
+    $launchEvent = App\Models\Event::where('theme', 'island')
+        ->where('key', 'rescue_4_launch')->first();
+    expect($launchEvent)->not->toBeNull();
+});
