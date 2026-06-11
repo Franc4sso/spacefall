@@ -88,7 +88,105 @@ class IslandEventSeeder extends Seeder
             $this->itemArcs(),
             $this->pairArcs(),
             $this->crossReactions(),
+            $this->expeditions(),
         );
+    }
+
+    // ---- Spedizioni nella giungla: l'interno dell'isola --------------------
+    // Mirrors space's expedition send/return mechanism EXACTLY. A departure
+    // card sends ONE survivor into the interior via the `expedition` field
+    // (who/days/danger); EventEngine marks them away, rolls the outcome tier
+    // with ExpeditionResolver, and force-schedules the matching exp_return_*.
+    //
+    // TUNED GENTLE for the three-survivor cast: short trips (days 2) and the
+    // LOWEST danger (1) keep the resolver's risk score low, so lost/wounded
+    // tiers stay rare; rich/modest/discovery dominate. The hint "molto
+    // pericoloso" keeps the cautious simulator at home (deaths stay opt-in).
+    private function expeditions(): array
+    {
+        // One send choice per survivor, gated on that survivor being present
+        // (alive, not already away) by their role. Dispatch is the `expedition`
+        // field; the visible outcome is just the goodbye log.
+        $send = function (string $label, string $who, string $role, int $days, int $danger, string $log): array {
+            return [
+                'label' => $label, 'hint' => 'molto pericoloso', 'tags' => [],
+                'requires' => ['has_role' => $role],
+                'expedition' => ['who' => $who, 'days' => $days, 'danger' => $danger],
+                'outcomes' => [['weight' => 1, 'effects' => [], 'log' => $log]],
+            ];
+        };
+
+        $noOneAway = ['not' => ['flag' => 'expedition_active', 'is' => true]];
+
+        return [
+            // ---- Departure: the interior of the island ----------------------
+            $this->ev([
+                'key' => 'exp_jungle_depart', 'title' => 'L\'interno dell\'isola', 'speaker' => 'Nadia',
+                'body' => "La spiaggia vi ha dato quel che poteva. Oltre la prima fascia di alberi, la giungla sale verso il cuore dell'isola: acqua dolce a monte, forse frutti, forse un altro relitto. Forse niente. Chi mandi a guardare? Chi parte sparisce per giorni.",
+                'requires' => ['all' => [['day' => ['op' => '>=', 'value' => 5]], $noOneAway]],
+                'base_weight' => 6, 'cooldown_days' => 8,
+                'choices' => [
+                    $send('Manda Nadia', 'Nadia', 'engineer', 2, 1, 'Nadia si carica lo zaino, controlla il machete e sparisce tra le felci.'),
+                    $send('Manda Bruno', 'Bruno', 'doctor', 2, 1, 'Bruno prende il kit. «Se trovo qualcuno là dentro, servo io.» Poi la giungla lo inghiotte.'),
+                    $send('Manda Carla', 'Carla', 'pilot', 2, 1, 'Carla studia il sole, si segna la rotta a mente e parte. «Torno prima che cali il buio.»'),
+                    $this->one('Restiamo sulla spiaggia', [['resource' => 'morale', 'delta' => -2]], 'L\'interno resta un\'ombra verde all\'orizzonte. Forse è più saggio così.'),
+                ],
+            ]),
+
+            // ---- Returns (one per resolver tier, force-scheduled) -----------
+            // Biased toward modest/wounded over lost: wounded is stress+morale,
+            // NOT death; lost is the only fatal tier and the risk tuning keeps
+            // it rare.
+            $this->ev([
+                'key' => 'exp_return_rich', 'title' => 'Tornano carichi', 'speaker' => null,
+                'body' => "Le felci si aprono e chi avevi mandato torna — e non a mani vuote. Un ruscello d'acqua dolce a monte, frutti maturi, e qualcosa di utile strappato a un vecchio relitto nell'entroterra.",
+                'requires' => ['flag' => 'expedition_active', 'is' => true],
+                'base_weight' => 0, 'cooldown_days' => 0,
+                'choices' => [
+                    $this->one('Bentornati', [['resource' => 'water', 'delta' => 22], ['resource' => 'food', 'delta' => 18], ['grant_item' => 'binoculars'], ['resource' => 'morale', 'delta' => 10], ['end_expedition' => true]], 'Una giornata buona, di quelle rare. La giungla, stavolta, ha dato.'),
+                ],
+            ]),
+
+            $this->ev([
+                'key' => 'exp_return_modest', 'title' => 'Tornano provati', 'speaker' => null,
+                'body' => "Rientrano stremati, graffiati dai rovi, ma rientrano. Qualche frutto, un po' d'acqua nelle borracce: meglio di niente.",
+                'requires' => ['flag' => 'expedition_active', 'is' => true],
+                'base_weight' => 0, 'cooldown_days' => 0,
+                'choices' => [
+                    $this->one('Aiutali a rientrare', [['resource' => 'food', 'delta' => 12], ['resource' => 'water', 'delta' => 8], ['end_expedition' => true]], 'Si lasciano cadere sulla sabbia, esausti. Ma vivi, e con qualcosa in mano.'),
+                ],
+            ]),
+
+            $this->ev([
+                'key' => 'exp_return_wounded', 'title' => 'Tornano feriti', 'speaker' => null,
+                'body' => "Rientrano, ma là dentro qualcosa è andato storto: un animale, una caduta, una febbre presa nell'umido. Pochissimo bottino e una ferita che peserà.",
+                'requires' => ['flag' => 'expedition_active', 'is' => true],
+                'base_weight' => 0, 'cooldown_days' => 0,
+                'choices' => [
+                    $this->one('Curali come puoi', [['resource' => 'food', 'delta' => 4], ['character' => 'expeditioner', 'stress' => 18], ['resource' => 'morale', 'delta' => -5], ['end_expedition' => true]], 'Respirano a fatica, sudati di febbre. Per ora basta che respirino.'),
+                ],
+            ]),
+
+            $this->ev([
+                'key' => 'exp_return_lost', 'title' => 'Non tornano', 'speaker' => null,
+                'body' => "Il giorno del rientro arriva. Poi il giorno dopo. Scrutate la linea degli alberi finché fa buio. La giungla ha inghiottito chi avevi mandato, e non lo restituisce.",
+                'requires' => ['flag' => 'expedition_active', 'is' => true],
+                'base_weight' => 0, 'cooldown_days' => 0,
+                'choices' => [
+                    $this->one('Smettete di aspettare', [['kill' => 'expeditioner'], ['resource' => 'morale', 'delta' => -16], ['modify_trust' => -10], ['set_flag' => 'lost_on_expedition', 'value' => true], ['end_expedition' => true]], 'Aspettate un giorno di troppo prima di arrendervi. Poi tornate al fuoco, in meno di prima.'),
+                ],
+            ]),
+
+            $this->ev([
+                'key' => 'exp_return_discovery', 'title' => 'Tornano in due', 'speaker' => null,
+                'body' => "Le felci si aprono e dietro chi avevi mandato c'è un'altra figura, barcollante: un superstite di un altro schianto, vivo per miracolo nell'interno dell'isola.",
+                'requires' => ['flag' => 'expedition_active', 'is' => true],
+                'base_weight' => 0, 'cooldown_days' => 0,
+                'choices' => [
+                    $this->one('Falli avvicinare al fuoco', [['recruit' => ['role' => 'survivor']], ['resource' => 'morale', 'delta' => 8], ['resource' => 'food', 'delta' => -4], ['resource' => 'water', 'delta' => -4], ['end_expedition' => true]], 'Una bocca in più, due mani in più. Una storia in più attorno al fuoco.'),
+                ],
+            ]),
+        ];
     }
 
     // ---- Pair arcs: relationships between the three survivors ----------------

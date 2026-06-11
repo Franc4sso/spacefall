@@ -80,7 +80,9 @@ return [
 
     'relationships' => [
         'death_drift' => 3,
-        'expedition_risk' => 3,
+        // Gentler than space (3): with only three survivors, losing one is
+        // catastrophic, so relationship strife nudges expedition risk less.
+        'expedition_risk' => 2,
     ],
 
     'hardship' => [
