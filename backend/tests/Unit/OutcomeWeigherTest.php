@@ -11,7 +11,8 @@ const TRAITS = [
 
 function weigher(): OutcomeWeigher
 {
-    return new OutcomeWeigher(TRAITS);
+    config(['themes.space.traits' => TRAITS]);
+    return new OutcomeWeigher(new \App\Game\ThemeConfig());
 }
 
 /** A 50/50 gamble: one good branch (+5), one bad branch (-15). */

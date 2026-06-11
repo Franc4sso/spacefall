@@ -126,7 +126,7 @@ final class EventEngine
 
         $rng = $run->rng();
         $speaker = $this->resolveSpeaker($event, $state);
-        $outcome = $this->pickOutcome($choice['outcomes'] ?? [], $speaker, $rng);
+        $outcome = $this->pickOutcome($choice['outcomes'] ?? [], $speaker, $rng, $state->theme);
 
         $deathsBefore = count($state->deathLog);
 
@@ -261,7 +261,7 @@ final class EventEngine
         $out = [];
         foreach ($event->choices as $index => $choice) {
             $available = $this->evaluator->evaluate($choice['requires'] ?? null, $state);
-            $hint = $this->hints->hintFor($choice, $speaker);
+            $hint = $this->hints->hintFor($choice, $speaker, $state->theme);
 
             // Corrupt hint: swap it with a random other choice's hint
             if ($corrupted && $hint !== null && $choiceCount > 1) {
@@ -269,7 +269,7 @@ final class EventEngine
                 if ($otherIndices !== []) {
                     $otherKey = array_values($otherIndices)[($state->day + $index) % count($otherIndices)];
                     $otherChoice = $event->choices[$otherKey];
-                    $hint = $this->hints->hintFor($otherChoice, $speaker) ?? $hint;
+                    $hint = $this->hints->hintFor($otherChoice, $speaker, $state->theme) ?? $hint;
                 }
             }
 
@@ -299,7 +299,7 @@ final class EventEngine
      * Weighted-random outcome branch, reweighted by the speaker's luck traits.
      * Single-branch choices resolve directly (no luck to apply).
      */
-    private function pickOutcome(array $outcomes, ?array $speaker, \App\Game\SeededRng $rng): array
+    private function pickOutcome(array $outcomes, ?array $speaker, \App\Game\SeededRng $rng, string $theme = 'space'): array
     {
         if ($outcomes === []) {
             return ['effects' => [], 'log' => ''];
@@ -308,7 +308,7 @@ final class EventEngine
             return $outcomes[0];
         }
 
-        $weights = $this->weigher->weights($outcomes, $speaker);
+        $weights = $this->weigher->weights($outcomes, $speaker, $theme);
         // weightedPick keys by array index; weights is parallel to $outcomes.
         return $outcomes[$rng->weightedPick($weights)];
     }

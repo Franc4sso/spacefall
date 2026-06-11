@@ -3,6 +3,7 @@
 namespace App\Game\Engine;
 
 use App\Game\SeededRng;
+use App\Game\ThemeConfig;
 
 /**
  * Applies a declarative list of effects to a RunState.
@@ -20,7 +21,7 @@ use App\Game\SeededRng;
 final class EffectApplier
 {
     public function __construct(
-        private readonly array $resourceMeta, // code => ['max' => int, ...]
+        private readonly ThemeConfig $theme,
     ) {
     }
 
@@ -30,16 +31,17 @@ final class EffectApplier
      */
     public function apply(array $effects, RunState $state, SeededRng $rng, array $context = []): void
     {
+        $resourceMeta = $this->theme->for($state->theme)->get('resources', []);
         foreach ($effects as $effect) {
-            $this->applyOne($effect, $state, $rng, $context);
+            $this->applyOne($effect, $state, $rng, $context, $resourceMeta);
         }
     }
 
-    private function applyOne(array $effect, RunState $state, SeededRng $rng, array $context = []): void
+    private function applyOne(array $effect, RunState $state, SeededRng $rng, array $context = [], array $resourceMeta = []): void
     {
         if (array_key_exists('resource', $effect)) {
             $code = $effect['resource'];
-            $max = $this->resourceMeta[$code]['max'] ?? 100;
+            $max = $resourceMeta[$code]['max'] ?? 100;
             $current = $state->resources[$code] ?? 0;
             $state->resources[$code] = $this->clamp($current + (int) ($effect['delta'] ?? 0), $max);
             return;

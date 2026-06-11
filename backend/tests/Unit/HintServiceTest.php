@@ -17,7 +17,8 @@ const HINT_TRAITS = [
 
 function hints(): HintService
 {
-    return new HintService(RISK_BANDS, HINT_TRAITS);
+    config(['themes.space.risk_bands' => RISK_BANDS, 'themes.space.traits' => HINT_TRAITS]);
+    return new HintService(new \App\Game\ThemeConfig());
 }
 
 /** A choice with one risky branch (net -10) and one safe branch. */

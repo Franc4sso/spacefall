@@ -6,12 +6,13 @@ use App\Game\SeededRng;
 
 function applier(): EffectApplier
 {
-    return new EffectApplier([
+    config(['themes.space.resources' => [
         'oxygen' => ['max' => 100],
-        'food' => ['max' => 100],
-        'power' => ['max' => 100],
+        'food'   => ['max' => 100],
+        'power'  => ['max' => 100],
         'morale' => ['max' => 100],
-    ]);
+    ]]);
+    return new EffectApplier(new \App\Game\ThemeConfig());
 }
 
 function freshState(array $o = []): RunState

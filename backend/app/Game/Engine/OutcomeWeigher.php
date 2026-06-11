@@ -2,6 +2,8 @@
 
 namespace App\Game\Engine;
 
+use App\Game\ThemeConfig;
+
 /**
  * Adjusts outcome-branch weights by the speaker's luck-shifting traits.
  *
@@ -14,8 +16,7 @@ namespace App\Game\Engine;
  */
 final class OutcomeWeigher
 {
-    /** @param array<string,array<string,mixed>> $traits config('game.traits') */
-    public function __construct(private readonly array $traits)
+    public function __construct(private readonly ThemeConfig $theme)
     {
     }
 
@@ -27,9 +28,10 @@ final class OutcomeWeigher
      * @param  array<string,mixed>|null   $speaker
      * @return list<int>
      */
-    public function weights(array $outcomes, ?array $speaker): array
+    public function weights(array $outcomes, ?array $speaker, string $theme = 'space'): array
     {
-        $shift = $this->luckShift($speaker);
+        $traits = $this->theme->for($theme)->get('traits', []);
+        $shift = $this->luckShift($speaker, $traits);
 
         $weights = [];
         foreach ($outcomes as $o) {
@@ -46,7 +48,7 @@ final class OutcomeWeigher
         return $weights;
     }
 
-    private function luckShift(?array $speaker): float
+    private function luckShift(?array $speaker, array $traits): float
     {
         if ($speaker === null) {
             return 1.0;
@@ -54,7 +56,7 @@ final class OutcomeWeigher
         // Combine multiplicatively if a speaker has several luck traits.
         $shift = 1.0;
         foreach ($speaker['traits'] ?? [] as $trait) {
-            $shift *= (float) ($this->traits[$trait]['luck_shift'] ?? 1.0);
+            $shift *= (float) ($traits[$trait]['luck_shift'] ?? 1.0);
         }
         return $shift;
     }

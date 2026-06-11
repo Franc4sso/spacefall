@@ -2,6 +2,8 @@
 
 namespace App\Game\Engine;
 
+use App\Game\ThemeConfig;
+
 /**
  * Turns a choice's hidden risk into a vague, character-coloured phrase.
  *
@@ -17,11 +19,8 @@ namespace App\Game\Engine;
  */
 final class HintService
 {
-    /** @param array<int,array<string,mixed>> $riskBands  config('game.risk_bands') */
-    /** @param array<string,array<string,mixed>> $traits   config('game.traits') */
     public function __construct(
-        private readonly array $riskBands,
-        private readonly array $traits,
+        private readonly ThemeConfig $theme,
     ) {
     }
 
@@ -30,21 +29,24 @@ final class HintService
      * @param  array<string,mixed>|null  $speaker  the character "saying" the card
      * @return string|null
      */
-    public function hintFor(array $choice, ?array $speaker): ?string
+    public function hintFor(array $choice, ?array $speaker, string $theme = 'space'): ?string
     {
         // Author override wins.
         if (! empty($choice['hint'])) {
             return $choice['hint'];
         }
 
+        $riskBands = $this->theme->for($theme)->get('risk_bands', []);
+        $traits = $this->theme->for($theme)->get('traits', []);
+
         $trueBand = $this->trueRiskBand($choice['outcomes'] ?? []);
         if ($trueBand === null) {
             return null; // no resource stakes => no risk phrase
         }
 
-        $shifted = $this->shiftForSpeaker($trueBand, $speaker);
+        $shifted = $this->shiftForSpeaker($trueBand, $speaker, $riskBands, $traits);
 
-        return $this->riskBands[$shifted]['phrase'] ?? null;
+        return $riskBands[$shifted]['phrase'] ?? null;
     }
 
     /**
@@ -94,29 +96,29 @@ final class HintService
         };
     }
 
-    private function shiftForSpeaker(int $band, ?array $speaker): int
+    private function shiftForSpeaker(int $band, ?array $speaker, array $riskBands, array $traits): int
     {
-        $bias = $this->dominantBias($speaker);
+        $bias = $this->dominantBias($speaker, $traits);
         $shifted = match ($bias) {
             'inflate' => $band + 1,
             'downplay' => $band - 1,
             default => $band, // reliable / none
         };
 
-        return max(0, min(count($this->riskBands) - 1, $shifted));
+        return max(0, min(count($riskBands) - 1, $shifted));
     }
 
     /**
      * A speaker may carry several traits; the first one with a hint_bias other
      * than 'reliable' wins (fear/optimism colours speech more than neutrality).
      */
-    private function dominantBias(?array $speaker): string
+    private function dominantBias(?array $speaker, array $traits): string
     {
         if ($speaker === null) {
             return 'reliable';
         }
         foreach ($speaker['traits'] ?? [] as $trait) {
-            $bias = $this->traits[$trait]['hint_bias'] ?? 'reliable';
+            $bias = $traits[$trait]['hint_bias'] ?? 'reliable';
             if ($bias !== 'reliable') {
                 return $bias;
             }
