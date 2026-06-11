@@ -85,7 +85,121 @@ class IslandEventSeeder extends Seeder
             $this->silentEvents(),
             $this->fillerEvents(),
             $this->rescueChain(),
+            $this->itemArcs(),
         );
+    }
+
+    // ---- Item arcs: 3-stage chains anchored to island items -----------------
+    // Mirrors space's arc_seedbank pattern. Each stage gates on owning the item
+    // + the prior stage's flag; choices set a flag and spawn the next stage.
+    //   radio    → arc_radio_1/2/3   : alternate rescue path (answered/silent)
+    //   seedbank → arc_garden_1/2/3  : plant a garden (arc_garden_bloomed)
+    //   logbook  → arc_log_1/2/3     : the wreck's diary (arc_log_truth, hook)
+    private function itemArcs(): array
+    {
+        return [
+            // === RADIO: chiamata d'aiuto via etere ===========================
+            $this->ev([
+                'key' => 'arc_radio_1', 'title' => 'Una frequenza nel buio', 'speaker' => 'Nadia',
+                'body' => "Nadia ha smontato e rimontato la radio da campo tre volte. \"Se la accordo bene, qualcuno là fuori può sentirci. Ma la batteria è quasi morta — ogni trasmissione la prosciuga.\" Vale la pena bruciarla per una chiamata vera?",
+                'requires' => ['all' => [['has_item' => 'radio'], ['day' => ['op' => '>=', 'value' => 5]]]],
+                'base_weight' => 10, 'cooldown_days' => 999,
+                'choices' => [
+                    $this->one('Trasmetti un SOS completo', [['resource' => 'fire', 'delta' => -3], ['resource' => 'morale', 'delta' => 5], ['set_flag' => 'arc_radio_called', 'value' => true], ['spawn_event' => ['key' => 'arc_radio_2', 'in_days' => 3]]], 'La voce di Nadia parte verso il nulla. Coordinate, nomi, una preghiera.'),
+                    $this->one('Solo un segnale breve, per risparmiare', [['resource' => 'morale', 'delta' => -2], ['set_flag' => 'arc_radio_called', 'value' => true], ['spawn_event' => ['key' => 'arc_radio_2', 'in_days' => 3]]], 'Tre impulsi secchi. Poco, ma è uscito qualcosa.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'arc_radio_2', 'title' => 'La batteria muore', 'speaker' => 'Nadia',
+                'body' => "L'indicatore di carica è rosso. \"Abbiamo una trasmissione, forse due, poi è ferraglia,\" dice Nadia. Carla suggerisce di cannibalizzare le torce per spremere ancora qualche volt. Costa, ma è l'ultima occasione di essere sentiti.",
+                'requires' => ['flag' => 'arc_radio_called', 'is' => true],
+                'base_weight' => 10, 'cooldown_days' => 999,
+                'choices' => [
+                    $this->one('Sacrifica le torce per la radio', [['resource' => 'fire', 'delta' => -4], ['set_flag' => 'arc_radio_powered', 'value' => true], ['spawn_event' => ['key' => 'arc_radio_3', 'in_days' => 3]]], 'Nadia salda i contatti. La radio respira ancora un poco.'),
+                    $this->one('Tieni le torce, rischia la radio', [['character' => 'Nadia', 'stress' => 5], ['set_flag' => 'arc_radio_powered', 'value' => false], ['spawn_event' => ['key' => 'arc_radio_3', 'in_days' => 3]]], 'La carica scende ancora. Una sola chiamata, se va bene.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'arc_radio_3', 'title' => 'Statica, o una voce', 'speaker' => 'Nadia',
+                'body' => "Nadia preme il pulsante un'ultima volta. Tutti trattengono il fiato attorno all'apparecchio.",
+                'requires' => ['flag' => 'arc_radio_called', 'is' => true],
+                'base_weight' => 10, 'cooldown_days' => 999,
+                'choices' => [
+                    array_merge(
+                        $this->one('Ascolta', [['resource' => 'morale', 'delta' => 15], ['set_flag' => 'arc_radio_answered', 'value' => true]], 'Dal rumore emerge una voce: vi hanno sentiti. Stanno cercando le coordinate. Per la prima volta, qualcuno là fuori sa che esistete.'),
+                        ['requires' => ['flag' => 'arc_radio_powered', 'is' => true]]
+                    ),
+                    $this->one('Ascolta', [['resource' => 'morale', 'delta' => -8], ['set_flag' => 'arc_radio_silent', 'value' => true]], 'Solo statica. La carica si esaurisce a metà parola di Nadia. Il mare resta sordo.', null, ['not' => ['flag' => 'arc_radio_powered', 'is' => true]]),
+                ],
+            ]),
+
+            // === SEEDBANK: l'orto (adattato dall'arc spaziale) ===============
+            $this->ev([
+                'key' => 'arc_garden_1', 'title' => 'Un fazzoletto di terra', 'speaker' => 'Bruno',
+                'body' => "Bruno rigira il sacchetto di semi tra le mani, ostinatamente speranzoso. \"Potremmo coltivare davvero, non solo razionare. Costa acqua e fatica adesso — ma un giorno l'isola ci sfamerebbe.\" Oppure si tiene tutto in riserva.",
+                'requires' => ['all' => [['has_item' => 'seedbank'], ['day' => ['op' => '>=', 'value' => 5]]]],
+                'base_weight' => 10, 'cooldown_days' => 999,
+                'choices' => [
+                    $this->one('Orto vero, adesso', [['resource' => 'water', 'delta' => -4], ['resource' => 'food', 'delta' => -2], ['set_flag' => 'arc_garden_stage1', 'value' => true], ['spawn_event' => ['key' => 'arc_garden_2', 'in_days' => 4]]], 'Bruno dissoda un tratto al riparo dal vento. Mani nella terra, finalmente.'),
+                    $this->one('Solo qualche solco, per ora', [['resource' => 'morale', 'delta' => -3], ['set_flag' => 'arc_garden_stage1', 'value' => true], ['spawn_event' => ['key' => 'arc_garden_2', 'in_days' => 4]]], 'Verde fragile e simbolico. Meglio di niente, dice Bruno.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'arc_garden_2', 'title' => 'L\'orto ha sete', 'speaker' => 'Bruno',
+                'body' => "I germogli reggono, ma chiedono cure: acqua dolce, riparo dal sole, tempo che potreste spendere altrove. Bruno li annaffia col suo razionamento. Trascurarli adesso significa perderli.",
+                'requires' => ['flag' => 'arc_garden_stage1', 'is' => true],
+                'base_weight' => 10, 'cooldown_days' => 999,
+                'choices' => [
+                    $this->one('Mi prendo cura dell\'orto', [['resource' => 'water', 'delta' => -3], ['set_flag' => 'arc_garden_stage2', 'value' => true], ['set_flag' => 'arc_garden_tended', 'value' => true], ['spawn_event' => ['key' => 'arc_garden_3', 'in_days' => 4]]], 'Foglie più larghe ogni mattina. Costa acqua, ma vive.'),
+                    $this->one('Ho di meglio da fare', [['character' => 'Bruno', 'stress' => 7], ['set_flag' => 'arc_garden_stage2', 'value' => true], ['spawn_event' => ['key' => 'arc_garden_3', 'in_days' => 4]]], 'L\'orto aspetta sotto il sole. Bruno non te lo dice, ma ci rimane male.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'arc_garden_3', 'title' => 'Il raccolto', 'speaker' => null,
+                'body' => "Quello che avete seminato dà i suoi frutti — o quello che resta dell'orto sotto il sole dell'isola.",
+                'requires' => ['flag' => 'arc_garden_stage2', 'is' => true],
+                'base_weight' => 10, 'cooldown_days' => 999,
+                'choices' => [
+                    array_merge(
+                        $this->one('Raccogli', [['resource' => 'food', 'delta' => 30], ['resource' => 'morale', 'delta' => 10], ['set_flag' => 'arc_garden_bloomed', 'value' => true], ['set_flag' => 'tended_crops', 'value' => true]], 'L\'orto ha tenuto fede alla promessa di Bruno. Per una volta, abbondanza sull\'isola.'),
+                        ['requires' => ['flag' => 'arc_garden_tended', 'is' => true]]
+                    ),
+                    $this->one('Raccogli quel che resta', [['resource' => 'food', 'delta' => 7], ['resource' => 'morale', 'delta' => -6]], 'Foglie secche, qualche frutto amaro. Non l\'avete curato abbastanza, e Bruno lo sa.', null, ['not' => ['flag' => 'arc_garden_tended', 'is' => true]]),
+                ],
+            ]),
+
+            // === LOGBOOK: il diario del relitto (hook mistero, LOST-style) ====
+            $this->ev([
+                'key' => 'arc_log_1', 'title' => 'Le pagine del relitto', 'speaker' => 'Nadia',
+                'body' => "Il diario recuperato tra i rottami non è dell'aereo. È più vecchio. Nadia lo sfoglia: nomi, date, una mappa rabbiosa. \"Qualcuno è naufragato qui prima di noi. E scriveva tutti i giorni — fino a un certo punto.\"",
+                'requires' => ['all' => [['has_item' => 'logbook'], ['day' => ['op' => '>=', 'value' => 5]]]],
+                'base_weight' => 10, 'cooldown_days' => 999,
+                'choices' => [
+                    $this->one('Leggiamo le prime pagine insieme', [['resource' => 'morale', 'delta' => -2], ['set_flag' => 'arc_log_read', 'value' => true], ['spawn_event' => ['key' => 'arc_log_2', 'in_days' => 4]]], 'Sopravvissuti come voi. All\'inizio organizzati, fiduciosi. Poi qualcosa cambia nella grafia.'),
+                    $this->one('Cerco solo le parti utili (acqua, cibo)', [['resource' => 'food', 'delta' => 4], ['set_flag' => 'arc_log_read', 'value' => true], ['spawn_event' => ['key' => 'arc_log_2', 'in_days' => 4]]], 'Indicazioni preziose su sorgenti e frutti. Ma l\'occhio cade su righe che non volevi leggere.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'arc_log_2', 'title' => 'Un dettaglio che non torna', 'speaker' => 'Bruno',
+                'body' => "Una pagina conta i sopravvissuti: nove. La successiva, sei. Nessuna parola sui tre mancanti — solo un trattino accanto ai nomi. Bruno impallidisce. \"Non sono morti di fame. Lo avrebbero scritto.\" Carla vorrebbe smettere di leggere.",
+                'requires' => ['flag' => 'arc_log_read', 'is' => true],
+                'base_weight' => 10, 'cooldown_days' => 999,
+                'choices' => [
+                    $this->one('Andiamo fino in fondo', [['character' => 'Carla', 'stress' => 6], ['set_flag' => 'arc_log_dug', 'value' => true], ['spawn_event' => ['key' => 'arc_log_3', 'in_days' => 4]]], 'Nadia continua a voce bassa. Le ultime pagine sono diverse. Più buie.'),
+                    $this->one('Basta così, per stanotte', [['resource' => 'morale', 'delta' => -4], ['set_flag' => 'arc_log_dug', 'value' => true], ['spawn_event' => ['key' => 'arc_log_3', 'in_days' => 4]]], 'Chiudete il diario. Ma quei trattini restano negli occhi di tutti.'),
+                ],
+            ]),
+            $this->ev([
+                'key' => 'arc_log_3', 'title' => 'Una verità a metà', 'speaker' => 'Nadia',
+                'body' => "L'ultima pagina leggibile: \"Non è la fame a ucciderci. È l'isola. C'è qualcosa qui che non—\" La frase si interrompe. Il resto è strappato. Nadia guarda gli altri. \"Forse il vento. Forse no. Ma loro lo sapevano, e non sono mai partiti.\"",
+                'requires' => ['flag' => 'arc_log_dug', 'is' => true],
+                'base_weight' => 10, 'cooldown_days' => 999,
+                'choices' => [
+                    $this->one('Conserviamo il diario. Ci serve sapere.', [['resource' => 'morale', 'delta' => -3], ['set_flag' => 'arc_log_truth', 'value' => true]], 'Una verità a metà pesa più di nessuna. Qualcosa, su quest\'isola, non è solo natura.'),
+                    $this->one('Bruciamolo. Non ci serve questa paura.', [['resource' => 'morale', 'delta' => 4], ['set_flag' => 'arc_log_truth', 'value' => true]], 'Le fiamme prendono le pagine. Ma ciò che avete letto non brucia con loro.'),
+                ],
+            ]),
+        ];
     }
 
     // ---- The rescue chain (mirrors space's escape arc stage-for-stage) ------

@@ -92,6 +92,8 @@ const ISLAND_FLAG_REACHABILITY_IGNORE = [
     // provviste e annega (IslandEventSeeder, evento "fetch supplies"). Oggi
     // nessun finale/epilogo lo legge; un task colpa/sopravvissuti lo caplerà.
     'sent_to_drown',
+    // mystery hook, sub-project 3
+    'arc_log_truth',
 ];
 
 it('island: ogni flag scritto da una scelta è letto da una carta, un finale o l\'epilogo', function () {
