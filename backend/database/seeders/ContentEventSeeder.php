@@ -1696,6 +1696,16 @@ class ContentEventSeeder extends Seeder
                         $this->one('Monitora e basta', [['spawn_event' => ['key' => 'fuel_crisis', 'in_days' => 6]]], 'Segnato nel registro. Probabilmente si stabilizzerà.'),
                         ['tags' => ['ignored_warning']]
                     ),
+                    array_merge(
+                        $this->one(
+                            'Esco in tuta a sigillare la perdita',
+                            [['consume_item' => 'spacesuit'], ['resource' => 'power', 'delta' => -2]],
+                            'Quaranta minuti nel vuoto, mani ferme sul sigillante. La perdita è chiusa senza bruciare energia. La tuta, dopo, non è più affidabile.',
+                            'consuma la tuta EVA',
+                            ['has_item' => 'spacesuit'],
+                        ),
+                        ['requires_item' => 'spacesuit'],
+                    ),
                 ],
             ]),
 
