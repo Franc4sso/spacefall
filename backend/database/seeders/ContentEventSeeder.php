@@ -1745,6 +1745,16 @@ class ContentEventSeeder extends Seeder
                         $this->one('Priorità a chi lavora di più', [['resource' => 'morale', 'delta' => -15], ['modify_trust' => -20], ['spawn_event' => ['key' => 'ration_revolt', 'in_days' => 5]]], "La decisione ha un senso logico. L'equipaggio non è d'accordo."),
                         ['tags' => ['sacrifice_crew']]
                     ),
+                    array_merge(
+                        $this->one(
+                            'Attingo alle razioni di riserva',
+                            [['consume_item' => 'rations'], ['resource' => 'food', 'delta' => 14], ['resource' => 'morale', 'delta' => 2]],
+                            'Non tagli niente. Apri la riserva e fai finta che basti ancora a lungo. Le scatole sono finite.',
+                            'consuma le razioni extra',
+                            ['has_item' => 'rations'],
+                        ),
+                        ['requires_item' => 'rations'],
+                    ),
                 ],
             ]),
 
