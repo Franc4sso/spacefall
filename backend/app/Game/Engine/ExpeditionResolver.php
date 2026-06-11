@@ -3,6 +3,7 @@
 namespace App\Game\Engine;
 
 use App\Game\SeededRng;
+use App\Game\ThemeConfig;
 
 /**
  * Decides how an expedition turns out. Pure and deterministic given the RNG.
@@ -14,6 +15,11 @@ use App\Game\SeededRng;
 final class ExpeditionResolver
 {
     private const TIERS = ['rich', 'modest', 'wounded', 'lost', 'discovery'];
+
+    public function __construct(
+        private readonly ThemeConfig $theme = new ThemeConfig(),
+    ) {
+    }
 
     /** Items that make a trip safer. */
     private const GEAR = ['spacesuit', 'scanner', 'drone', 'medkit'];
@@ -57,7 +63,7 @@ final class ExpeditionResolver
      */
     private function relationshipRisk(string $who, RunState $state): int
     {
-        $mag = (int) config('game.relationships.expedition_risk', 0);
+        $mag = (int) $this->theme->for($state->theme)->get('relationships.expedition_risk', 0);
         if ($mag === 0) {
             return 0;
         }
