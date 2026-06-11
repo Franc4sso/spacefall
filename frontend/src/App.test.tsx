@@ -158,6 +158,43 @@ it("shows the game-over screen with the ending and a restart button", async () =
   expect(screen.getByTestId("restart")).toBeInTheDocument();
 });
 
+it("threads the chosen theme into /items and /runs", async () => {
+  const calls: string[] = [];
+  let runBody: unknown = null;
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (url: string, init?: RequestInit) => {
+      calls.push(url);
+      const handler = (u: string): unknown => {
+        if (u.includes("/items")) return ITEMS;
+        if (u.endsWith("/runs")) {
+          runBody = init?.body ? JSON.parse(String(init.body)) : null;
+          return runState();
+        }
+        return {};
+      };
+      return { ok: true, status: 200, url, json: async () => handler(url) };
+    }),
+  );
+
+  const user = userEvent.setup();
+  render(<App />);
+
+  // pick the island theme
+  await user.click(await screen.findByTestId("theme-island"));
+
+  // /items was re-fetched with theme=island
+  await screen.findByTestId("item-welder");
+  expect(calls.some((u) => u.includes("/items") && u.includes("theme=island"))).toBe(true);
+
+  await user.click(screen.getByTestId("item-welder"));
+  await user.click(screen.getByTestId("item-scanner"));
+  await user.click(screen.getByTestId("begin"));
+
+  await screen.findByTestId("card");
+  expect(runBody).toMatchObject({ theme: "island" });
+});
+
 it("disables an unavailable (item-gated) choice", async () => {
   const gated = runState({
     card: {

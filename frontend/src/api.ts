@@ -103,15 +103,16 @@ export function fetchHealth(): Promise<Health> {
   return fetch(`${BASE}/health`).then((r) => json<Health>(r));
 }
 
-export function fetchItems(handle: string): Promise<ItemCatalogue> {
-  return fetch(`${BASE}/items?handle=${encodeURIComponent(handle)}`).then((r) =>
-    json<ItemCatalogue>(r),
-  );
+export function fetchItems(handle: string, theme: string = "space"): Promise<ItemCatalogue> {
+  return fetch(
+    `${BASE}/items?handle=${encodeURIComponent(handle)}&theme=${encodeURIComponent(theme)}`,
+  ).then((r) => json<ItemCatalogue>(r));
 }
 
 export function startRun(opts: {
   items: string[];
   handle: string;
+  theme?: string;
   seed?: number;
 }): Promise<RunState> {
   return fetch(`${BASE}/runs`, {

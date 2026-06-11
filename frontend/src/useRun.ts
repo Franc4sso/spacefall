@@ -15,11 +15,11 @@ export function useRun(handle: string) {
   const [error, setError] = useState<string | null>(null);
 
   const begin = useCallback(
-    async (items: string[]) => {
+    async (items: string[], theme: string = "space") => {
       setError(null);
       setBusy(true);
       try {
-        const state = await startRun({ items, handle });
+        const state = await startRun({ items, handle, theme });
         setRun(state);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Errore di avvio");

@@ -1,26 +1,43 @@
 import { useEffect, useState } from "react";
 import { fetchItems, type Item } from "../api";
 
+type Theme = "space" | "island";
+
 type Props = {
   handle: string;
   busy: boolean;
-  onBegin: (items: string[]) => void;
+  onBegin: (items: string[], theme: Theme) => void;
+};
+
+const THEME_COPY: Record<Theme, { title: string; intro: (pick: number) => string }> = {
+  space: {
+    title: "STARFALL STATION",
+    intro: (pick) => `La stazione è compromessa. Scegli ${pick} dotazioni prima del distacco.`,
+  },
+  island: {
+    title: "RELITTO",
+    intro: (pick) =>
+      `L'aereo è caduto. Scegli ${pick} dotazioni prima di addentrarti nell'isola.`,
+  },
 };
 
 export function StartScreen({ handle, busy, onBegin }: Props) {
+  const [theme, setTheme] = useState<Theme>("space");
   const [items, setItems] = useState<Item[]>([]);
   const [pick, setPick] = useState(5);
   const [chosen, setChosen] = useState<string[]>([]);
   const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
-    fetchItems(handle)
+    setLoadError(false);
+    fetchItems(handle, theme)
       .then((c) => {
         setItems(c.items);
         setPick(c.pick);
+        setChosen([]);
       })
       .catch(() => setLoadError(true));
-  }, [handle]);
+  }, [handle, theme]);
 
   function toggle(key: string) {
     setChosen((cur) =>
@@ -46,6 +63,33 @@ export function StartScreen({ handle, busy, onBegin }: Props) {
       maxWidth: 640,
       margin: "0 auto",
     }}>
+      <div style={{ display: "flex", gap: 8 }}>
+        {(["space", "island"] as const).map((t) => {
+          const on = theme === t;
+          return (
+            <button
+              key={t}
+              data-testid={`theme-${t}`}
+              onClick={() => setTheme(t)}
+              style={{
+                padding: "6px 18px",
+                borderRadius: 999,
+                border: `1px solid ${on ? "var(--color-cyan-dim)" : "var(--color-border)"}`,
+                background: on ? "rgba(0,212,255,0.1)" : "transparent",
+                color: on ? "var(--color-cyan)" : "var(--color-text-muted)",
+                fontSize: 12,
+                fontFamily: "var(--font-mono)",
+                letterSpacing: "0.15em",
+                cursor: "pointer",
+                transition: "border-color 150ms ease, background 150ms ease, color 150ms ease",
+              }}
+            >
+              {t === "space" ? "SPAZIO" : "ISOLA"}
+            </button>
+          );
+        })}
+      </div>
+
       <header style={{ textAlign: "center" }}>
         <h1 style={{
           margin: 0,
@@ -55,7 +99,7 @@ export function StartScreen({ handle, busy, onBegin }: Props) {
           color: "var(--color-cyan)",
           textShadow: "0 0 20px var(--color-cyan-glow)",
         }}>
-          STARFALL STATION
+          {THEME_COPY[theme].title}
         </h1>
         <p style={{
           margin: "6px 0 0",
@@ -69,9 +113,7 @@ export function StartScreen({ handle, busy, onBegin }: Props) {
       </header>
 
       <p style={{ margin: 0, fontSize: 13, color: "rgba(232,244,253,0.7)", textAlign: "center" }}>
-        La stazione è compromessa. Scegli{" "}
-        <span style={{ color: "var(--color-text)", fontWeight: 600 }}>{pick}</span>{" "}
-        dotazioni prima del distacco.
+        {THEME_COPY[theme].intro(pick)}
       </p>
 
       {loadError && (
@@ -123,7 +165,7 @@ export function StartScreen({ handle, busy, onBegin }: Props) {
         <button
           data-testid="begin"
           disabled={!ready || busy}
-          onClick={() => onBegin(chosen)}
+          onClick={() => onBegin(chosen, theme)}
           style={{
             padding: "9px 24px",
             borderRadius: 10,
