@@ -4,6 +4,7 @@ namespace App\Game\Engine;
 
 use App\Game\Engine\EpithetEngine;
 use App\Game\Engine\TrustEngine;
+use App\Game\ThemeConfig;
 use App\Models\Event;
 use App\Models\Run;
 use RuntimeException;
@@ -29,6 +30,7 @@ final class EventEngine
         private readonly ReactionDeriver $reactions,
         private readonly ExpeditionResolver $expeditions,
         private readonly EffectSummarizer $summarizer,
+        private readonly ThemeConfig $theme = new ThemeConfig(),
     ) {
     }
 
@@ -87,7 +89,7 @@ final class EventEngine
             $log = $run->death_log ?? [];
             foreach ($log as $entry) {
                 if (! ($entry['announced'] ?? false)) {
-                    $phrase = config('game.death_notice_phrases.' . ($entry['cause'] ?? 'event'), 'Se n\'è andato.');
+                    $phrase = $this->theme->for($run->theme)->get('death_notice_phrases.' . ($entry['cause'] ?? 'event'), 'Se n\'è andato.');
                     $event->body = "{$entry['name']}. Giorno {$entry['day']}. {$phrase}";
                     break;
                 }
