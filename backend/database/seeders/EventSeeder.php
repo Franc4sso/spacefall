@@ -414,6 +414,19 @@ class EventSeeder extends Seeder
                             ], 'log' => 'Torni a mani quasi vuote, e con un graffio che brucia.'],
                         ],
                     ],
+                    [
+                        'label' => 'Apro le razioni di riserva',
+                        'hint' => 'consuma le razioni extra',
+                        'requires' => ['has_item' => 'rations'],
+                        'requires_item' => 'rations',
+                        'outcomes' => [
+                            ['weight' => 1, 'effects' => [
+                                ['consume_item' => 'rations'],
+                                ['resource' => 'food', 'delta' => 12],
+                                ['resource' => 'morale', 'delta' => 4],
+                            ], 'log' => 'Tiri fuori il cuscinetto che tenevi da parte. Stasera nessuno salta il turno, nessuno mangia di nascosto. Domani sarà un altro problema.'],
+                        ],
+                    ],
                 ],
             ],
 
