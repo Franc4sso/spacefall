@@ -80,9 +80,7 @@ return [
 
     'relationships' => [
         'death_drift' => 3,
-        // Gentler than space (3): with only three survivors, losing one is
-        // catastrophic, so relationship strife nudges expedition risk less.
-        'expedition_risk' => 2,
+        'expedition_risk' => 3,
     ],
 
     'hardship' => [
@@ -332,14 +330,11 @@ return [
             'vented_the_technician' => 'Hai abbandonato un uomo alla marea.',
             'lost_on_expedition' => 'Hai lasciato l\'accampamento a chi non era ancora rientrato.',
             'arc_garden_bloomed' => 'Hai fatto crescere un orto dove tutto seccava.',
-            'arc_radio_answered' => 'La radio ha gracchiato una risposta. Qualcuno, là fuori, sapeva di voi.',
-            'arc_radio_silent' => 'Hai bruciato l\'ultima carica nell\'etere. Solo statica ti ha risposto.',
-            'nadia_vindicated'  => 'L\'azzardo di Nadia ha pagato: acqua dove c\'era solo sete.',
-            'nadia_overreached' => 'Nadia ha voluto strafare. Il suo apparecchio è saltato, e con esso qualcosa in lei.',
-            'bruno_hope_held'   => 'La speranza ostinata di Bruno ha tenuto, quando contava davvero.',
-            'bruno_denial_cost' => 'Bruno ha sorriso troppo a lungo, e la verità è arrivata tardi.',
-            'carla_redeemed'    => 'Carla ha vinto la sua paura quando un altro ne dipendeva.',
-            'carla_broke'       => 'Carla si è bloccata ancora. Stavolta è rimasta a terra per sempre.',
+            'arc_rescue_answered' => 'Il tuo segnale ha trovato orecchie. Qualcuno è venuto.',
+            'arc_truth_found' => 'Hai scoperto cosa è successo a chi c\'era prima. Avresti preferito di no.',
+            'cole_found_exit' => 'Bruno ha cercato una via di fuga. L\'hai seguito.',
+            'cole_left'       => 'Bruno se n\'è andato nella giungla. Non saprai mai se ce l\'ha fatta.',
+            'cole_heroics'    => 'Quando contava, Bruno ha preso il timone e non ha tremato.',
         ],
         'victory_beats' => [
             'escape_repaired' => 'Hai rimesso in sesto la scialuppa, giorno {day}.',
@@ -372,8 +367,6 @@ return [
             'description' => 'Sblocca la zattera.', 'grants_item' => 'raft'],
         ['key' => 'unlock_still',   'cost' => 40, 'name' => 'Alambicco',
             'description' => 'Sblocca l\'alambicco per l\'acqua.', 'grants_item' => 'still'],
-        ['key' => 'unlock_logbook', 'cost' => 30, 'name' => 'Diario del relitto',
-            'description' => 'Sblocca il diario: scopri cosa è successo a chi c\'era prima.', 'grants_item' => 'logbook'],
     ],
 
     /*

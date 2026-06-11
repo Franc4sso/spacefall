@@ -79,377 +79,13 @@ class IslandEventSeeder extends Seeder
             $this->phaseEvents(),
             $this->hungerEvents(),
             $this->dilemmaEvents(),
-            $this->survivorVoiceArcs(),
+            $this->survivorArc(),
             $this->moralEvents(),
             $this->dominoEvents(),
             $this->silentEvents(),
             $this->fillerEvents(),
             $this->rescueChain(),
-            $this->itemArcs(),
-            $this->pairArcs(),
-            $this->crossReactions(),
-            $this->expeditions(),
         );
-    }
-
-    // ---- Spedizioni nella giungla: l'interno dell'isola --------------------
-    // Mirrors space's expedition send/return mechanism EXACTLY. A departure
-    // card sends ONE survivor into the interior via the `expedition` field
-    // (who/days/danger); EventEngine marks them away, rolls the outcome tier
-    // with ExpeditionResolver, and force-schedules the matching exp_return_*.
-    //
-    // TUNED GENTLE for the three-survivor cast: short trips (days 2) and the
-    // LOWEST danger (1) keep the resolver's risk score low, so lost/wounded
-    // tiers stay rare; rich/modest/discovery dominate. The hint "molto
-    // pericoloso" keeps the cautious simulator at home (deaths stay opt-in).
-    private function expeditions(): array
-    {
-        // One send choice per survivor, gated on that survivor being present
-        // (alive, not already away) by their role. Dispatch is the `expedition`
-        // field; the visible outcome is just the goodbye log.
-        $send = function (string $label, string $who, string $role, int $days, int $danger, string $log): array {
-            return [
-                'label' => $label, 'hint' => 'molto pericoloso', 'tags' => [],
-                'requires' => ['has_role' => $role],
-                'expedition' => ['who' => $who, 'days' => $days, 'danger' => $danger],
-                'outcomes' => [['weight' => 1, 'effects' => [], 'log' => $log]],
-            ];
-        };
-
-        $noOneAway = ['not' => ['flag' => 'expedition_active', 'is' => true]];
-
-        return [
-            // ---- Departure: the interior of the island ----------------------
-            $this->ev([
-                'key' => 'exp_jungle_depart', 'title' => 'L\'interno dell\'isola', 'speaker' => 'Nadia',
-                'body' => "La spiaggia vi ha dato quel che poteva. Oltre la prima fascia di alberi, la giungla sale verso il cuore dell'isola: acqua dolce a monte, forse frutti, forse un altro relitto. Forse niente. Chi mandi a guardare? Chi parte sparisce per giorni.",
-                'requires' => ['all' => [['day' => ['op' => '>=', 'value' => 5]], $noOneAway]],
-                'base_weight' => 6, 'cooldown_days' => 8,
-                'choices' => [
-                    $send('Manda Nadia', 'Nadia', 'engineer', 2, 1, 'Nadia si carica lo zaino, controlla il machete e sparisce tra le felci.'),
-                    $send('Manda Bruno', 'Bruno', 'doctor', 2, 1, 'Bruno prende il kit. «Se trovo qualcuno là dentro, servo io.» Poi la giungla lo inghiotte.'),
-                    $send('Manda Carla', 'Carla', 'pilot', 2, 1, 'Carla studia il sole, si segna la rotta a mente e parte. «Torno prima che cali il buio.»'),
-                    $this->one('Restiamo sulla spiaggia', [['resource' => 'morale', 'delta' => -2]], 'L\'interno resta un\'ombra verde all\'orizzonte. Forse è più saggio così.'),
-                ],
-            ]),
-
-            // ---- Returns (one per resolver tier, force-scheduled) -----------
-            // Biased toward modest/wounded over lost: wounded is stress+morale,
-            // NOT death; lost is the only fatal tier and the risk tuning keeps
-            // it rare.
-            $this->ev([
-                'key' => 'exp_return_rich', 'title' => 'Tornano carichi', 'speaker' => null,
-                'body' => "Le felci si aprono e chi avevi mandato torna — e non a mani vuote. Un ruscello d'acqua dolce a monte, frutti maturi, e qualcosa di utile strappato a un vecchio relitto nell'entroterra.",
-                'requires' => ['flag' => 'expedition_active', 'is' => true],
-                'base_weight' => 0, 'cooldown_days' => 0,
-                'choices' => [
-                    $this->one('Bentornati', [['resource' => 'water', 'delta' => 22], ['resource' => 'food', 'delta' => 18], ['grant_item' => 'binoculars'], ['resource' => 'morale', 'delta' => 10], ['end_expedition' => true]], 'Una giornata buona, di quelle rare. La giungla, stavolta, ha dato.'),
-                ],
-            ]),
-
-            $this->ev([
-                'key' => 'exp_return_modest', 'title' => 'Tornano provati', 'speaker' => null,
-                'body' => "Rientrano stremati, graffiati dai rovi, ma rientrano. Qualche frutto, un po' d'acqua nelle borracce: meglio di niente.",
-                'requires' => ['flag' => 'expedition_active', 'is' => true],
-                'base_weight' => 0, 'cooldown_days' => 0,
-                'choices' => [
-                    $this->one('Aiutali a rientrare', [['resource' => 'food', 'delta' => 12], ['resource' => 'water', 'delta' => 8], ['end_expedition' => true]], 'Si lasciano cadere sulla sabbia, esausti. Ma vivi, e con qualcosa in mano.'),
-                ],
-            ]),
-
-            $this->ev([
-                'key' => 'exp_return_wounded', 'title' => 'Tornano feriti', 'speaker' => null,
-                'body' => "Rientrano, ma là dentro qualcosa è andato storto: un animale, una caduta, una febbre presa nell'umido. Pochissimo bottino e una ferita che peserà.",
-                'requires' => ['flag' => 'expedition_active', 'is' => true],
-                'base_weight' => 0, 'cooldown_days' => 0,
-                'choices' => [
-                    $this->one('Curali come puoi', [['resource' => 'food', 'delta' => 4], ['character' => 'expeditioner', 'stress' => 18], ['resource' => 'morale', 'delta' => -5], ['end_expedition' => true]], 'Respirano a fatica, sudati di febbre. Per ora basta che respirino.'),
-                ],
-            ]),
-
-            $this->ev([
-                'key' => 'exp_return_lost', 'title' => 'Non tornano', 'speaker' => null,
-                'body' => "Il giorno del rientro arriva. Poi il giorno dopo. Scrutate la linea degli alberi finché fa buio. La giungla ha inghiottito chi avevi mandato, e non lo restituisce.",
-                'requires' => ['flag' => 'expedition_active', 'is' => true],
-                'base_weight' => 0, 'cooldown_days' => 0,
-                'choices' => [
-                    $this->one('Smettete di aspettare', [['kill' => 'expeditioner'], ['resource' => 'morale', 'delta' => -16], ['modify_trust' => -10], ['set_flag' => 'lost_on_expedition', 'value' => true], ['end_expedition' => true]], 'Aspettate un giorno di troppo prima di arrendervi. Poi tornate al fuoco, in meno di prima.'),
-                ],
-            ]),
-
-            $this->ev([
-                'key' => 'exp_return_discovery', 'title' => 'Tornano in due', 'speaker' => null,
-                'body' => "Le felci si aprono e dietro chi avevi mandato c'è un'altra figura, barcollante: un superstite di un altro schianto, vivo per miracolo nell'interno dell'isola.",
-                'requires' => ['flag' => 'expedition_active', 'is' => true],
-                'base_weight' => 0, 'cooldown_days' => 0,
-                'choices' => [
-                    $this->one('Falli avvicinare al fuoco', [['recruit' => ['role' => 'survivor']], ['resource' => 'morale', 'delta' => 8], ['resource' => 'food', 'delta' => -4], ['resource' => 'water', 'delta' => -4], ['end_expedition' => true]], 'Una bocca in più, due mani in più. Una storia in più attorno al fuoco.'),
-                ],
-            ]),
-        ];
-    }
-
-    // ---- Pair arcs: relationships between the three survivors ----------------
-    // Mirrors space's pair_* events stage-for-stage. For each couple a CLASH
-    // card (gated on both alive) where they fight under stress, and a BOND card
-    // (gated on relationship state 'bond') where they've grown close. Conflicts
-    // are written FROM their established voices (survivorVoiceArcs):
-    //   Nadia  — brilliance as risk (her azzardi strain the group)
-    //   Bruno  — hope as denial (downplays real danger)
-    //   Carla  — fear, freezes in a crisis
-    // Effects use relationship/modify_standing only; no flags, so the bond gate
-    // is the relationship STATE, never a set_flag.
-    private function pairArcs(): array
-    {
-        return [
-            // === NADIA × BRUNO : il suo azzardo contro la sua prudenza ========
-            $this->ev([
-                'key' => 'pair_nadia_bruno_clash', 'title' => 'L\'azzardo e la cautela', 'speaker' => null,
-                'body' => "Nadia vuole smontare la cassetta del pronto soccorso per recuperarne il metallo e l'alcol: «Mi serve per l'alambicco, e ne vale la pena.» Bruno le si pianta davanti. «Non tutto si può aggiustare con un azzardo, Nadia. Quella roba salva delle vite. La tua acqua può aspettare.» Si fissano. Aspettano te.",
-                'requires' => ['all' => [['alive' => 'Nadia'], ['alive' => 'Bruno']]],
-                'base_weight' => 9, 'cooldown_days' => 7,
-                'choices' => [
-                    $this->one('Dai ragione a Nadia: rischiamo per l\'acqua', [['relationship' => ['a' => 'Nadia', 'b' => 'Bruno', 'delta' => -12]], ['modify_standing' => ['who' => 'Nadia', 'delta' => 8]]], 'Bruno raccoglie quel che resta della cassetta senza una parola. Nadia ha già le mani nel metallo.'),
-                    $this->one('Dai ragione a Bruno: la prudenza prima', [['relationship' => ['a' => 'Nadia', 'b' => 'Bruno', 'delta' => -12]], ['modify_standing' => ['who' => 'Bruno', 'delta' => 8]]], 'Nadia richiude la cassetta di scatto. «Allora resteremo prudenti e assetati. Bravi.»'),
-                    $this->one('Hanno ragione entrambi: trovate un compromesso', [['relationship' => ['a' => 'Nadia', 'b' => 'Bruno', 'delta' => 8]], ['resource' => 'morale', 'delta' => -3]], 'Litigano ancora un po\', poi spartiscono: metà alla medicina, metà all\'alambicco. Nessuno è contento. Ma lavorano fianco a fianco.'),
-                ],
-            ]),
-            $this->ev([
-                'key' => 'pair_nadia_bruno_bond', 'title' => 'Due teste, una notte', 'speaker' => 'Bruno',
-                'body' => "Li trovi svegli al fuoco, vicini. Nadia disegna circuiti nella cenere, Bruno tiene il ritmo con domande da profano che però la fanno ridere. «Mi ha spiegato come funziona il suo alambicco finché non ho capito,» ti dice Bruno. «E io le ho insegnato a suturare. Se uno di noi crolla, l'altro sa cosa fare.» Nadia annuisce, per una volta senza spigoli.",
-                'requires' => ['relationship' => ['a' => 'Nadia', 'b' => 'Bruno', 'state' => 'bond']],
-                'base_weight' => 8, 'cooldown_days' => 10,
-                'choices' => [
-                    $this->one('Incoraggiali: insegnatevi tutto', [['relationship' => ['a' => 'Nadia', 'b' => 'Bruno', 'delta' => 10]]], 'Passano la notte a scambiarsi i loro mestieri. Domani il gruppo ha due teste che pensano in due modi.'),
-                    $this->one('Mettili alla prova: chi decide se siete in disaccordo?', [['relationship' => ['a' => 'Nadia', 'b' => 'Bruno', 'delta' => -6]], ['resource' => 'morale', 'delta' => 4]], 'La domanda li gela un istante. «Decide chi ha ragione,» dice Nadia. «Decide chi rischia di meno,» dice Bruno. Ridono, ma adesso lo sanno: un giorno dovranno scegliere.'),
-                ],
-            ]),
-
-            // === NADIA × CARLA : la competenza contro la paura ================
-            $this->ev([
-                'key' => 'pair_nadia_carla_clash', 'title' => 'Chi si muove e chi si blocca', 'speaker' => null,
-                'body' => "Una trave del riparo sta cedendo e Nadia è sotto a reggerla. «Carla, la corda, ADESSO!» Ma Carla è impietrita, le mani che tremano, lo sguardo perso. Nadia ce la fa da sola per un soffio, poi esplode: «Eri un pilota! Come fai a bloccarti così? Ogni volta tocca farlo a me!» Carla incassa, muta. Ti girano entrambe lo sguardo addosso.",
-                'requires' => ['all' => [['alive' => 'Nadia'], ['alive' => 'Carla']]],
-                'base_weight' => 9, 'cooldown_days' => 7,
-                'choices' => [
-                    $this->one('Dai ragione a Nadia: Carla deve reagire', [['relationship' => ['a' => 'Nadia', 'b' => 'Carla', 'delta' => -12]], ['modify_standing' => ['who' => 'Nadia', 'delta' => 8]]], 'Nadia annuisce, dura. Carla si allontana sola verso gli alberi, le spalle curve.'),
-                    $this->one('Dai ragione a Carla: la paura non è una colpa', [['relationship' => ['a' => 'Nadia', 'b' => 'Carla', 'delta' => -12]], ['modify_standing' => ['who' => 'Carla', 'delta' => 8]]], 'Carla ti cerca con gli occhi, grata. Nadia sbuffa e torna al lavoro: «Allora reggetela voi, la prossima trave.»'),
-                    $this->one('Hanno ragione entrambe: il panico va capito, non punito', [['relationship' => ['a' => 'Nadia', 'b' => 'Carla', 'delta' => 8]], ['resource' => 'morale', 'delta' => -3]], 'Costringi Nadia a respirare e Carla a parlare. «Quando mi blocco, dammi un compito piccolo,» dice Carla piano. Nadia ci pensa. «...Va bene. La corda è un compito piccolo.»'),
-                ],
-            ]),
-            $this->ev([
-                'key' => 'pair_nadia_carla_bond', 'title' => 'La mano ferma', 'speaker' => 'Nadia',
-                'body' => "Nadia ti mostra il faro di posizione, di nuovo acceso. «L'ho rimontato io, ma le mani che hanno tenuto fermi i contatti mentre saldavo erano le sue.» Indica Carla con il mento. «Non si è bloccata. Non una volta.» Carla quasi arrossisce. «Mi ha dato un compito alla volta. Così riesco.» Tra loro due, adesso, c'è un ritmo.",
-                'requires' => ['relationship' => ['a' => 'Nadia', 'b' => 'Carla', 'state' => 'bond']],
-                'base_weight' => 8, 'cooldown_days' => 10,
-                'choices' => [
-                    $this->one('Affidale insieme un lavoro difficile', [['relationship' => ['a' => 'Nadia', 'b' => 'Carla', 'delta' => 10]]], 'Nadia spezza ogni compito in passi piccoli, Carla li esegue uno a uno senza esitare. Funziona. Più di quanto entrambe sperassero.'),
-                    $this->one('Metti Carla in una crisi senza Nadia accanto', [['relationship' => ['a' => 'Nadia', 'b' => 'Carla', 'delta' => -6]], ['character' => 'Carla', 'stress' => 6]], 'Carla regge, a stento, sudando freddo. Nadia accorre dopo: «Perché l\'hai lasciata sola?» C\'è qualcosa di protettivo, ora, nel modo in cui difende Carla.'),
-                ],
-            ]),
-
-            // === BRUNO × CARLA : la speranza contro il terrore ================
-            $this->ev([
-                'key' => 'pair_bruno_carla_clash', 'title' => 'Quando il sorriso non basta', 'speaker' => null,
-                'body' => "Carla è seduta in disparte, le ginocchia strette al petto: è convinta che non vi salverà nessuno. Bruno le si avvicina col suo sorriso di sempre. «Su, andrà tutto bene! Domani il mare sarà calmo e—» «SMETTILA!» scatta Carla. «Non va tutto bene. Tu fai finta e basta. La mia paura non è uno scherzo da spazzare via con una battuta.» Bruno resta col sorriso a metà. Aspettano te.",
-                'requires' => ['all' => [['alive' => 'Bruno'], ['alive' => 'Carla']]],
-                'base_weight' => 9, 'cooldown_days' => 7,
-                'choices' => [
-                    $this->one('Dai ragione a Bruno: il morale ci tiene vivi', [['relationship' => ['a' => 'Bruno', 'b' => 'Carla', 'delta' => -10]], ['modify_standing' => ['who' => 'Bruno', 'delta' => 8]]], 'Bruno ritrova il sorriso. Carla si chiude ancora di più: si sente sola con la sua paura.'),
-                    $this->one('Dai ragione a Carla: la sua paura è reale', [['relationship' => ['a' => 'Bruno', 'b' => 'Carla', 'delta' => -10]], ['modify_standing' => ['who' => 'Carla', 'delta' => 8]]], 'Bruno abbassa lo sguardo. «...Hai ragione. A volte sorrido per non guardare anch\'io.» Carla lo fissa, sorpresa da quella crepa.'),
-                    $this->one('Hanno ragione entrambi: la speranza ascolta prima di consolare', [['relationship' => ['a' => 'Bruno', 'b' => 'Carla', 'delta' => 8]], ['resource' => 'morale', 'delta' => -3]], 'Bruno si siede accanto a Carla senza una battuta, e per una volta la lascia parlare. «Non ti dico che andrà bene,» dice piano. «Ti dico che ci sono.» Carla, lentamente, allenta le ginocchia.'),
-                ],
-            ]),
-            $this->ev([
-                'key' => 'pair_bruno_carla_bond', 'title' => 'Una paura ascoltata', 'speaker' => 'Bruno',
-                'body' => "Bruno ti prende da parte. «Carla ha avuto un altro attacco di panico stanotte. Stavolta non ho fatto battute — sono rimasto seduto con lei finché non è passato. Mi ha detto di cosa ha davvero paura.» Guarda Carla, che dorme finalmente serena. «Non te lo dico, è suo. Ma adesso so come tirarla fuori, quando si blocca. E lei lo sa.»",
-                'requires' => ['relationship' => ['a' => 'Bruno', 'b' => 'Carla', 'state' => 'bond']],
-                'base_weight' => 8, 'cooldown_days' => 10,
-                'choices' => [
-                    $this->one('Rispetta il loro patto silenzioso', [['relationship' => ['a' => 'Bruno', 'b' => 'Carla', 'delta' => 10]]], 'Bruno è diventato l\'ancora di Carla, e Carla la coscienza di Bruno: lei gli ricorda di non mentire alla paura, lui le ricorda di respirare. Si reggono a vicenda.'),
-                    $this->one('Chiedi a Bruno di dirti cosa la spaventa', [['relationship' => ['a' => 'Bruno', 'b' => 'Carla', 'delta' => -6]], ['resource' => 'morale', 'delta' => 4]], 'Bruno scuote la testa. «No. Se lo dico io, tradisco l\'unica cosa che si fida di me.» Tiene il segreto. Carla, quando lo scopre, lo guarda come non guarda nessun altro.'),
-                ],
-            ]),
-        ];
-    }
-
-    // ---- Cross-reactions: jealousy when you keep favouring one survivor -----
-    // Mirrors space's cross_* events: when you consistently FAVOUR one survivor
-    // their standing climbs, and ANOTHER survivor remarks on it. The gate is the
-    // SAME mechanism space uses for its standing-driven cross beats (see
-    // ContentEventSeeder cross_*/standing gates at lines 1116/1207/1234/1332):
-    //   ['standing' => ['who' => <favoured>, 'op' => '>=', 'value' => N]]
-    // which ConditionEvaluator reads from state flag standing_<who> (set by the
-    // modify_standing effect scattered through pairArcs/dilemmas). Both the
-    // COMMENTER and the FAVOURED survivor must be alive. Choices ripple the
-    // dynamic via relationship/modify_standing/morale only — no flags.
-    //   cross_bruno_on_nadia : Bruno, hurt optimism, on a favoured Nadia
-    //   cross_carla_on_bruno : Carla, timid resentment, on a favoured Bruno
-    //   cross_nadia_on_carla : Nadia, blunt impatience, on a favoured Carla
-    private function crossReactions(): array
-    {
-        return [
-            // === BRUNO commenta una NADIA troppo coccolata ===================
-            $this->ev([
-                'key' => 'cross_bruno_on_nadia', 'title' => 'Bruno parla di Nadia', 'speaker' => 'Bruno',
-                'body' => "Bruno ti raggiunge dove nessuno sente, e per una volta non sorride. «Lo so che Nadia è la più sveglia di noi. Glielo dici con gli occhi ogni volta. Ma c'è altra gente, qui. Io curo, Carla pilota, e cominciamo a sentirci come attrezzi che tieni nello zaino di scorta. Non è da te. O forse sì, e non me n'ero accorto.»",
-                'requires' => ['all' => [
-                    ['alive' => 'Bruno'], ['alive' => 'Nadia'],
-                    ['standing' => ['who' => 'Nadia', 'op' => '>=', 'value' => 30]],
-                ]],
-                'base_weight' => 6, 'cooldown_days' => 999,
-                'choices' => [
-                    $this->one('Hai ragione, mi sono sbilanciato', [['modify_standing' => ['who' => 'Bruno', 'delta' => 8]], ['relationship' => ['a' => 'Bruno', 'b' => 'Nadia', 'delta' => -6]], ['resource' => 'morale', 'delta' => 3]], 'Bruno respira piano, come se gli avessi tolto un peso. «Grazie. Ne avevo bisogno.» Torna dai feriti più dritto di prima.'),
-                    $this->one('Nadia ci tiene vivi: è meritato', [['modify_standing' => ['who' => 'Nadia', 'delta' => 6]], ['relationship' => ['a' => 'Bruno', 'b' => 'Nadia', 'delta' => -8]], ['resource' => 'morale', 'delta' => -3]], '«Certo. Ci tiene vivi.» Bruno annuisce e se ne va, e per la prima volta il suo ottimismo sembra una porta che si chiude.'),
-                    $this->one('Hai ragione: ridistribuirò il peso', [['relationship' => ['a' => 'Bruno', 'b' => 'Nadia', 'delta' => 5]], ['modify_standing' => ['who' => 'Bruno', 'delta' => 4]], ['modify_standing' => ['who' => 'Nadia', 'delta' => -4]]], 'Da quel giorno chiedi anche a lui, davanti agli altri. Nadia alza un sopracciglio, ma Bruno cammina più leggero, e il gruppo respira.'),
-                ],
-            ]),
-
-            // === CARLA commenta un BRUNO troppo ascoltato ====================
-            $this->ev([
-                'key' => 'cross_carla_on_bruno', 'title' => 'Carla parla di Bruno', 'speaker' => 'Carla',
-                'body' => "Carla ti si avvicina di lato, le braccia strette al petto, la voce che le trema appena. «Non voglio fare scenate, davvero. Però… ascolti sempre Bruno. 'Andrà tutto bene, abbiate fede.' E io che dico di tenerci pronti al peggio sembro quella che porta sfortuna. Lo so che ho paura. Ma a volte ho anche ragione, e nessuno mi guarda.»",
-                'requires' => ['all' => [
-                    ['alive' => 'Carla'], ['alive' => 'Bruno'],
-                    ['standing' => ['who' => 'Bruno', 'op' => '>=', 'value' => 30]],
-                ]],
-                'base_weight' => 6, 'cooldown_days' => 999,
-                'choices' => [
-                    $this->one('Ti ascolto: dimmi cosa vedi tu', [['modify_standing' => ['who' => 'Carla', 'delta' => 8]], ['relationship' => ['a' => 'Carla', 'b' => 'Bruno', 'delta' => -4]], ['resource' => 'morale', 'delta' => 2]], 'Carla scioglie le braccia, sorpresa. Ti spiega due rischi che nessuno aveva visto. Ha ragione su entrambi.'),
-                    $this->one('Bruno ci tiene su il morale: serve', [['modify_standing' => ['who' => 'Bruno', 'delta' => 5]], ['relationship' => ['a' => 'Carla', 'b' => 'Bruno', 'delta' => -8]], ['resource' => 'morale', 'delta' => -2]], '«Già. Il morale.» Carla annuisce in fretta e si ritira nel suo angolo, dove la paura non disturba nessuno.'),
-                    $this->one('Avete ragione tutti e due, insieme', [['relationship' => ['a' => 'Carla', 'b' => 'Bruno', 'delta' => 6]], ['modify_standing' => ['who' => 'Carla', 'delta' => 4]], ['modify_standing' => ['who' => 'Bruno', 'delta' => -3]]], 'Li metti a parlare: la speranza di Bruno e la prudenza di Carla, insieme, fanno un piano migliore. Carla, per una volta, alza la testa.'),
-                ],
-            ]),
-
-            // === NADIA commenta una CARLA troppo protetta ====================
-            $this->ev([
-                'key' => 'cross_nadia_on_carla', 'title' => 'Nadia parla di Carla', 'speaker' => 'Nadia',
-                'body' => "Nadia ti blocca con la chiave inglese ancora in mano, senza giri di parole. «La tratti con i guanti. Carla congela quando serve agire e tu la copri, la rassicuri, le togli i compiti pesanti. Io intanto lavoro doppio. Va bene proteggere chi ha paura. Ma se la paura non le costa mai niente, non smetterà mai di averne. E qualcuno di noi paga per questo. Io.»",
-                'requires' => ['all' => [
-                    ['alive' => 'Nadia'], ['alive' => 'Carla'],
-                    ['standing' => ['who' => 'Carla', 'op' => '>=', 'value' => 30]],
-                ]],
-                'base_weight' => 6, 'cooldown_days' => 999,
-                'choices' => [
-                    $this->one('Hai ragione: smetterò di coprirla', [['modify_standing' => ['who' => 'Nadia', 'delta' => 8]], ['relationship' => ['a' => 'Nadia', 'b' => 'Carla', 'delta' => -6]], ['character' => 'Carla', 'stress' => 6]], 'Nadia grugnisce, soddisfatta. Da domani Carla ha i suoi turni pesanti. Trema, ma li fa. Nadia smette di lavorare doppio.'),
-                    $this->one('Carla ha bisogno di tempo: la proteggo', [['modify_standing' => ['who' => 'Carla', 'delta' => 4]], ['relationship' => ['a' => 'Nadia', 'b' => 'Carla', 'delta' => -8]], ['character' => 'Nadia', 'stress' => 6]], '«Tempo. Certo.» Nadia rimette via la chiave inglese di scatto e torna al doppio lavoro, e ogni colpo che batte è un rimprovero.'),
-                    $this->one('Avete entrambe ragione: dividiamo il carico', [['relationship' => ['a' => 'Nadia', 'b' => 'Carla', 'delta' => 6]], ['modify_standing' => ['who' => 'Nadia', 'delta' => 3]], ['modify_standing' => ['who' => 'Carla', 'delta' => 3]]], 'Affianchi Carla a Nadia sui compiti duri: una insegna, l\'altra impara. Carla suda di paura, ma regge. E Nadia, per la prima volta, non lavora sola.'),
-                ],
-            ]),
-        ];
-    }
-
-    // ---- Item arcs: 3-stage chains anchored to island items -----------------
-    // Mirrors space's arc_seedbank pattern. Each stage gates on owning the item
-    // + the prior stage's flag; choices set a flag and spawn the next stage.
-    //   radio    → arc_radio_1/2/3   : alternate rescue path (answered/silent)
-    //   seedbank → arc_garden_1/2/3  : plant a garden (arc_garden_bloomed)
-    //   logbook  → arc_log_1/2/3     : the wreck's diary (arc_log_truth, hook)
-    private function itemArcs(): array
-    {
-        return [
-            // === RADIO: chiamata d'aiuto via etere ===========================
-            $this->ev([
-                'key' => 'arc_radio_1', 'title' => 'Una frequenza nel buio', 'speaker' => 'Nadia',
-                'body' => "Nadia ha smontato e rimontato la radio da campo tre volte. \"Se la accordo bene, qualcuno là fuori può sentirci. Ma la batteria è quasi morta — ogni trasmissione la prosciuga.\" Vale la pena bruciarla per una chiamata vera?",
-                'requires' => ['all' => [['has_item' => 'radio'], ['day' => ['op' => '>=', 'value' => 5]]]],
-                'base_weight' => 10, 'cooldown_days' => 999,
-                'choices' => [
-                    $this->one('Trasmetti un SOS completo', [['resource' => 'fire', 'delta' => -3], ['resource' => 'morale', 'delta' => 5], ['set_flag' => 'arc_radio_called', 'value' => true], ['spawn_event' => ['key' => 'arc_radio_2', 'in_days' => 3]]], 'La voce di Nadia parte verso il nulla. Coordinate, nomi, una preghiera.'),
-                    $this->one('Solo un segnale breve, per risparmiare', [['resource' => 'morale', 'delta' => -2], ['set_flag' => 'arc_radio_called', 'value' => true], ['spawn_event' => ['key' => 'arc_radio_2', 'in_days' => 3]]], 'Tre impulsi secchi. Poco, ma è uscito qualcosa.'),
-                ],
-            ]),
-            $this->ev([
-                'key' => 'arc_radio_2', 'title' => 'La batteria muore', 'speaker' => 'Nadia',
-                'body' => "L'indicatore di carica è rosso. \"Abbiamo una trasmissione, forse due, poi è ferraglia,\" dice Nadia. Carla suggerisce di cannibalizzare le torce per spremere ancora qualche volt. Costa, ma è l'ultima occasione di essere sentiti.",
-                'requires' => ['flag' => 'arc_radio_called', 'is' => true],
-                'base_weight' => 10, 'cooldown_days' => 999,
-                'choices' => [
-                    $this->one('Sacrifica le torce per la radio', [['resource' => 'fire', 'delta' => -4], ['set_flag' => 'arc_radio_powered', 'value' => true], ['spawn_event' => ['key' => 'arc_radio_3', 'in_days' => 3]]], 'Nadia salda i contatti. La radio respira ancora un poco.'),
-                    $this->one('Tieni le torce, rischia la radio', [['character' => 'Nadia', 'stress' => 5], ['set_flag' => 'arc_radio_powered', 'value' => false], ['spawn_event' => ['key' => 'arc_radio_3', 'in_days' => 3]]], 'La carica scende ancora. Una sola chiamata, se va bene.'),
-                ],
-            ]),
-            $this->ev([
-                'key' => 'arc_radio_3', 'title' => 'Statica, o una voce', 'speaker' => 'Nadia',
-                'body' => "Nadia preme il pulsante un'ultima volta. Tutti trattengono il fiato attorno all'apparecchio.",
-                'requires' => ['flag' => 'arc_radio_called', 'is' => true],
-                'base_weight' => 10, 'cooldown_days' => 999,
-                'choices' => [
-                    array_merge(
-                        $this->one('Ascolta', [['resource' => 'morale', 'delta' => 15], ['set_flag' => 'arc_radio_answered', 'value' => true]], 'Dal rumore emerge una voce: vi hanno sentiti. Stanno cercando le coordinate. Per la prima volta, qualcuno là fuori sa che esistete.'),
-                        ['requires' => ['flag' => 'arc_radio_powered', 'is' => true]]
-                    ),
-                    $this->one('Ascolta', [['resource' => 'morale', 'delta' => -8], ['set_flag' => 'arc_radio_silent', 'value' => true]], 'Solo statica. La carica si esaurisce a metà parola di Nadia. Il mare resta sordo.', null, ['not' => ['flag' => 'arc_radio_powered', 'is' => true]]),
-                ],
-            ]),
-
-            // === SEEDBANK: l'orto (adattato dall'arc spaziale) ===============
-            $this->ev([
-                'key' => 'arc_garden_1', 'title' => 'Un fazzoletto di terra', 'speaker' => 'Bruno',
-                'body' => "Bruno rigira il sacchetto di semi tra le mani, ostinatamente speranzoso. \"Potremmo coltivare davvero, non solo razionare. Costa acqua e fatica adesso — ma un giorno l'isola ci sfamerebbe.\" Oppure si tiene tutto in riserva.",
-                'requires' => ['all' => [['has_item' => 'seedbank'], ['day' => ['op' => '>=', 'value' => 5]]]],
-                'base_weight' => 10, 'cooldown_days' => 999,
-                'choices' => [
-                    $this->one('Orto vero, adesso', [['resource' => 'water', 'delta' => -4], ['resource' => 'food', 'delta' => -2], ['set_flag' => 'arc_garden_stage1', 'value' => true], ['spawn_event' => ['key' => 'arc_garden_2', 'in_days' => 4]]], 'Bruno dissoda un tratto al riparo dal vento. Mani nella terra, finalmente.'),
-                    $this->one('Solo qualche solco, per ora', [['resource' => 'morale', 'delta' => -3], ['set_flag' => 'arc_garden_stage1', 'value' => true], ['spawn_event' => ['key' => 'arc_garden_2', 'in_days' => 4]]], 'Verde fragile e simbolico. Meglio di niente, dice Bruno.'),
-                ],
-            ]),
-            $this->ev([
-                'key' => 'arc_garden_2', 'title' => 'L\'orto ha sete', 'speaker' => 'Bruno',
-                'body' => "I germogli reggono, ma chiedono cure: acqua dolce, riparo dal sole, tempo che potreste spendere altrove. Bruno li annaffia col suo razionamento. Trascurarli adesso significa perderli.",
-                'requires' => ['flag' => 'arc_garden_stage1', 'is' => true],
-                'base_weight' => 10, 'cooldown_days' => 999,
-                'choices' => [
-                    $this->one('Mi prendo cura dell\'orto', [['resource' => 'water', 'delta' => -3], ['set_flag' => 'arc_garden_stage2', 'value' => true], ['set_flag' => 'arc_garden_tended', 'value' => true], ['spawn_event' => ['key' => 'arc_garden_3', 'in_days' => 4]]], 'Foglie più larghe ogni mattina. Costa acqua, ma vive.'),
-                    $this->one('Ho di meglio da fare', [['character' => 'Bruno', 'stress' => 7], ['set_flag' => 'arc_garden_stage2', 'value' => true], ['spawn_event' => ['key' => 'arc_garden_3', 'in_days' => 4]]], 'L\'orto aspetta sotto il sole. Bruno non te lo dice, ma ci rimane male.'),
-                ],
-            ]),
-            $this->ev([
-                'key' => 'arc_garden_3', 'title' => 'Il raccolto', 'speaker' => null,
-                'body' => "Quello che avete seminato dà i suoi frutti — o quello che resta dell'orto sotto il sole dell'isola.",
-                'requires' => ['flag' => 'arc_garden_stage2', 'is' => true],
-                'base_weight' => 10, 'cooldown_days' => 999,
-                'choices' => [
-                    array_merge(
-                        $this->one('Raccogli', [['resource' => 'food', 'delta' => 30], ['resource' => 'morale', 'delta' => 10], ['set_flag' => 'arc_garden_bloomed', 'value' => true], ['set_flag' => 'tended_crops', 'value' => true]], 'L\'orto ha tenuto fede alla promessa di Bruno. Per una volta, abbondanza sull\'isola.'),
-                        ['requires' => ['flag' => 'arc_garden_tended', 'is' => true]]
-                    ),
-                    $this->one('Raccogli quel che resta', [['resource' => 'food', 'delta' => 7], ['resource' => 'morale', 'delta' => -6]], 'Foglie secche, qualche frutto amaro. Non l\'avete curato abbastanza, e Bruno lo sa.', null, ['not' => ['flag' => 'arc_garden_tended', 'is' => true]]),
-                ],
-            ]),
-
-            // === LOGBOOK: il diario del relitto (hook mistero, LOST-style) ====
-            $this->ev([
-                'key' => 'arc_log_1', 'title' => 'Le pagine del relitto', 'speaker' => 'Nadia',
-                'body' => "Il diario recuperato tra i rottami non è dell'aereo. È più vecchio. Nadia lo sfoglia: nomi, date, una mappa rabbiosa. \"Qualcuno è naufragato qui prima di noi. E scriveva tutti i giorni — fino a un certo punto.\"",
-                'requires' => ['all' => [['has_item' => 'logbook'], ['day' => ['op' => '>=', 'value' => 5]]]],
-                'base_weight' => 10, 'cooldown_days' => 999,
-                'choices' => [
-                    $this->one('Leggiamo le prime pagine insieme', [['resource' => 'morale', 'delta' => -2], ['set_flag' => 'arc_log_read', 'value' => true], ['spawn_event' => ['key' => 'arc_log_2', 'in_days' => 4]]], 'Sopravvissuti come voi. All\'inizio organizzati, fiduciosi. Poi qualcosa cambia nella grafia.'),
-                    $this->one('Cerco solo le parti utili (acqua, cibo)', [['resource' => 'food', 'delta' => 4], ['set_flag' => 'arc_log_read', 'value' => true], ['spawn_event' => ['key' => 'arc_log_2', 'in_days' => 4]]], 'Indicazioni preziose su sorgenti e frutti. Ma l\'occhio cade su righe che non volevi leggere.'),
-                ],
-            ]),
-            $this->ev([
-                'key' => 'arc_log_2', 'title' => 'Un dettaglio che non torna', 'speaker' => 'Bruno',
-                'body' => "Una pagina conta i sopravvissuti: nove. La successiva, sei. Nessuna parola sui tre mancanti — solo un trattino accanto ai nomi. Bruno impallidisce. \"Non sono morti di fame. Lo avrebbero scritto.\" Carla vorrebbe smettere di leggere.",
-                'requires' => ['flag' => 'arc_log_read', 'is' => true],
-                'base_weight' => 10, 'cooldown_days' => 999,
-                'choices' => [
-                    $this->one('Andiamo fino in fondo', [['character' => 'Carla', 'stress' => 6], ['set_flag' => 'arc_log_dug', 'value' => true], ['spawn_event' => ['key' => 'arc_log_3', 'in_days' => 4]]], 'Nadia continua a voce bassa. Le ultime pagine sono diverse. Più buie.'),
-                    $this->one('Basta così, per stanotte', [['resource' => 'morale', 'delta' => -4], ['set_flag' => 'arc_log_dug', 'value' => true], ['spawn_event' => ['key' => 'arc_log_3', 'in_days' => 4]]], 'Chiudete il diario. Ma quei trattini restano negli occhi di tutti.'),
-                ],
-            ]),
-            $this->ev([
-                'key' => 'arc_log_3', 'title' => 'Una verità a metà', 'speaker' => 'Nadia',
-                'body' => "L'ultima pagina leggibile: \"Non è la fame a ucciderci. È l'isola. C'è qualcosa qui che non—\" La frase si interrompe. Il resto è strappato. Nadia guarda gli altri. \"Forse il vento. Forse no. Ma loro lo sapevano, e non sono mai partiti.\"",
-                'requires' => ['flag' => 'arc_log_dug', 'is' => true],
-                'base_weight' => 10, 'cooldown_days' => 999,
-                'choices' => [
-                    $this->one('Conserviamo il diario. Ci serve sapere.', [['resource' => 'morale', 'delta' => -3], ['set_flag' => 'arc_log_truth', 'value' => true]], 'Una verità a metà pesa più di nessuna. Qualcosa, su quest\'isola, non è solo natura.'),
-                    $this->one('Bruciamolo. Non ci serve questa paura.', [['resource' => 'morale', 'delta' => 4], ['set_flag' => 'arc_log_truth', 'value' => true]], 'Le fiamme prendono le pagine. Ma ciò che avete letto non brucia con loro.'),
-                ],
-            ]),
-        ];
     }
 
     // ---- The rescue chain (mirrors space's escape arc stage-for-stage) ------
@@ -514,177 +150,65 @@ class IslandEventSeeder extends Seeder
         ];
     }
 
-    // ---- Survivor voice arcs: Nadia / Bruno / Carla ------------------------
-    // Three nominal 3-beat chains that DEFINE each survivor through their trait.
-    // Beat 1 gated on alive + day>=4; beats 2-3 on the prior beat's flag and
-    // chained via spawn_event. Terminal flags are read by the island epilogue
-    // witness_flags (config/themes/island.php).
-    private function survivorVoiceArcs(): array
+    // ---- Survivor arc: Bruno's thread (mirrors space's Cole arc) ------------
+    // Sets cole_found_exit / cole_left / cole_heroics — the exact epilogue
+    // witness_flags the island config references.
+    private function survivorArc(): array
     {
-        return array_merge(
-            $this->nadiaArc(),
-            $this->brunoArc(),
-            $this->carlaArc(),
-            $this->survivorStressEvents(),
-        );
-    }
+        $done = ['set_flag' => 'survivor_thread_done', 'value' => true];
 
-    // Nadia (genius): a brilliant, risky fix that strains the group before it
-    // pays off — or overreaches.
-    private function nadiaArc(): array
-    {
         return [
             $this->ev([
-                'key' => 'nadia_arc_1', 'title' => 'L\'idea di Nadia',
-                'speaker' => 'Nadia',
-                'body' => "Nadia ha smontato mezza fusoliera e ti mostra uno schema tracciato nella sabbia. «Posso ricavare un alambicco dai serbatoi dell'aereo. Acqua pulita, litri al giorno. Ma devo cannibalizzare il circuito che tiene acceso il faro di posizione. È un azzardo — e lo so.» I suoi occhi brillano come solo davanti a un problema difficile.",
-                'requires' => ['all' => [
-                    ['alive' => 'Nadia'],
-                    ['day' => ['op' => '>=', 'value' => 4]],
-                ]],
-                'base_weight' => 8, 'cooldown_days' => 999,
-                'choices' => [
-                    $this->one('Falla. Ci fidiamo del tuo ingegno.', [['set_flag' => 'nadia_gambit', 'value' => true], ['modify_standing' => ['who' => 'Nadia', 'delta' => 12]], ['spawn_event' => ['key' => 'nadia_arc_2', 'in_days' => 3]]], 'Nadia è già al lavoro prima che tu finisca la frase. Pezzi ovunque.'),
-                    $this->one('Troppo rischio. Lascia stare il faro.', [['modify_standing' => ['who' => 'Nadia', 'delta' => -8]], ['resource' => 'morale', 'delta' => -3]], 'Cancella lo schema con un piede. «Come vuoi. Resteremo assetati e prudenti.»'),
-                ],
-            ]),
-            $this->ev([
-                'key' => 'nadia_arc_2', 'title' => 'Il prezzo dell\'ingegno',
-                'speaker' => 'Nadia',
-                'body' => "L'alambicco gocciola acqua limpida, ma Nadia pretende sempre di più: legna per il fuoco di distillazione, mani che dovrebbero pescare o riparare il riparo. «Ancora un giorno e raddoppio la resa.» Bruno e Carla cominciano a guardarla storto: stanno pagando loro il conto della sua ossessione.",
-                'requires' => ['all' => [
-                    ['alive' => 'Nadia'],
-                    ['flag' => 'nadia_gambit', 'is' => true],
-                ]],
-                'base_weight' => 9, 'cooldown_days' => 999,
-                'choices' => [
-                    $this->one('Dalle quello che chiede.', [['set_flag' => 'nadia_pushed', 'value' => true], ['resource' => 'fire', 'delta' => -6], ['character' => 'all', 'stress' => 6], ['spawn_event' => ['key' => 'nadia_arc_3', 'in_days' => 3]]], 'Il fuoco si abbassa, i nervi si tendono. Nadia non alza nemmeno lo sguardo.'),
-                    $this->one('Falla rallentare. Il gruppo viene prima.', [['set_flag' => 'nadia_pushed', 'value' => true], ['resource' => 'morale', 'delta' => 5], ['modify_standing' => ['who' => 'Nadia', 'delta' => -6]], ['spawn_event' => ['key' => 'nadia_arc_3', 'in_days' => 3]]], 'Obbedisce, a labbra strette. «Vi sto salvando, e mi fermate.»'),
-                ],
-            ]),
-            $this->ev([
-                'key' => 'nadia_arc_3', 'title' => 'La resa dei conti',
-                'speaker' => 'Nadia',
-                'body' => "Nadia ti chiama al suo apparecchio. «È il momento. Riattacco il circuito del faro all'alambicco al massimo della pressione: o ci dà acqua per settimane, o salta tutto.» Tiene la mano sulla leva, ferma per una volta. «Decidi tu, capo.»",
-                'requires' => ['all' => [
-                    ['alive' => 'Nadia'],
-                    ['flag' => 'nadia_pushed', 'is' => true],
-                ]],
-                'base_weight' => 9, 'cooldown_days' => 999,
-                'choices' => [
-                    $this->gamble('Tira la leva.', [['resource' => 'water', 'delta' => 22], ['resource' => 'morale', 'delta' => 10], ['set_flag' => 'nadia_vindicated', 'value' => true], ['modify_standing' => ['who' => 'Nadia', 'delta' => 18]]], 'L\'alambicco canta. Acqua a fiotti. Nadia, per una volta, sorride senza riserve.', [['resource' => 'water', 'delta' => -8], ['resource' => 'fire', 'delta' => -10], ['set_flag' => 'nadia_overreached', 'value' => true], ['character' => 'Nadia', 'stress' => 20]], 'Lo scoppio le brucia le sopracciglia. L\'apparecchio è rottami. «Avevo calcolato tutto», sussurra. Non aveva calcolato abbastanza.', 7, 3, 'incerto'),
-                    $this->one('Smonta tutto. Non vale la pena.', [['resource' => 'water', 'delta' => -3], ['set_flag' => 'nadia_overreached', 'value' => true], ['modify_standing' => ['who' => 'Nadia', 'delta' => -10]]], 'Nadia smonta l\'alambicco in silenzio. «Allora era tutto inutile.» Qualcosa, in lei, si spegne.'),
-                ],
-            ]),
-        ];
-    }
-
-    // Bruno (optimist): buoys morale, then downplays a real danger; his denial
-    // costs — or his hope holds.
-    private function brunoArc(): array
-    {
-        return [
-            $this->ev([
-                'key' => 'bruno_arc_1', 'title' => 'Il buonumore di Bruno',
+                'key' => 'survivor_finds_path', 'title' => 'Bruno ha trovato qualcosa',
                 'speaker' => 'Bruno',
-                'body' => "Il morale è a terra: pioggia, fame, silenzio. Bruno si alza, batte le mani e comincia a raccontare la storia più assurda della sua carriera da medico, gesticolando come un attore. «E il tizio ringrazia il chirurgo sbagliato!» Persino Carla ride. «Vedete? Siamo ancora vivi, e finché ridiamo non abbiamo perso.»",
+                'body' => "Bruno ti mostra un sentiero appena visibile nell'entroterra. «C'è un valico. Una via verso l'altro versante. Non sarà comoda, ma è qualcosa di diverso da questa spiaggia. Vale la pena guardarci?»",
                 'requires' => ['all' => [
-                    ['alive' => 'Bruno'],
-                    ['day' => ['op' => '>=', 'value' => 4]],
+                    ['has_role' => 'doctor'],
+                    ['not' => ['flag' => 'survivor_thread_done', 'is' => true]],
+                    ['day' => ['op' => '>=', 'value' => 7]],
                 ]],
-                'base_weight' => 8, 'cooldown_days' => 999,
+                'base_weight' => 7, 'cooldown_days' => 999,
                 'choices' => [
-                    $this->one('Lascialo fare. Ne abbiamo bisogno.', [['set_flag' => 'bruno_hope', 'value' => true], ['resource' => 'morale', 'delta' => 10], ['modify_standing' => ['who' => 'Bruno', 'delta' => 10]], ['spawn_event' => ['key' => 'bruno_arc_2', 'in_days' => 3]]], 'Per una sera l\'accampamento sembra di nuovo un gruppo di persone, non di naufraghi.'),
-                    $this->one('Non è il momento di scherzare.', [['resource' => 'morale', 'delta' => -5], ['modify_standing' => ['who' => 'Bruno', 'delta' => -8]]], 'Bruno si siede, il sorriso che gli muore in faccia. «Hai ragione tu. Scusate.» Il silenzio torna, più pesante.'),
+                    $this->one('Seguiamo il sentiero', [['set_flag' => 'cole_found_exit', 'value' => true], ['modify_standing' => ['who' => 'Bruno', 'delta' => 15]], ['resource' => 'water', 'delta' => -5]], 'Bruno si illumina. Per la prima volta sembra avere uno scopo.'),
+                    $this->one('Restiamo all\'accampamento', [['set_flag' => 'survivor_resentful', 'value' => true], ['modify_standing' => ['who' => 'Bruno', 'delta' => -12]]], 'Bruno ripiega la mappa, lentamente. «Certo. Come vuoi tu.»'),
                 ],
             ]),
             $this->ev([
-                'key' => 'bruno_arc_2', 'title' => 'Bruno minimizza',
+                'key' => 'survivor_leaves', 'title' => 'Il giaciglio di Bruno è vuoto',
                 'speaker' => 'Bruno',
-                'body' => "Carla ha una ferita al polpaccio che si è gonfiata e annerita ai bordi. Bruno la sbircia e sorride. «Roba da nulla, un graffio infetto. Un impacco e domani corre.» Ma tu hai visto la striscia rossa salirle su per la gamba. Lui lo sa — e sceglie di non vederlo, per non spaventare nessuno.",
+                'body' => "Bruno non è all'accampamento. Lo trovi al limitare della giungla, uno zaino già pronto. «Non aspetterò di morire qui mentre tu giochi a fare l'eroe. Mi prendo la mia possibilità.»",
                 'requires' => ['all' => [
-                    ['alive' => 'Bruno'],
-                    ['flag' => 'bruno_hope', 'is' => true],
+                    ['has_role' => 'doctor'],
+                    ['not' => ['flag' => 'survivor_thread_done', 'is' => true]],
+                    ['flag' => 'survivor_resentful', 'is' => true],
                 ]],
                 'base_weight' => 9, 'cooldown_days' => 999,
                 'choices' => [
-                    $this->one('Fidati di lui. È il medico.', [['set_flag' => 'bruno_denial', 'value' => true], ['resource' => 'morale', 'delta' => 4], ['spawn_event' => ['key' => 'bruno_arc_3', 'in_days' => 3]]], 'Bruno applica l\'impacco con un sorriso. Tutti scelgono di credergli.'),
-                    $this->one('Costringilo a guardare la verità.', [['set_flag' => 'bruno_denial', 'value' => true], ['resource' => 'fire', 'delta' => -4], ['character' => 'Bruno', 'stress' => 8], ['spawn_event' => ['key' => 'bruno_arc_3', 'in_days' => 3]]], 'Gli tieni la mano sulla ferita finché non smette di sorridere. «...Va bene. Va bene, è grave. Brucio i ferri.»'),
+                    $this->gamble('Fermalo. Abbiamo bisogno di tutti.', [['modify_standing' => ['who' => 'Bruno', 'delta' => 20]], ['resource' => 'morale', 'delta' => -5], $done], 'Lo convinci a restare. A fatica. Resta una crepa.', [['character' => 'all', 'stress' => 12], ['modify_trust' => -15], $done], 'Degenera in rissa. Tutti hanno visto. Niente sarà come prima.', 5, 5, 'rischioso'),
+                    $this->one('Lascialo andare.', [['kill' => 'Bruno'], ['resource' => 'morale', 'delta' => -10], ['set_flag' => 'cole_left', 'value' => true], $done], 'Sparisce tra gli alberi. Non saprai mai se ce l\'ha fatta.'),
                 ],
             ]),
             $this->ev([
-                'key' => 'bruno_arc_3', 'title' => 'Quando la speranza si paga',
+                'key' => 'survivor_heroics', 'title' => 'Bruno prende il timone',
                 'speaker' => 'Bruno',
-                'body' => "La notte la febbre di Carla esplode. Bruno è chino su di lei, gli occhi sbarrati, la maschera del buonumore finalmente caduta. «Ho aspettato troppo perché volevo che andasse tutto bene. Adesso devo tagliare, e non ho granché. Reggetela. Reggetela forte.»",
+                'body' => "La tempesta scaglia onde sull'accampamento. Bruno è già nell'acqua a reggere le funi del riparo. «So che ho paura di tutto. Ma questo — questo lo so fare. Reggetevi a qualcosa.» Le sue mani, per una volta, non tremano.",
                 'requires' => ['all' => [
-                    ['alive' => 'Bruno'],
-                    ['flag' => 'bruno_denial', 'is' => true],
+                    ['has_role' => 'doctor'],
+                    ['not' => ['flag' => 'survivor_thread_done', 'is' => true]],
+                    ['standing' => ['who' => 'Bruno', 'op' => '>=', 'value' => 40]],
+                    ['day' => ['op' => '>=', 'value' => 12]],
+                    ['resource' => 'shelter', 'op' => '<', 'value' => 45],
                 ]],
-                'base_weight' => 9, 'cooldown_days' => 999,
+                'base_weight' => 7, 'cooldown_days' => 999,
                 'choices' => [
-                    $this->gamble('Affidati a lui. Stavolta sul serio.', [['resource' => 'morale', 'delta' => 12], ['set_flag' => 'bruno_hope_held', 'value' => true], ['modify_standing' => ['who' => 'Bruno', 'delta' => 16]]], 'All\'alba la febbre cala. Bruno crolla esausto, ridendo e piangendo insieme. «Ve l\'avevo detto. Ce l\'abbiamo fatta.»', [['resource' => 'morale', 'delta' => -14], ['set_flag' => 'bruno_denial_cost', 'value' => true], ['character' => 'all', 'stress' => 12], ['modify_standing' => ['who' => 'Bruno', 'delta' => -10]]], 'Le sue mani arrivano tardi. Carla regge fino all\'alba, poi no. Bruno fissa il mare e non sorride per giorni.', 6, 4, 'incerto'),
-                    $this->one('Prendi tu in mano la situazione.', [['resource' => 'water', 'delta' => -6], ['resource' => 'fire', 'delta' => -6], ['set_flag' => 'bruno_hope_held', 'value' => true], ['character' => 'Bruno', 'stress' => 10]], 'Lo metti da parte e dirigi tu l\'operazione, freddo dove lui era tenero. Funziona — a stento. Bruno ti guarda diverso, dopo.'),
+                    $this->gamble('Affidati a lui', [['resource' => 'shelter', 'delta' => 25], ['resource' => 'morale', 'delta' => 12], ['set_flag' => 'cole_heroics', 'value' => true], ['modify_standing' => ['who' => 'Bruno', 'delta' => 15]], $done], 'La manovra è folle e perfetta. Bruno ride, incredulo di se stesso.', [['resource' => 'shelter', 'delta' => -5], ['character' => 'Bruno', 'stress' => 20], $done], 'Quasi. Reggete tutti, a malapena. Bruno è scosso ma vivo.', 7, 3, 'incerto'),
                 ],
             ]),
-        ];
-    }
 
-    // Carla (coward): freezes in a crisis, frays the group's patience, then
-    // either finds redemption — or breaks.
-    private function carlaArc(): array
-    {
-        return [
-            $this->ev([
-                'key' => 'carla_arc_1', 'title' => 'Carla si blocca',
-                'speaker' => 'Carla',
-                'body' => "Un fronte di fiamme corre lungo la sterpaglia verso le scorte. Bruno e Nadia spalano sabbia urlando, ma Carla è inchiodata, le mani strette sul petto, lo sguardo perso. «Io... io non riesco. Mi dispiace. Non riesco a muovermi.» Il fuoco avanza.",
-                'requires' => ['all' => [
-                    ['alive' => 'Carla'],
-                    ['day' => ['op' => '>=', 'value' => 4]],
-                ]],
-                'base_weight' => 8, 'cooldown_days' => 999,
-                'choices' => [
-                    $this->one('Scuotila. Abbiamo bisogno di lei ORA.', [['set_flag' => 'carla_froze', 'value' => true], ['resource' => 'food', 'delta' => -5], ['character' => 'Carla', 'stress' => 10]], 'La strattoni e si muove come un automa. Salvate metà delle scorte. Carla trema ancora ore dopo.'),
-                    $this->one('Lasciala. Spegniamo il fuoco senza di lei.', [['set_flag' => 'carla_froze', 'value' => true], ['resource' => 'food', 'delta' => -8], ['modify_standing' => ['who' => 'Carla', 'delta' => -10]]], 'Vi arrangiate in tre. Carla resta a guardare, le lacrime che le rigano la cenere sul viso.'),
-                ],
-            ]),
-            $this->ev([
-                'key' => 'carla_arc_2', 'title' => 'La pazienza si logora',
-                'speaker' => 'Carla',
-                'body' => "È la terza volta che Carla si tira indietro davanti a un pericolo. Stavolta Nadia esplode: «Tu eri il pilota! Dovevi salvarci tu, e invece ci tocca portarti come un peso morto!» Carla incassa, muta. Il gruppo aspetta che tu dica qualcosa.",
-                'requires' => ['all' => [
-                    ['alive' => 'Carla'],
-                    ['flag' => 'carla_froze', 'is' => true],
-                ]],
-                'base_weight' => 9, 'cooldown_days' => 999,
-                'choices' => [
-                    $this->one('Difendila. La paura non è una colpa.', [['set_flag' => 'carla_strained', 'value' => true], ['resource' => 'morale', 'delta' => -3], ['modify_standing' => ['who' => 'Carla', 'delta' => 10]], ['spawn_event' => ['key' => 'carla_arc_3', 'in_days' => 3]]], 'Ti metti tra Carla e Nadia. Carla ti cerca con gli occhi, gratitudine e vergogna insieme.'),
-                    $this->one('Dalle ragione a Nadia. Carla deve reagire.', [['set_flag' => 'carla_strained', 'value' => true], ['character' => 'Carla', 'stress' => 14], ['modify_standing' => ['who' => 'Carla', 'delta' => -8]], ['spawn_event' => ['key' => 'carla_arc_3', 'in_days' => 3]]], 'Carla annuisce piano, lo sguardo a terra. «Avete ragione voi. Sono un peso.» Si allontana sola.'),
-                ],
-            ]),
-            $this->ev([
-                'key' => 'carla_arc_3', 'title' => 'Il momento di Carla',
-                'speaker' => 'Carla',
-                'body' => "Una corrente trascina Nadia al largo mentre raccoglie molluschi. Nessuno sa nuotare bene in quel mare — tranne Carla, che da pilota lo ha studiato. Resta impietrita sulla riva un battito di troppo, poi ti guarda. «Posso provarci. Ma se mi blocco di nuovo, anneghiamo in due.»",
-                'requires' => ['all' => [
-                    ['alive' => 'Carla'],
-                    ['flag' => 'carla_strained', 'is' => true],
-                ]],
-                'base_weight' => 9, 'cooldown_days' => 999,
-                'choices' => [
-                    $this->gamble('Vai, Carla. Credo in te.', [['resource' => 'morale', 'delta' => 14], ['set_flag' => 'carla_redeemed', 'value' => true], ['modify_standing' => ['who' => 'Carla', 'delta' => 20]]], 'Si butta. Per una volta non esita. Riporta Nadia a riva tossendo acqua e ridendo. Qualcosa, in lei, si è raddrizzato per sempre.', [['resource' => 'morale', 'delta' => -12], ['set_flag' => 'carla_broke', 'value' => true], ['character' => 'Carla', 'stress' => 22], ['modify_standing' => ['who' => 'Carla', 'delta' => -12]]], 'A metà strada il panico la riprende. Torna a riva da sola, vuota. Nadia ce la fa per i suoi mezzi, a stento. Carla non alza più la testa.', 6, 4, 'incerto'),
-                    $this->one('Vado io. Tu non sei pronta.', [['resource' => 'fire', 'delta' => -5], ['character' => 'all', 'stress' => 8], ['set_flag' => 'carla_broke', 'value' => true], ['modify_standing' => ['who' => 'Carla', 'delta' => -6]]], 'Ti tuffi tu e riporti Nadia per il rotto della cuffia. Carla ti guarda dalla riva, e in quello sguardo c\'è una resa definitiva.'),
-                ],
-            ]),
-        ];
-    }
-
-    // --- Stress-driven self-initiated behaviour (scheduled-only) ----
-    // The island config's stress_bands schedules these when crew stress
-    // crosses 60 / 85. Island flavour: isolamento, giungla, fame, paura.
-    private function survivorStressEvents(): array
-    {
-        return [
+            // --- Stress-driven self-initiated behaviour (scheduled-only) ----
+            // Mirror of space's survivor_strained / survivor_breaks. The island
+            // config's stress_bands schedules these when crew stress crosses
+            // 60 / 85. Island flavour: isolamento, giungla, fame, paura.
             $this->ev([
                 'key' => 'survivor_strained',
                 'title' => 'Nervi tesi',
@@ -767,82 +291,6 @@ class IslandEventSeeder extends Seeder
                 'choices' => [
                     $this->one('Spremiamo tutto adesso', [['resource' => 'water', 'delta' => 20], ['damage_system' => 'water_still', 'amount' => 60]], 'Un\'ultima riserva d\'acqua. Poi la sete.'),
                     $this->one('Lo centelliniamo', [['resource' => 'water', 'delta' => -4]], 'Razioni d\'acqua. Si tira avanti, per ora.'),
-                ],
-            ]),
-
-            // ---- Naufragio (castaway): i primi giorni, contesto, presa di coscienza
-            $this->ev([
-                'key' => 'iso_taking_stock', 'title' => 'L\'inventario', 'speaker' => 'Bruno',
-                'body' => "Bruno svuota le tasche sulla sabbia, una alla volta. 'Questo è tutto quello che abbiamo. Tanto vale guardarlo in faccia adesso.' Tre persone, una manciata di oggetti, un'isola che non sapete nominare.",
-                'requires' => ['phase' => 'castaway'],
-                'base_weight' => 9, 'cooldown_days' => 7,
-                'choices' => [
-                    $this->one('Contiamo tutto con calma', [['resource' => 'morale', 'delta' => 3], ['character' => 'all', 'stress' => -2]], 'Sapere cosa avete vi dà un punto da cui partire.'),
-                    $this->one('Non c\'è tempo, muoviamoci', [['resource' => 'food', 'delta' => 4], ['character' => 'all', 'stress' => 4]], 'Recuperate qualcosa in fretta. Ma a testa bassa, senza un piano.'),
-                ],
-            ]),
-            $this->ev([
-                'key' => 'iso_who_are_you', 'title' => 'Sconosciuti', 'speaker' => 'Carla',
-                'body' => "Attorno al fuoco, Carla rompe il silenzio: 'Tre giorni fa non sapevo nemmeno i vostri nomi. E adesso le nostre vite dipendono l'una dall'altra.' Nessuno sa bene cosa rispondere.",
-                'requires' => ['phase' => 'castaway'],
-                'base_weight' => 8, 'cooldown_days' => 8,
-                'choices' => [
-                    $this->one('Ci raccontiamo chi siamo', [['resource' => 'morale', 'delta' => 5], ['character' => 'all', 'stress' => -3]], 'Storie sottovoce nel buio. Qualcosa, tra voi, comincia a tenere.'),
-                    $this->one('Meglio concentrarsi sulla sopravvivenza', [['resource' => 'shelter', 'delta' => 3], ['resource' => 'morale', 'delta' => -2]], 'Si lavora in silenzio. Estranei che dividono un fuoco.'),
-                ],
-            ]),
-
-            // ---- Logoramento (deterioration): scorte che calano, nervi che cedono
-            $this->ev([
-                'key' => 'det_ration_fight', 'title' => 'La razione di Bruno', 'speaker' => 'Bruno',
-                'body' => "Bruno fissa la sua porzione, poi la tua. 'La mia è più piccola. Non dirmi che è uguale, lo vedo.' La fame ha cominciato a contare i bocconi degli altri.",
-                'requires' => ['phase' => 'deterioration'],
-                'base_weight' => 11, 'cooldown_days' => 5,
-                'choices' => [
-                    $this->gamble('Tengo il punto: le razioni sono giuste', [['character' => 'all', 'stress' => 5]], 'Borbotta, ma lascia perdere. La regola tiene.', [['resource' => 'morale', 'delta' => -8], ['character' => 'all', 'stress' => 10]], 'La discussione degenera. Da oggi vi guardate diversi.', 6, 4, 'rischioso'),
-                    $this->one('Gli cedo metà della mia', [['resource' => 'food', 'delta' => -4], ['resource' => 'morale', 'delta' => 3]], 'Mangi meno. Ma lui ti deve qualcosa, e lo sa.'),
-                ],
-            ]),
-            $this->ev([
-                'key' => 'det_empty_sea', 'title' => 'Il mare resta vuoto', 'speaker' => null,
-                'body' => "Un'altra giornata a fissare l'orizzonte. Nessuna vela, nessun aereo, nessun fumo lontano. Solo l'azzurro che si chiude su sé stesso. Comincia a pesare il sospetto che nessuno stia cercando.",
-                'requires' => ['phase' => 'deterioration'],
-                'base_weight' => 10, 'cooldown_days' => 6,
-                'choices' => [
-                    $this->one('Insisto: continuiamo a segnalare', [['resource' => 'fire', 'delta' => -6], ['resource' => 'morale', 'delta' => 2]], 'Bruci legna per la speranza. Forse non è spreco.'),
-                    $this->one('Smettiamo di aspettarli', [['resource' => 'morale', 'delta' => -6], ['character' => 'all', 'stress' => -3]], 'Niente più sguardi al mare. Fa male, ma libera le mani per altro.'),
-                ],
-            ]),
-
-            // ---- Resa dei conti (reckoning): chi parte, chi resta, le verità dure
-            $this->ev([
-                'key' => 'rec_who_leaves', 'title' => 'Non possiamo partire tutti', 'speaker' => 'Carla',
-                'body' => "La zattera regge due, forse. Carla lo dice senza giri di parole: 'Qualcuno deve restare. E dobbiamo decidere adesso, non quando l'acqua sarà alta.' Tre sguardi, e nessuno che si offra per primo.",
-                'requires' => ['phase' => 'reckoning'],
-                'base_weight' => 12, 'cooldown_days' => 999,
-                'choices' => [
-                    $this->one('Tiriamo a sorte, è l\'unico modo giusto', [['character' => 'all', 'stress' => 8], ['resource' => 'morale', 'delta' => 2]], 'Il caso decide al posto vostro. Nessuno può odiare nessuno. Solo la sorte.'),
-                    $this->one('Resto io, voi andate', [['resource' => 'morale', 'delta' => 6], ['character' => 'all', 'stress' => -4]], 'Lo dici prima di ripensarci. I loro occhi cambiano: gratitudine, e una colpa che si porteranno dietro.'),
-                ],
-            ]),
-            $this->ev([
-                'key' => 'rec_hard_truth', 'title' => 'La verità di Nadia', 'speaker' => 'Nadia',
-                'body' => "Nadia ti prende da parte. 'C'è una cosa che non vi ho detto. Quella notte, sulla nave, potevo dare l'allarme prima. Ho aspettato. Ho avuto paura.' Lo dice ora, perché ora conta dirla.",
-                'requires' => ['phase' => 'reckoning'],
-                'base_weight' => 11, 'cooldown_days' => 999,
-                'choices' => [
-                    $this->one('Non è colpa tua, è andata così', [['resource' => 'morale', 'delta' => 4], ['character' => 'all', 'stress' => -5]], 'La sollevi da un peso che la stava schiacciando. Respira, per la prima volta da giorni.'),
-                    $this->one('Allora siamo qui anche per questo', [['resource' => 'morale', 'delta' => -5], ['character' => 'all', 'stress' => 6]], 'La verità resta sospesa tra voi, fredda. Ma almeno è detta.'),
-                ],
-            ]),
-            $this->ev([
-                'key' => 'rec_last_repair', 'title' => 'L\'ultima riparazione', 'speaker' => 'Nadia',
-                'body' => "Nadia stende sulla sabbia tutto quello che resta: corda marcia, lamiera storta, un motore che non parte da settimane. 'Una sola possibilità di metterlo in mare. Se sbagliamo, non c'è un secondo tentativo.'",
-                'requires' => ['phase' => 'reckoning'],
-                'base_weight' => 12, 'cooldown_days' => 999,
-                'choices' => [
-                    $this->gamble('Ci proviamo, tutto o niente', [['resource' => 'shelter', 'delta' => 8], ['resource' => 'morale', 'delta' => 6]], 'La zattera regge il varo. Per la prima volta, l\'orizzonte sembra raggiungibile.', [['resource' => 'shelter', 'delta' => -14], ['character' => 'all', 'stress' => 12]], 'Cede sotto le vostre mani. Mesi di lavoro che tornano legna e ruggine.', 6, 4, 'tutto o niente'),
-                    $this->one('Aspettiamo un giorno migliore', [['resource' => 'morale', 'delta' => -4], ['character' => 'all', 'stress' => 4]], 'Rimandate. Ma ogni giorno qui le forze sono di meno, e lo sapete.'),
                 ],
             ]),
         ];
@@ -1464,119 +912,6 @@ class IslandEventSeeder extends Seeder
                 'choices' => [
                     $this->one('Sistemo il sistemabile', [['resource' => 'shelter', 'delta' => 2]], 'Niente di che, ma utile.'),
                     $this->one('Riposo', [['character' => 'all', 'stress' => -2]], 'Le mani ferme per un giorno.'),
-                ],
-            ]),
-            // ---- Atmosphere fillers: the island breathing -----------------
-            $this->ev([
-                'key' => 'c_filler_jungle_night', 'title' => 'La giungla di notte', 'is_filler' => true, 'base_weight' => 5, 'cooldown_days' => 3,
-                'body' => "Oltre il cerchio del fuoco la giungla è un muro nero che respira. Un verso, lungo e gorgogliante, che nessuno di voi sa nominare. Bruno smette di parlare a metà frase.",
-                'choices' => [
-                    $this->one('«È solo un animale.»', [['character' => 'all', 'stress' => -1]], 'Lo ripeti finché non ci credi un po\'. Funziona, quasi.'),
-                    $this->one('Aggiungo legna al fuoco', [['resource' => 'fire', 'delta' => 1]], 'Le ombre indietreggiano. Il buio aspetta, paziente.'),
-                ],
-            ]),
-            $this->ev([
-                'key' => 'c_filler_flat_sea', 'title' => 'Il mare piatto', 'is_filler' => true, 'base_weight' => 5, 'cooldown_days' => 3,
-                'body' => "Niente onde, niente vento. Il mare è una lastra di stagno fino all'orizzonte, e nessuna sagoma a romperlo. Carla resta a fissarlo a lungo, le braccia strette intorno alle ginocchia.",
-                'choices' => [
-                    $this->one('Mi siedo accanto a lei', [['character' => 'Carla', 'stress' => -3]], 'Non dite niente. Non serve.'),
-                    $this->one('Le porto via lo sguardo dall\'acqua', [['resource' => 'morale', 'delta' => 1]], '«Vieni, c\'è da fare.» A volte è la cosa più gentile.'),
-                ],
-            ]),
-            $this->ev([
-                'key' => 'c_filler_footprint', 'title' => 'L\'impronta', 'is_filler' => true, 'base_weight' => 4, 'cooldown_days' => 4,
-                'body' => "Sulla sabbia umida, una sola impronta di piede nudo. Più grande delle vostre. La misurate contro le mani senza dirlo ad alta voce. La marea l'ha già mezza cancellata. Forse non c'è mai stata.",
-                'choices' => [
-                    $this->one('Non lo dico a nessuno', [['resource' => 'morale', 'delta' => -1]], 'Te lo tieni dentro, come una pietra in tasca.'),
-                    $this->one('Tengo gli occhi aperti', [['resource' => 'shelter', 'delta' => 1]], 'Forse non siete soli. Meglio essere pronti.'),
-                ],
-            ]),
-            $this->ev([
-                'key' => 'c_filler_shells', 'title' => 'Conchiglie', 'is_filler' => true, 'base_weight' => 5, 'cooldown_days' => 2,
-                'body' => "Una manciata di conchiglie levigate dal mare, di un rosa che pare impossibile su quest'isola. Le rigirate al sole. Per un momento è solo bellezza, senza secondo fine.",
-                'choices' => [
-                    $this->one('Le regalo a Carla', [['character' => 'Carla', 'stress' => -2]], 'Le infila in tasca come un tesoro di bambina.'),
-                    $this->one('Ne faccio un mucchietto sul riparo', [['resource' => 'morale', 'delta' => 2]], 'Un piccolo segno che qui vive ancora qualcuno.'),
-                ],
-            ]),
-            $this->ev([
-                'key' => 'c_filler_crab_shell', 'title' => 'Un guscio di granchio', 'is_filler' => true, 'base_weight' => 4, 'cooldown_days' => 3,
-                'body' => "Un guscio di granchio vuoto, intatto, abbandonato come un'armatura troppo stretta. Bruno lo solleva. «Anche lui è cresciuto e ha dovuto lasciarsi indietro la corazza vecchia. Non è male, come idea.»",
-                'choices' => [
-                    $this->one('«Filosofo di spiaggia.»', [['resource' => 'morale', 'delta' => 1]], 'Ride. Per una volta la battuta è leggera davvero.'),
-                    $this->one('Lo rimetto dov\'era', [], 'Qualcosa, qui, va lasciato in pace.'),
-                ],
-            ]),
-            $this->ev([
-                'key' => 'c_filler_fire_shadows', 'title' => 'Ombre dal fuoco', 'is_filler' => true, 'base_weight' => 5, 'cooldown_days' => 2,
-                'body' => "Il fuoco scoppietta e schizza scintille. Le vostre ombre ballano enormi sulla parete del riparo, e per un attimo sembrate dei giganti, non tre naufraghi spauriti.",
-                'choices' => [
-                    $this->one('Faccio le ombre con le mani', [['character' => 'all', 'stress' => -2]], 'Un cane, un uccello, un coniglio. Carla indovina tutto e ride.'),
-                    $this->one('Resto a guardare le fiamme', [['resource' => 'morale', 'delta' => 1]], 'Il fuoco non chiede niente. È un buon compagno.'),
-                ],
-            ]),
-            $this->ev([
-                'key' => 'c_filler_distant_storm', 'title' => 'Un temporale lontano', 'is_filler' => true, 'base_weight' => 5, 'cooldown_days' => 3,
-                'body' => "All'orizzonte, sul mare, un temporale che non vi raggiungerà. Lampi muti dentro nuvole nere, lontanissimi. Da qui è quasi bello — la furia di qualcun altro.",
-                'choices' => [
-                    $this->one('Controllo le coperture, per sicurezza', [['resource' => 'shelter', 'delta' => 1]], 'Non si sa mai. Il vento gira in fretta, qui.'),
-                    $this->one('Lo guardo e basta', [['resource' => 'morale', 'delta' => 1]], 'C\'è qualcosa di consolante in una tempesta che non è la tua.'),
-                ],
-            ]),
-            $this->ev([
-                'key' => 'c_filler_wreck_groan', 'title' => 'Il relitto geme', 'is_filler' => true, 'base_weight' => 4, 'cooldown_days' => 3,
-                'body' => "Nel vento la carcassa dell'aereo geme, un lamento di lamiera che si torce. Nadia ci appoggia una mano. «Si sta ancora raffreddando. Tra un po' tacerà del tutto. Come tutto, qui.»",
-                'choices' => [
-                    $this->one('«Almeno ci ha portati fin qui.»', [['character' => 'Nadia', 'stress' => -2]], 'Lei annuisce piano. «Già. Almeno quello.»'),
-                    $this->one('Recupero quel che posso dalla fusoliera', [['resource' => 'shelter', 'delta' => 1]], 'Un pannello, qualche vite. La carcassa dà ancora qualcosa.'),
-                ],
-            ]),
-            $this->ev([
-                'key' => 'c_filler_tidepool_fish', 'title' => 'Pesci nella secca', 'is_filler' => true, 'base_weight' => 5, 'cooldown_days' => 2,
-                'body' => "La marea si è ritirata e ha lasciato pesci argentei a guizzare in una pozza tra gli scogli, intrappolati. Brillano disperati sotto il sole.",
-                'choices' => [
-                    $this->one('Ne prendo qualcuno', [['resource' => 'food', 'delta' => 2]], 'Cena facile. L\'isola, ogni tanto, è generosa.'),
-                    $this->one('Li ributto in mare', [['resource' => 'morale', 'delta' => 2]], 'Carla ti guarda strano. Ma stasera dormirai meglio.'),
-                ],
-            ]),
-            $this->ev([
-                'key' => 'c_filler_shooting_star', 'title' => 'Una stella cadente', 'is_filler' => true, 'base_weight' => 5, 'cooldown_days' => 3,
-                'body' => "Senza le luci di nessuna città, il cielo è una cosa che non avevate mai visto: fitto, vivo, bianco di stelle. Una scia luminosa lo taglia in due e svanisce.",
-                'choices' => [
-                    $this->one('Esprimo un desiderio', [['character' => 'all', 'stress' => -2]], 'Sapete tutti e tre cosa avete chiesto. Nessuno lo dice.'),
-                    $this->one('«Domani, da lì, ci cercheranno.»', [['resource' => 'morale', 'delta' => 2]], 'Forse è vero, forse no. Ma stanotte ci credete.'),
-                ],
-            ]),
-            $this->ev([
-                'key' => 'c_filler_salt_smell', 'title' => 'Odore di sale e legna bagnata', 'is_filler' => true, 'base_weight' => 5, 'cooldown_days' => 3,
-                'body' => "Dopo la pioggia, l'aria sa di sale e di legna fradicia che fuma sul fuoco. Un odore che ormai conoscete come la vostra pelle. È diventato l'odore di casa, che vi piaccia o no.",
-                'choices' => [
-                    $this->one('Respiro a fondo', [['resource' => 'morale', 'delta' => 1]], 'Strano: non è più sgradevole. È solo casa.'),
-                    $this->one('Stendo i panni a asciugare', [['resource' => 'shelter', 'delta' => 1]], 'Piccoli gesti ordinari. Tengono insieme le giornate.'),
-                ],
-            ]),
-            $this->ev([
-                'key' => 'c_filler_strange_bird', 'title' => 'Un uccello mai visto', 'is_filler' => true, 'base_weight' => 4, 'cooldown_days' => 3,
-                'body' => "Sul ramo più alto si è posato un uccello dai colori assurdi — verde, scarlatto, un occhio giallo e curioso. Vi studia senza paura, come se i naufraghi foste voi la novità.",
-                'choices' => [
-                    $this->one('Resto immobile a guardarlo', [['character' => 'all', 'stress' => -2]], 'Resta un minuto intero. Poi vola via, e vi sentite onorati.'),
-                    $this->one('Provo a disegnarlo nel diario', [['resource' => 'morale', 'delta' => 2]], 'Viene male, ma è un giorno che vale la pena ricordare.'),
-                ],
-            ]),
-            $this->ev([
-                'key' => 'c_filler_animal_tracks', 'title' => 'Impronte nel fango', 'is_filler' => true, 'base_weight' => 4, 'cooldown_days' => 3,
-                'body' => "Nel fango lungo il ruscello, vecchie impronte di animale — zampe, non piedi. Non sapete di che bestia, né se sia grossa. Ma vuol dire che, oltre il vostro accampamento, qui vive qualcosa.",
-                'choices' => [
-                    $this->one('Le seguo un tratto', [['resource' => 'food', 'delta' => 1]], 'Portano a una pianta da frutto che non avevate trovato. Grazie, chiunque tu sia.'),
-                    $this->one('Le evito e torno indietro', [['resource' => 'shelter', 'delta' => 1]], 'Meglio non incontrarsi. Rinforzi la recinzione del campo.'),
-                ],
-            ]),
-            $this->ev([
-                'key' => 'c_filler_night_calm', 'title' => 'Una notte tranquilla', 'is_filler' => true, 'base_weight' => 5, 'cooldown_days' => 3,
-                'body' => "Nessuna emergenza. Il vento è caldo, il fuoco basso e regolare, e i grilli — o quel che sono — cantano piano. Per una notte l'isola non chiede niente a nessuno.",
-                'choices' => [
-                    $this->one('Resto di guardia, ma sereno', [['character' => 'all', 'stress' => -3]], 'Gli altri dormono profondo. È un regalo, e lo sai.'),
-                    $this->one('Dormo anch\'io, per una volta', [['resource' => 'morale', 'delta' => 2]], 'Vi svegliate riposati. Una rarità, qui.'),
                 ],
             ]),
         ];
