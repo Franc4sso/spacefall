@@ -6,7 +6,7 @@ use Database\Seeders\ContentEventSeeder;
 use Database\Seeders\EventSeeder;
 
 it('accepts a named-pair relationship condition at seed-validation time', function () {
-    $schema = new EventSchema(array_keys(config('game.resources')));
+    $schema = new EventSchema(array_keys(config('themes.space.resources')));
 
     // Should not throw — the validator checks the top-level condition kind
     // (relationship), which is whitelisted; the a/b/state sub-shape is allowed.
@@ -56,7 +56,7 @@ it('seeds dedicated pair events that move relationships', function () {
 it('keeps every event valid against the DSL schema', function () {
     $this->seed(EventSeeder::class);
     $this->seed(ContentEventSeeder::class);
-    $schema = new \App\Game\Engine\EventSchema(array_keys(config('game.resources')));
+    $schema = new \App\Game\Engine\EventSchema(array_keys(config('themes.space.resources')));
     Event::all()->each(function (Event $e) use ($schema) {
         $schema->validate([
             'key' => $e->key, 'title' => $e->title, 'body' => $e->body,

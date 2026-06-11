@@ -11,9 +11,9 @@ beforeEach(function () {
 it('exposes the item catalogue and the pick count', function () {
     $res = $this->getJson('/api/items')->assertOk();
 
-    expect($res->json('pick'))->toBe(config('game.items_pick'));
+    expect($res->json('pick'))->toBe(config('themes.space.items_pick'));
     // Locked items are filtered out for a profile that hasn't unlocked them.
-    $unlockedCount = collect(config('game.items'))->reject(fn ($i) => $i['locked'] ?? false)->count();
+    $unlockedCount = collect(config('themes.space.items'))->reject(fn ($i) => $i['locked'] ?? false)->count();
     expect($res->json('items'))->toHaveCount($unlockedCount);
     expect($res->json('items.0'))->toHaveKeys(['key', 'name', 'description']);
 });
@@ -25,7 +25,7 @@ it('keeps only valid items, de-duplicates, and caps the pick', function () {
 
     // bogus dropped, welder de-duped, capped at items_pick.
     expect($run->items)->not->toContain('bogus_item');
-    expect(count($run->items))->toBe(config('game.items_pick'));
+    expect(count($run->items))->toBe(config('themes.space.items_pick'));
     expect(array_count_values($run->items)['welder'] ?? 0)->toBe(1);
 });
 

@@ -12,7 +12,7 @@ beforeEach(function () {
 it('initialises station systems on a new run', function () {
     $run = app(RunFactory::class)->create(1);
 
-    foreach (config('game.systems') as $key => $def) {
+    foreach (config('themes.space.systems') as $key => $def) {
         expect($run->systems[$key]['efficiency'])->toBe($def['start']);
     }
 });
@@ -21,8 +21,8 @@ it('degrades systems each day and bleeds a resource once below threshold', funct
     $run = app(RunFactory::class)->create(1);
 
     // Read the tuned numbers from config so this test tracks the balance pass.
-    $ls = config('game.systems.life_support');
-    $oxDaily = config('game.resources.oxygen.daily');
+    $ls = config('themes.space.systems.life_support');
+    $oxDaily = config('themes.space.resources.oxygen.daily');
 
     // Force life_support just above its penalty threshold, oxygen full.
     $systems = $run->systems;
@@ -47,7 +47,7 @@ it('degrades systems each day and bleeds a resource once below threshold', funct
 it('adds hardship stress to every survivor when a resource is critically low', function () {
     $run = app(RunFactory::class)->create(1);
 
-    $foodRule = collect(config('game.hardship'))->firstWhere('resource', 'food');
+    $foodRule = collect(config('themes.space.hardship'))->firstWhere('resource', 'food');
     $res = $run->resources;
     $res['food'] = $foodRule['at_or_below']; // at the threshold -> stress to all
     $run->resources = $res;
@@ -84,7 +84,7 @@ it('keeps state internally consistent across a 15-day playthrough', function () 
         $state = $run->fresh();
 
         // Every resource within [0, max].
-        foreach (config('game.resources') as $code => $def) {
+        foreach (config('themes.space.resources') as $code => $def) {
             expect($state->resources[$code])->toBeGreaterThanOrEqual(0);
             expect($state->resources[$code])->toBeLessThanOrEqual($def['max']);
         }

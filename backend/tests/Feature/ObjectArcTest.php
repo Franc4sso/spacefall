@@ -67,7 +67,7 @@ it('has no free choice in any multi-option arc event', function () {
 });
 
 it('keeps every arc event valid against the DSL schema', function () {
-    $schema = new EventSchema(array_keys(config('game.resources')));
+    $schema = new EventSchema(array_keys(config('themes.space.resources')));
     arcEvents()->each(function (Event $e) use ($schema) {
         $schema->validate(['key' => $e->key, 'title' => $e->title, 'body' => $e->body, 'choices' => $e->choices, 'requires' => $e->requires]);
         expect(true)->toBeTrue();
@@ -112,6 +112,6 @@ it('surfaces a completed arc in the epilogue', function () {
 });
 
 it('registers the three arc completion flags in the epilogue config', function () {
-    $flags = config('game.epilogue.witness_flags');
+    $flags = config('themes.space.epilogue.witness_flags');
     expect($flags)->toHaveKeys(['arc_garden_bloomed', 'arc_rescue_answered', 'arc_truth_found']);
 });

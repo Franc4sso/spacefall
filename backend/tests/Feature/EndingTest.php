@@ -135,7 +135,7 @@ it('every configured ending is reachable by some forced state', function () {
     // Reachability guard: drive each ending and assert it fires. This is the
     // "no dead content" check for endings (the harness covers it via play too).
     $reached = [];
-    foreach (config('game.endings') as $ending) {
+    foreach (config('themes.space.endings') as $ending) {
         $reached[$ending['key']] = true;
     }
     // The individual tests above already drive the core endings; assert the count matches

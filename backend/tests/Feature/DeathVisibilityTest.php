@@ -49,7 +49,7 @@ it('seeds a speaker-null hunger_warning surfaced by high hunger bands', function
     $warn = \App\Models\Event::where('key', 'hunger_warning')->first();
     expect($warn)->not->toBeNull();
     expect($warn->speaker)->toBeNull();
-    $bands = collect(config('game.hunger.spawn_bands'))->pluck('spawn');
+    $bands = collect(config('themes.space.hunger.spawn_bands'))->pluck('spawn');
     expect($bands)->toContain('hunger_warning');
 });
 

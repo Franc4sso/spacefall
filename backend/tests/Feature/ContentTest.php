@@ -23,7 +23,7 @@ it('keeps a guaranteed filler pool', function () {
 });
 
 it('every event validates against the DSL schema', function () {
-    $schema = new EventSchema(array_keys(config('game.resources')));
+    $schema = new EventSchema(array_keys(config('themes.space.resources')));
 
     Event::all()->each(function (Event $event) use ($schema) {
         $schema->validate([

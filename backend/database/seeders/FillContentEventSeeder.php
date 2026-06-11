@@ -17,7 +17,7 @@ final class FillContentEventSeeder extends Seeder
 {
     public function run(): void
     {
-        $schema = new EventSchema(array_keys(config('game.resources')));
+        $schema = new EventSchema(array_keys(config('themes.space.resources')));
 
         foreach ($this->events() as $event) {
             $schema->validate($event);

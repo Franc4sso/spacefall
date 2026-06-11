@@ -49,7 +49,7 @@ it('"stringere la cinghia" stresses the whole crew (scales with survivors)', fun
     $engine->resolveChoice($run->fresh(), 1);
 
     $after = collect($run->fresh()->characters)->pluck('stress')->sum();
-    $crew = count(config('game.roster'));
+    $crew = count(config('themes.space.roster'));
 
     // Every living survivor gained 12; the total weight scales with the crew.
     expect($after - $before)->toBe(12 * $crew);

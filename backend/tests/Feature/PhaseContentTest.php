@@ -24,7 +24,7 @@ it('has at least two distinctive events gated to each phase', function () {
 });
 
 it('keeps every event valid against the DSL schema', function () {
-    $schema = new \App\Game\Engine\EventSchema(array_keys(config('game.resources')));
+    $schema = new \App\Game\Engine\EventSchema(array_keys(config('themes.space.resources')));
     Event::all()->each(function (Event $e) use ($schema) {
         $schema->validate([
             'key' => $e->key,
@@ -40,7 +40,7 @@ it('keeps every event valid against the DSL schema', function () {
 it('always has a drawable card in every phase', function () {
     $selector = app(\App\Game\Engine\Selector::class);
     $pool = \App\Models\Event::all();
-    $order = config('game.phases.order');
+    $order = config('themes.space.phases.order');
 
     foreach (['isolation' => 5, 'deterioration' => 15, 'reckoning' => 25] as $phase => $day) {
         $state = new \App\Game\Engine\RunState(

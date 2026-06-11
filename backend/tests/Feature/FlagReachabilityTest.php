@@ -61,15 +61,15 @@ it('ogni flag scritto da una scelta è letto da una carta, un finale o l\'epilog
         }
     }
 
-    foreach (config('game.endings') as $ending) {
+    foreach (config('themes.space.endings') as $ending) {
         collectReadFlags($ending['when'] ?? null, $read);
     }
 
-    foreach (array_keys(config('game.epilogue.witness_flags', [])) as $flag) {
+    foreach (array_keys(config('themes.space.epilogue.witness_flags', [])) as $flag) {
         $read[$flag] = true;
     }
 
-    foreach (array_keys(config('game.epilogue.escape_outcome_lines', [])) as $flag) {
+    foreach (array_keys(config('themes.space.epilogue.escape_outcome_lines', [])) as $flag) {
         $read[$flag] = true;
     }
 

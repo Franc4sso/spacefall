@@ -15,7 +15,7 @@ it('exposes meta state for a profile', function () {
     $res = $this->getJson('/api/meta?handle=tester')->assertOk();
 
     expect($res->json('research_points'))->toBe(0);
-    expect($res->json('unlocks'))->toHaveCount(count(config('game.unlocks')));
+    expect($res->json('unlocks'))->toHaveCount(count(config('themes.space.unlocks')));
     expect($res->json('unlocks.0'))->toHaveKeys(['key', 'name', 'cost', 'owned', 'affordable']);
 });
 

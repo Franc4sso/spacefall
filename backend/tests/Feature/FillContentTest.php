@@ -62,7 +62,7 @@ it('has no free choice: every multi-option card has a cost on every choice', fun
 });
 
 it('keeps every new event valid against the DSL schema', function () {
-    $schema = new EventSchema(array_keys(config('game.resources')));
+    $schema = new EventSchema(array_keys(config('themes.space.resources')));
     fcEvents()->each(function (Event $e) use ($schema) {
         $schema->validate([
             'key' => $e->key, 'title' => $e->title, 'body' => $e->body,

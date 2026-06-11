@@ -12,7 +12,7 @@ it('starts a run with the configured starting resources', function () {
         'seed' => 555,
     ]);
 
-    foreach (config('game.resources') as $code => $def) {
+    foreach (config('themes.space.resources') as $code => $def) {
         expect($response->json("resources.$code"))->toBe($def['start']);
         expect($response->json("resource_meta.$code.max"))->toBe($def['max']);
     }
@@ -33,7 +33,7 @@ it('consumes resources deterministically on advance', function () {
 
     $after->assertJson(['day' => 2]);
 
-    foreach (config('game.resources') as $code => $def) {
+    foreach (config('themes.space.resources') as $code => $def) {
         $expected = max(0, min($def['max'], $def['start'] - $def['daily']));
         expect($after->json("resources.$code"))->toBe($expected);
     }
@@ -44,7 +44,7 @@ it('clamps resources at zero and never goes negative', function () {
         'seed' => 1,
         'rng_cursor' => 0,
         'day' => 1,
-        'resources' => array_fill_keys(array_keys(config('game.resources')), 1),
+        'resources' => array_fill_keys(array_keys(config('themes.space.resources')), 1),
         'status' => 'active',
     ]);
 

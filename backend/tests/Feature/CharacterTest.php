@@ -7,7 +7,7 @@ use App\Models\Run;
 it('seeds the configured roster onto a new run', function () {
     $run = app(RunFactory::class)->create(1);
 
-    expect($run->characters)->toHaveCount(count(config('game.roster')));
+    expect($run->characters)->toHaveCount(count(config('themes.space.roster')));
     expect($run->characters[0]['stress'])->toBe(0);
     expect($run->characters[0]['alive'])->toBeTrue();
     expect($run->characters[0])->toHaveKey('traits');
@@ -48,6 +48,6 @@ it('does not re-schedule the same band on subsequent days', function () {
 it('the API surfaces the living roster', function () {
     $run = $this->postJson('/api/runs', ['seed' => 1])->assertCreated();
 
-    expect($run->json('characters'))->toHaveCount(count(config('game.roster')));
+    expect($run->json('characters'))->toHaveCount(count(config('themes.space.roster')));
     expect($run->json('characters.0'))->toHaveKeys(['name', 'role', 'traits', 'stress', 'alive']);
 });
