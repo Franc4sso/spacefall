@@ -75,6 +75,32 @@ it('ogni scelta-strumento consuma il proprio attrezzo in tutti gli outcome', fun
     }
 });
 
+it('scelta scanner visibile con scanner, assente senza', function () {
+    $events = toolItemSeededEvents();
+
+    $event = $events['power_cascade'] ?? null;
+    expect($event)->not->toBeNull('carta power_cascade non trovata');
+
+    $gated = toolItemGatedChoice($event->choices, 'scanner');
+    expect($gated)->not->toBeNull('scelta gated su scanner non trovata in power_cascade');
+
+    $evaluator = new \App\Game\Engine\ConditionEvaluator();
+
+    // Stato CON scanner: la scelta deve essere visibile.
+    $runWith = app(\App\Game\RunFactory::class)->create(1, ['scanner']);
+    $stateWith = \App\Game\Engine\RunState::fromRun($runWith);
+    expect($evaluator->evaluate($gated['requires'], $stateWith))->toBeTrue(
+        'la scelta scanner dovrebbe essere visibile quando il giocatore possiede lo scanner'
+    );
+
+    // Stato SENZA oggetti: la scelta deve essere nascosta.
+    $runWithout = app(\App\Game\RunFactory::class)->create(1, []);
+    $stateWithout = \App\Game\Engine\RunState::fromRun($runWithout);
+    expect($evaluator->evaluate($gated['requires'], $stateWithout))->toBeFalse(
+        'la scelta scanner dovrebbe essere nascosta quando il giocatore non possiede lo scanner'
+    );
+});
+
 it('nessuna scelta-strumento gata su un oggetto fuori dalla griglia sbloccata', function () {
     $unlocked = collect(config('game.items'))
         ->reject(fn ($i) => $i['locked'] ?? false)
