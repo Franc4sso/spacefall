@@ -60,7 +60,8 @@ final class RunState
 
         $resolver = new PhaseResolver();
         $floor = $run->phase_floor ?? 'isolation';
-        $phase = $resolver->resolve($run->day, $run->resources ?? [], $floor);
+        $runTheme = $run->theme ?? 'space';
+        $phase = $resolver->resolve($run->day, $run->resources ?? [], $floor, $runTheme);
 
         return new self(
             day: $run->day,
@@ -76,7 +77,7 @@ final class RunState
             choiceLog: $run->choice_log ?? [],
             phaseFloor: $floor,
             phase: $phase,
-            phaseIndex: $resolver->indexOf($phase),
+            phaseIndex: $resolver->indexOf($phase, $runTheme),
             deathLog: $run->death_log ?? [],
             theme: $run->theme ?? 'space',
         );

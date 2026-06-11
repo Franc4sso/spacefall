@@ -48,8 +48,8 @@ final class DayProcessor
         $characters = $run->characters ?? [];
         $scheduled = $run->scheduled_events ?? [];
 
-        $resolver = new PhaseResolver();
-        $phase = $resolver->resolve($run->day, $resources, $run->phase_floor ?? 'isolation');
+        $resolver = new PhaseResolver($this->theme);
+        $phase = $resolver->resolve($run->day, $resources, $run->phase_floor ?? 'isolation', $run->theme);
         $decay = (float) $this->theme->for($run->theme)->get("phase_decay.$phase", 1.0);
 
         // 1. Resource consumption (scaled by the current phase).
@@ -80,8 +80,8 @@ final class DayProcessor
         // no marker for the initial isolation phase).
         $oldFloor = $run->phase_floor ?? 'isolation';
         $newDay = $run->day + 1;
-        $newPhase = $resolver->resolve($newDay, $resources, $oldFloor);
-        if ($resolver->indexOf($newPhase) > $resolver->indexOf($oldFloor)) {
+        $newPhase = $resolver->resolve($newDay, $resources, $oldFloor, $run->theme);
+        if ($resolver->indexOf($newPhase, $run->theme) > $resolver->indexOf($oldFloor, $run->theme)) {
             $run->phase_floor = $newPhase;
             $marker = 'phase_enter_' . $newPhase;
             $scheduled[] = ['key' => $marker, 'fire_on_day' => $newDay];
