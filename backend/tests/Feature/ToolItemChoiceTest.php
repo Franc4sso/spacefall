@@ -81,8 +81,10 @@ it('nessuna scelta-strumento gata su un oggetto fuori dalla griglia sbloccata', 
         ->pluck('key')
         ->all();
 
-    foreach (toolItemExpectations() as $itemKey) {
-        expect($unlocked)->toContain($itemKey,
-            "attrezzo {$itemKey} non è nella griglia sbloccata");
+    foreach (toolItemExpectations() as $cardKey => $itemKey) {
+        // toContain è variadico: niente messaggio come 2° arg (verrebbe trattato
+        // come secondo valore da cercare). Si asserisce sull'appartenenza.
+        expect(in_array($itemKey, $unlocked, true))->toBeTrue(
+            "attrezzo {$itemKey} ({$cardKey}) non è nella griglia sbloccata");
     }
 });
