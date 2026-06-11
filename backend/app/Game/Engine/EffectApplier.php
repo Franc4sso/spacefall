@@ -86,7 +86,7 @@ final class EffectApplier
 
         if (array_key_exists('recruit', $effect)) {
             $used = array_column($state->characters, 'name');
-            $pool = config('game.recruit_names', []);
+            $pool = $this->theme->for($state->theme)->get('recruit_names', []);
             $available = array_values(array_filter($pool, fn ($n) => ! in_array($n, $used, true)));
             $name = $available[0] ?? ('Sopravvissuto ' . (count($state->characters) + 1));
             $state->characters[] = [
@@ -227,7 +227,7 @@ final class EffectApplier
      */
     private function applyDeathDrift(string $deadName, RunState $state): void
     {
-        $mag = (int) config('game.relationships.death_drift', 0);
+        $mag = (int) $this->theme->for($state->theme)->get('relationships.death_drift', 0);
         if ($mag === 0) {
             return;
         }
