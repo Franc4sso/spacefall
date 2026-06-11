@@ -17,8 +17,7 @@
 ## 🔭 Feature ancora da costruire (in ordine di impatto)
 
 ### Tier 1 — alto impatto
-1. **Oggetti-strumento nelle crisi comuni** *(prossima consigliata)*
-   Le ~15 carte più frequenti ottengono scelte condizionate all'oggetto: la breccia col welder la saldi, con la tuta esci a ripararla, col toolkit improvvisi. Oggi solo gli oggetti-cibo e l'attrezzatura-spedizioni interagiscono; questo estende l'interazione a *tutte* le crisi ed è l'arma più efficiente contro la ripetizione. ~8–10 task.
+1. ~~**Oggetti-strumento nelle crisi comuni**~~ ✅ CHIUSO (branch feat/tool-items-crises, 2026-06-11). 6 carte-crisi frequenti con costo-base reale (power_cascade→scanner, survivor_strained/survivor_breaks→medkit, ration_crisis→rations, ration_cut_decision→rations, fuel_leak_warning→spacesuit) ottengono una scelta gated sull'oggetto: scorciatoia più economica che **consuma** l'attrezzo (`consume_item`). Motore riusato (`has_item` + `consume_item`), zero engine nuovo. Test-guardiano `ToolItemChoiceTest` (presenza/consumo/solo-griglia-sbloccata/visibilità). **Escluse di proposito:** `power_flicker` (già aveva welder); `old_scorch`/`reactor_gamble`/`the_sacrifice` (costo-base = 0, niente da rendere "più economico"). Spec/piano: `specs/2026-06-11-tool-items-common-crises-design.md`, `plans/2026-06-11-tool-items-common-crises.md`. **Residuo:** estendere il pattern ad altre crisi con costo reale quando si risvegliano gli oggetti dormienti (vedi Tier 3 #6).
 
 ### Tier 2 — profondità e varietà
 2. **Struttura ad Atti / Fasi** — la run evolve (Isolamento → Deterioramento → Resa dei conti); pool diversi per fase, così il giorno 30 ≠ giorno 3. ~6–8 task.
