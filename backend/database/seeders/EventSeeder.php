@@ -106,6 +106,18 @@ class EventSeeder extends Seeder
                                 'log' => 'Il settore resta morto. Si gestisce così.'],
                         ],
                     ],
+                    [
+                        'label'         => 'Lo scanner mi dice quale linea sta cedendo',
+                        'hint'          => 'consuma lo scanner',
+                        'requires'      => ['has_item' => 'scanner'],
+                        'requires_item' => 'scanner',
+                        'outcomes' => [
+                            ['weight' => 1, 'effects' => [
+                                ['consume_item' => 'scanner'],
+                                ['resource' => 'power', 'delta' => 4],
+                            ], 'log' => 'Isoli la linea guasta prima che trascini le altre. Lo scanner si brucia nello sforzo, ma il settore regge.'],
+                        ],
+                    ],
                 ],
             ],
             [
